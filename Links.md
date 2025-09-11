@@ -1,3 +1,2 @@
 # Links
-
-https://drive.google.com/drive/folders/1qWK4m5jXwKFgx4baJeswFQE7cJXE9JJz?usp=sharing
+https://docs.google.com/spreadsheets/d/1mp7ejHRvqe4gb6B9yfDN-wwYY2wJv7uouZXhdA8WOok/edit?usp=sharing
