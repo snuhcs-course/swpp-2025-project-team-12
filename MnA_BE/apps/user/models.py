@@ -1,5 +1,7 @@
 from django.db import models
-from MnA_BE.constants import *
+
+TINY_TEXT = 255
+LONG_TEXT = 255
 
 class User(models.Model):
     id = models.AutoField(primary_key=True)

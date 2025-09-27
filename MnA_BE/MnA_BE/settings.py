@@ -29,38 +29,26 @@ SECRET_KEY = "django-insecure-9*#xm@jz&k9%1dpl$nq0d1_&wd0n9qua=krj(ucab+(+xtil+!
 DEBUG = (True if os.environ['DEBUG'] == 'True' else False)
 
 
-# CORS Settings
 ALLOWED_HOSTS = []
-CORS_ORIGIN_ALLOW_ALL = True
-CORS_ALLOW_CREDENTIALS = True
-
-CORS_ALLOW_METHODS = (
-    'DELETE',
-    'GET',
-    'POST',
-    'PUT',
-    'HEAD'
-)
-
-CORS_ALLOW_HEADERS = (
-    'content-type'
-)
-
 
 # Application definition
 
 INSTALLED_APPS = [
+    # default
     "django.contrib.admin",
     "django.contrib.auth",
     "django.contrib.contenttypes",
     "django.contrib.sessions",
     "django.contrib.messages",
     "django.contrib.staticfiles",
+
+    # custom apps
+    "corsheaders",
+    "apps.user",
+    "apps.DailyInsight",
 ]
 
 MIDDLEWARE = [
-    "apps.user",
-    "apps.DailyInsight",
     "django.middleware.security.SecurityMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
@@ -88,6 +76,23 @@ TEMPLATES = [
 ]
 
 WSGI_APPLICATION = "MnA_BE.wsgi.application"
+
+
+# CORS settings
+CORS_ORIGIN_ALLOW_ALL = True
+CORS_ALLOW_CREDENTIALS = True
+
+CORS_ALLOW_METHODS = (
+    'DELETE',
+    'GET',
+    'POST',
+    'PUT',
+    'HEAD'
+)
+
+CORS_ALLOW_HEADERS = (
+    'content-type'
+)
 
 
 # Database

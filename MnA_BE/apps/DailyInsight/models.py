@@ -1,5 +1,7 @@
 from django.db import models
-from MnA_BE.constants import *
+
+TINY_TEXT = 255
+LONG_TEXT = 255
 
 class PriceFluctuation(models.Model):
     recommended_date = models.DateField()
