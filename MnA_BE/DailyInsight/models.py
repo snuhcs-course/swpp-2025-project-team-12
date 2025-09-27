@@ -1,7 +1,7 @@
 from django.db import models
 
 TINY_TEXT = 255
-LONG_TEXT = 65535
+LONG_TEXT = 255
 
 # Create your models here.
 class User(models.Model):
