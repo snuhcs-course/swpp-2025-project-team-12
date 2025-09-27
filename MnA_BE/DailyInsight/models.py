@@ -27,22 +27,3 @@ class StockInfo(models.Model):
     market_type = models.CharField(max_length=TINY_TEXT)
     industry_tag = models.CharField(max_length=TINY_TEXT)
     company_profile = models.CharField(max_length=LONG_TEXT)
-
-
-class MacroInfo(models.Model):
-    kospi_price = ""
-    kosdaq_price = ""
-    korea_interest_rate = ""
-    sp500_price = ""
-    us_interest_rate = ""
-    market_profile = ""
-
-class PriceFinancialInfo(models.Model):
-    price=""
-    market_capacity=""
-    eps=""
-    bps=""
-    per=""
-    pbr=""
-    roe=""
-
