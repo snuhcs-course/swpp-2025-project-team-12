@@ -26,7 +26,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = "django-insecure-9*#xm@jz&k9%1dpl$nq0d1_&wd0n9qua=krj(ucab+(+xtil+!"
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = (True if os.environ['DEBUG'] == 'True' else False)
 
 
 # CORS Settings
@@ -59,7 +59,8 @@ INSTALLED_APPS = [
 ]
 
 MIDDLEWARE = [
-    "corsheaders.middleware.CorsMiddleware",
+    "apps.user",
+    "apps.DailyInsight",
     "django.middleware.security.SecurityMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
