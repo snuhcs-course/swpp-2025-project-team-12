@@ -1,4 +1,5 @@
-./idea/
+.idea/
 
 ### MnABE
 MnA_BE/.venv
+MnA_BE/.env
