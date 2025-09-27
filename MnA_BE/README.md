@@ -18,6 +18,8 @@ TODO
 * DB management
 ```
     python manage.py makemigrations DailyInsight
+```
+```
     python manage.py migrate
 ```
 

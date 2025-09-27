@@ -3,5 +3,5 @@ from . import views
 
 urlpatterns = [
     path('user/', include('DailyInsight.user.urls')),
-    path('sample/', include('DailyInsight.sample2.urls'))
+    path('sample/', include('DailyInsight.sample.urls'))
 ]
