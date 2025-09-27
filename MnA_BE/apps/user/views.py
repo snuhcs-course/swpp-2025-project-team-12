@@ -11,6 +11,7 @@ def logout(request):
     return JsonResponse({"message": "NOT IMPLEMENTED"}, status=500)
 
 def signup(request):
+    body = json.loads(request.body)
     return JsonResponse({"message": "NOT IMPLEMENTED"}, status=500)
 
 def withdraw(request):

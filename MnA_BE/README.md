@@ -17,7 +17,7 @@ TODO
 
 * DB management
 ```
-    python manage.py makemigrations DailyInsight
+    python manage.py makemigrations DailyInsight --pythonpath="applications"
 ```
 ```
     python manage.py migrate
