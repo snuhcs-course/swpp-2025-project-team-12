@@ -31,7 +31,7 @@ ALLOWED_HOSTS = []
 # Application definition
 
 INSTALLED_APPS = [
-    "DailyInsight"
+    "DailyInsight.apps.DailyInsightConfig",
     "django.contrib.admin",
     "django.contrib.auth",
     "django.contrib.contenttypes",
