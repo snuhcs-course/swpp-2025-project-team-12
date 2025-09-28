@@ -4,3 +4,5 @@
 MnA_BE/.venv
 MnA_BE/.env
 MnA_BE/utils/.gitkeep
+
+__pycache__/
