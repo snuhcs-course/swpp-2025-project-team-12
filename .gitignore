@@ -1,5 +1,14 @@
 .idea/*
 
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+*.sqlite3
+*.log
+
+articles/*
+
 ### MnABE
 MnA_BE/.venv
 MnA_BE/.env
