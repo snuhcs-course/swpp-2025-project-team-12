@@ -46,6 +46,7 @@ INSTALLED_APPS = [
     "corsheaders",
     "apps.user",
     "apps.DailyInsight",
+    "apps.articles",
 ]
 
 MIDDLEWARE = [
@@ -103,13 +104,13 @@ pymysql.install_as_MySQLdb()
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.mysql',
-        'NAME' : 'MnA_SQL',
-        'USER' : os.environ['MYSQL_USER'],
-        'PASSWORD' : os.environ['MYSQL_PASSWORD'],
-        'HOST': os.environ['MYSQL_HOST'],
-        'PORT': os.environ['MYSQL_PORT'],
-        'OPTIONS':{
-            'init_command' : "SET sql_mode='STRICT_TRANS_TABLES'"
+        'NAME': os.environ.get('MYSQL_DATABASE', 'MnA_SQL'),
+        'USER': os.environ.get('MYSQL_USER', 'root'),
+        'PASSWORD': os.environ.get('MYSQL_PASSWORD', ''),
+        'HOST': os.environ.get('MYSQL_HOST', 'localhost'),
+        'PORT': os.environ.get('MYSQL_PORT', '3306'),
+        'OPTIONS': {
+            'init_command': "SET sql_mode='STRICT_TRANS_TABLES'"
         }
     }
 }

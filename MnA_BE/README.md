@@ -26,6 +26,11 @@ TODO
     python manage.py migrate
 ```
 
+* crawl articles
+```
+    python manage.py crawl_articles --top 50
+```
+
 ## Our Stacks:
 * Base Language: Python with django framework\
     <img src="https://img.shields.io/badge/python-3776AB?style=for-the-badge&logo=python&logoColor=white">
