@@ -1,4 +1,3 @@
-# apps/MarketIndex/management/commands/fetch_stocks.py
 from django.core.management.base import BaseCommand
 from apps.MarketIndex.models import StockIndex
 from decimal import Decimal
