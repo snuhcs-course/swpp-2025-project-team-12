@@ -46,6 +46,7 @@ INSTALLED_APPS = [
     "corsheaders",
     "apps.user",
     "apps.DailyInsight",
+    "apps.MarketIndex",
 ]
 
 MIDDLEWARE = [
