@@ -7,7 +7,7 @@ __pycache__/
 *.sqlite3
 *.log
 
-articles/*
+articles/
 
 ### MnABE
 MnA_BE/.venv
