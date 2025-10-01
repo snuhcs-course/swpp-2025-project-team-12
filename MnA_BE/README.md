@@ -28,7 +28,7 @@ TODO
 
 * crawl articles
 ```
-    python manage.py crawl_articles --top 50
+    python manage.py crawler_articles --top 50
 ```
 
 ## Our Stacks:

@@ -1,9 +1,9 @@
 from django.core.management.base import BaseCommand
-from apps.articles import crawler_main
+from apps.articles.crawler_main import main
 
 
 class Command(BaseCommand):
-    help = "Crawl Korean finance articles from RSS feeds and save as JSON"
+    help = "Crawl Korean finance articles from Google News RSS (Business Topic)"
 
     def add_arguments(self, parser):
         parser.add_argument(
@@ -12,29 +12,17 @@ class Command(BaseCommand):
             default=50,
             help='Maximum number of articles to save (default: 50)'
         )
-        parser.add_argument(
-            '--no-content',
-            action='store_true',
-            help='Skip article content extraction'
-        )
 
     def handle(self, *args, **options):
-        top = options['top']
-        no_content = options['no_content']
-        
         self.stdout.write(self.style.SUCCESS('=' * 60))
-        self.stdout.write(self.style.SUCCESS('Starting finance article crawler...'))
+        self.stdout.write(self.style.SUCCESS('Starting Business News Crawler (Selenium)...'))
         self.stdout.write(self.style.SUCCESS('=' * 60))
         
         try:
-            results = crawler_main.main(top=top, no_content=no_content)
+            main()
             
             self.stdout.write(self.style.SUCCESS('=' * 60))
-            self.stdout.write(
-                self.style.SUCCESS(
-                    f'✓ Successfully crawled {len(results)} articles!'
-                )
-            )
+            self.stdout.write(self.style.SUCCESS('✓ Crawling completed!'))
             self.stdout.write(self.style.SUCCESS('=' * 60))
             
         except Exception as e:
