@@ -29,10 +29,8 @@ class StockindexManager:
         Args:
             data_dir_name: Directory to store JSON files (default: "stockindex")
         """
-        # --- START: MODIFY THIS LINE ---
         # Construct a full, absolute path to the data directory.
         self.data_dir = BASE_DIR / data_dir_name
-        # --- END: MODIFY THIS LINE ---
         
         self.data_dir.mkdir(exist_ok=True)
         
