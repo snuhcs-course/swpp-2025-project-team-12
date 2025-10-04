@@ -6,3 +6,6 @@ MnA_BE/.env
 MnA_BE/utils/.gitkeep
 
 __pycache__/
+
+### MarketIndex
+stockindex/
