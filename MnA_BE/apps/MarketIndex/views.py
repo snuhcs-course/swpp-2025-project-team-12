@@ -1,9 +1,9 @@
 from django.http import JsonResponse
-from .korean_stock_indices_manager import KoreanStockIndicesManager
+from .stockindex_manager import StockindexManager
 
 def stockindex_latest(request):
     """Get the latest closing price for each index from the JSON data."""
-    manager = KoreanStockIndicesManager()
+    manager = StockindexManager()
     latest_data = manager.get_latest()
 
     # The manager's get_latest() already returns the data in a perfect format.
@@ -19,7 +19,7 @@ def stockindex_history(request, index_type):
     Get historical data for a specific index from the JSON data.
     Example: /marketindex/stockindex/KOSPI/history/?days=30
     """
-    manager = KoreanStockIndicesManager()
+    manager = StockindexManager()
 
     # Validate index type against the manager's list
     valid_indices = manager.indices.keys()
@@ -62,7 +62,7 @@ def stockindex_compare(request):
     Compare all indices over a given period using data from the JSON files.
     Example: /marketindex/stockindex/compare/?days=7
     """
-    manager = KoreanStockIndicesManager()
+    manager = StockindexManager()
     
     try:
         days = int(request.GET.get('days', 7))
@@ -92,7 +92,7 @@ def stockindex_compare(request):
 
 def stockindex_summary(request):
     """Get summary statistics for all indices from the JSON data."""
-    manager = KoreanStockIndicesManager()
+    manager = StockindexManager()
     summary_data = manager.get_summary() # This method does all the work!
 
     return JsonResponse({

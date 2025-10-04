@@ -12,22 +12,22 @@ import yfinance as yf
 import pandas as pd
 from pathlib import Path
 
-# Get the directory where this script (korean_stock_indices_manager.py) is located.
+# Get the directory where this script (stockindex_manager.py) is located.
 # This ensures that the path is correct no matter where the script is run from.
 BASE_DIR = Path(__file__).resolve().parent
 
-class KoreanStockIndicesManager:
+class StockindexManager:
     """
     Manages KOSPI and KOSDAQ data in local JSON files.
     Designed to run at 3:35 PM KST after market close.
     """
     
-    def __init__(self, data_dir_name: str = "korean_stock_indices"):
+    def __init__(self, data_dir_name: str = "stockindex"):
         """
         Initialize the manager for Korean markets.
         
         Args:
-            data_dir_name: Directory to store JSON files (default: "korean_stock_indices")
+            data_dir_name: Directory to store JSON files (default: "stockindex")
         """
         # --- START: MODIFY THIS LINE ---
         # Construct a full, absolute path to the data directory.
@@ -309,17 +309,17 @@ class KoreanStockIndicesManager:
 
 def setup_initial_data():
     """Initial setup - fetch 365 days of data."""
-    manager = KoreanStockIndicesManager()
+    manager = StockindexManager()
     return manager.fetch_historical(days=365)
 
 def daily_update():
     """Daily update - run at 3:35 PM KST."""
-    manager = KoreanStockIndicesManager()
+    manager = StockindexManager()
     return manager.fetch_daily()
 
 def view_latest():
     """View latest prices."""
-    manager = KoreanStockIndicesManager()
+    manager = StockindexManager()
     latest = manager.get_latest()
     
     print("\n" + "="*50)
