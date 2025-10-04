@@ -16,18 +16,13 @@ def stockindex_latest(request):
 
 def stockindex_history(request, index_type):
     """
-    Get historical data for a specific index from the JSON data.
-    Example: /marketindex/stockindex/KOSPI/history/?days=30
+    Get historical data for a specific index or both from the JSON data.
+    Example: 
+    - /marketindex/stockindex/history/KOSPI/?days=30
+    - /marketindex/stockindex/history/KOSDAQ/?days=30
+    - /marketindex/stockindex/history/BOTH/?days=30
     """
     manager = StockindexManager()
-
-    # Validate index type against the manager's list
-    valid_indices = manager.indices.keys()
-    if index_type not in valid_indices:
-        return JsonResponse({
-            'status': 'error',
-            'message': f'Invalid index. Choose from: {", ".join(valid_indices)}'
-        }, status=400)
 
     # Get number of days from query params
     try:
@@ -36,66 +31,86 @@ def stockindex_history(request, index_type):
     except (ValueError, TypeError):
         days = 30
 
-    # Get historical data from the manager
-    history = manager.get_history(index_type, days=days)
-
-    # The manager's data keys need a slight rename to match the original API output
-    # ('close' -> 'price', 'change_amount' -> 'change')
-    data = [{
-        'date': record['date'],
-        'price': record['close'],
-        'change': record['change_amount'],
-        'change_percent': record['change_percent']
-    } for record in history]
-
-    return JsonResponse({
-        'status': 'success',
-        'index': index_type,
-        'days': days,
-        'count': len(data),
-        'data': data
-    })
-
-
-def stockindex_compare(request):
-    """
-    Compare all indices over a given period using data from the JSON files.
-    Example: /marketindex/stockindex/compare/?days=7
-    """
-    manager = StockindexManager()
-    
-    try:
-        days = int(request.GET.get('days', 7))
-        days = min(max(1, days), 365)
-    except (ValueError, TypeError):
-        days = 7
-
-    comparison_data = {}
-
-    # Fetch history for each index defined in the manager
-    for index_type in manager.indices.keys():
-        records = manager.get_history(index_type, days=days)
+    # Handle BOTH case
+    if index_type.upper() == 'BOTH':
+        both_data = {}
         
-        # Format data for the comparison response
-        comparison_data[index_type] = [{
-            'date': r['date'],
-            'price': r['close'],
-            'change_percent': r['change_percent']
-        } for r in records]
+        for idx_name in manager.indices.keys():
+            history = manager.get_history(idx_name, days=days)
+            
+            # Keep original field names from the manager
+            formatted_history = [{
+                'date': record['date'],
+                'close': record['close'],
+                'change_amount': record['change_amount'],
+                'change_percent': record['change_percent']
+            } for record in history]
+            
+            both_data[idx_name] = formatted_history
+        
+        return JsonResponse({
+            'status': 'success',
+            'index': 'BOTH',
+            'days': days,
+            'data': both_data
+        })
+    
+    # Handle single index case
+    else:
+        # Validate index type against the manager's list
+        valid_indices = list(manager.indices.keys())
+        if index_type not in valid_indices:
+            return JsonResponse({
+                'status': 'error',
+                'message': f'Invalid index. Choose from: {", ".join(valid_indices + ["BOTH"])}'
+            }, status=400)
 
-    return JsonResponse({
-        'status': 'success',
-        'days': days,
-        'data': comparison_data
-    })
+        # Get historical data from the manager
+        history = manager.get_history(index_type, days=days)
+
+        # Keep original field names from the manager
+        data = [{
+            'date': record['date'],
+            'close': record['close'],
+            'change_amount': record['change_amount'],
+            'change_percent': record['change_percent']
+        } for record in history]
+
+        return JsonResponse({
+            'status': 'success',
+            'index': index_type,
+            'days': days,
+            'count': len(data),
+            'data': data
+        })
 
 
 def stockindex_summary(request):
     """Get summary statistics for all indices from the JSON data."""
     manager = StockindexManager()
-    summary_data = manager.get_summary() # This method does all the work!
+    summary_data = manager.get_summary()
+    
+    # Also get latest data to extract change_amount
+    latest_data = manager.get_latest()
+    
+    # Format the data to use consistent naming
+    formatted_summary = {}
+    for index_name, data in summary_data.items():
+        formatted_summary[index_name] = {
+            'latest_close': data['latest_price'],
+            'latest_change_amount': latest_data[index_name]['change_amount'] if index_name in latest_data else None,
+            'latest_change_percent': data['latest_change'],
+            'latest_date': data['latest_date'],
+            'latest_volume': data['latest_volume'],
+            '30d_high': data['30d_high'],
+            '30d_low': data['30d_low'],
+            '30d_avg': data['30d_avg'],
+            '52w_high': data['52w_high'],
+            '52w_low': data['52w_low'],
+            'data_points': data['data_points']
+        }
 
     return JsonResponse({
         'status': 'success',
-        'data': summary_data
+        'data': formatted_summary
     })

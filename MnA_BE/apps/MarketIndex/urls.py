@@ -8,13 +8,10 @@ urlpatterns = [
     # GET /marketindex/stockindex/latest/
     path('stockindex/latest/', views.stockindex_latest, name='latest'),
     
-    # Get historical data for a specific index (e.g., KOSPI, KOSDAQ)
-    # GET /marketindex/stockindex/KOSPI/history/?days=30
-    path('stockindex/<str:index_type>/history/', views.stockindex_history, name='history'),
-    
-    # Compare all indices over a time period
-    # GET /marketindex/stockindex/compare/?days=7
-    path('stockindex/compare/', views.stockindex_compare, name='compare'),
+    # Get historical data for a specific index or both
+    # GET /marketindex/stockindex/history/<str:index_type>/?days=30
+    # where index_type can be: KOSPI, KOSDAQ, or BOTH
+    path('stockindex/history/<str:index_type>/', views.stockindex_history, name='history'),
     
     # Get summary statistics for all indices
     # GET /marketindex/stockindex/summary/
