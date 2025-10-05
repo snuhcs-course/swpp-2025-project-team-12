@@ -48,15 +48,26 @@ pip install -r requirements.txt
 
 ## 3. how to run demo
 
+Make sure you have activated the virtual environment and switched to the branch
+And you have to be: .../swpp-2025-project-team-12/MnA_BE
+
+...so it will be like
+```
+(myenv) ~/swpp-2025-project-team-12/MnA_BE git:(iteration-1-demo)
+```
+
 ### 3.1. Index crawler
 
 ```
 python -c "from apps.MarketIndex.stockindex_manager import setup_initial_data; setup_initial_data()"
 ```
 
+You can check the results at:
+.../swpp-2025-project-team-12/MnA_BE/apps/MarketIndex/stockindex/KOSPI.json
+.../swpp-2025-project-team-12/MnA_BE/apps/MarketIndex/stockindex/KOSDAQ.json
 ```
-.../MnA_BE/apps/MarketIndex/stockindex/KOSPI.json
-.../MnA_BE/apps/MarketIndex/stockindex/KOSDAQ.json
+cat apps/MarketIndex/stockindex/KOSPI.json
+cat apps/MarketIndex/stockindex/KOSDAQ.json
 ```
 
 ### 3.2. Articles crawler
@@ -65,8 +76,14 @@ python -c "from apps.MarketIndex.stockindex_manager import setup_initial_data; s
 python apps/articles/crawler_main.py
 ```
 
+You can check the results at:
+.../swpp-2025-project-team-12/MnA_BE/apps/articles/[date]/business_top50.json
+[date] is the date today (e.g. 20251005)
+
 ### 3.3. Stock information crawler
 
 ```
 python apps/Fianance/finance_crawler.py
 ```
+
+You can check the result just at the terminal (will be printed out)
