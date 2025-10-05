@@ -88,5 +88,15 @@ python apps/Finance/finance_crawler.py
 
 You can check the result just at the terminal (will be printed out)
 
+## 4. demo video
 
+You can check the demo video for each feature here
 
+### 4.1. Index crawler
+[swpp25 team12 iteration 1 demo - 1. Index crawler](https://youtu.be/ipA-jFqFZws)
+
+### 4.2. Articles crawler
+[swpp25 team12 iteration 1 demo - 2. Articles crawler](https://youtu.be/YQWbwLg6EsM)
+
+### 4.3. Stock information crawler
+[swpp25 team12 iteration 1 demo - 3. Stock information crawler](https://youtu.be/7EzlZLypGA0)
