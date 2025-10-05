@@ -83,9 +83,10 @@ You can check the results at:
 ### 3.3. Stock information crawler
 
 ```
-python apps/Fianance/finance_crawler.py
+python apps/Finance/finance_crawler.py
 ```
 
 You can check the result just at the terminal (will be printed out)
+
 
 
