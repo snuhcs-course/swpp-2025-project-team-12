@@ -48,8 +48,8 @@ pip install -r requirements.txt
 
 ## 3. how to run demo
 
-Make sure you have activated the virtual environment and switched to the branch
-And you have to be: .../swpp-2025-project-team-12/MnA_BE
+Make sure you have activated the virtual environment and switched to the branch <br>
+And you have to be: .../swpp-2025-project-team-12/MnA_BE <br>
 
 ...so it will be like
 ```
@@ -62,9 +62,9 @@ And you have to be: .../swpp-2025-project-team-12/MnA_BE
 python -c "from apps.MarketIndex.stockindex_manager import setup_initial_data; setup_initial_data()"
 ```
 
-You can check the results at:
-.../swpp-2025-project-team-12/MnA_BE/apps/MarketIndex/stockindex/KOSPI.json
-.../swpp-2025-project-team-12/MnA_BE/apps/MarketIndex/stockindex/KOSDAQ.json
+You can check the results at: <br>
+.../swpp-2025-project-team-12/MnA_BE/apps/MarketIndex/stockindex/KOSPI.json <br>
+.../swpp-2025-project-team-12/MnA_BE/apps/MarketIndex/stockindex/KOSDAQ.json <br>
 ```
 cat apps/MarketIndex/stockindex/KOSPI.json
 cat apps/MarketIndex/stockindex/KOSDAQ.json
@@ -87,3 +87,4 @@ python apps/Fianance/finance_crawler.py
 ```
 
 You can check the result just at the terminal (will be printed out)
+
