@@ -1,28 +1,72 @@
-# SNU-SWPP-Template
+# Iteration 1 demo of Daily insight
 
-You can use the README file to showcase and promote your mobile app. The template provided below is just a starting point. Feel free to craft your README as you see fit. 
+## 1. implemented features
 
-Please note that the README doesn't affect your grade and is not included in documentation(Wiki).
+<img width="1920" height="1080" alt="architecture_iter1" src="https://github.com/user-attachments/assets/e42841f3-d0c7-408b-9355-802e09037361" />
 
-# [Your Application Name]
+- Index crawler
+- Articles crawler
+- Stock information crawler (Brief information about corporates and their financial data)
 
-[Short application description here]
+## 2. how to set environment
 
-![Application Screenshot](path_to_screenshot.png)
+### 2.1. prepare repository
+First, clone git repository
+```
+git clone [url]
+```
 
-## Features
+And then, move to the project directory
+```
+cd swpp-2025-project-team-12
+```
 
-- Feature 1: Brief description
-- Feature 2: Brief description
-- ...
+Then switch to the 'iteration-1-demo' branch
+```
+git checkout iteration-1-demo
+```
 
-## Getting Started
+### 2.2. prepare virtual environment
 
-### Prerequisites
+Create a new environment with Anaconda3 and activate it
+You can set the environment name freely
 
-- Android Studio [version, e.g., 4.2.1]
-- Minimum Android SDK Version [e.g., 21]
+```
+conda create -n myenv
+conda activate myenv
+```
 
-### Installation
+Move to the demo directory named MnA_BE
+```
+cd MnA_BE
+```
 
-[Installation link here]
+Install the modules needed
+```
+pip install -r requirements.txt
+```
+
+## 3. how to run demo
+
+### 3.1. Index crawler
+
+```
+python -c "from apps.MarketIndex.stockindex_manager import setup_initial_data; setup_initial_data()"
+```
+
+```
+.../MnA_BE/apps/MarketIndex/stockindex/KOSPI.json
+.../MnA_BE/apps/MarketIndex/stockindex/KOSDAQ.json
+```
+
+### 3.2. Articles crawler
+
+```
+python apps/articles/crawler_main.py
+```
+
+### 3.3. Stock information crawler
+
+```
+python apps/Fianance/finance_crawler.py
+```
