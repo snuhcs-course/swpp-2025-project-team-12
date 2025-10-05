@@ -2,7 +2,7 @@
 
 ## 1. implemented features
 
-<img width="1920" height="1080" alt="architecture_iter1" src="https://github.com/user-attachments/assets/e42841f3-d0c7-408b-9355-802e09037361" />
+<img width="415" height="446" alt="architecture_iter1" src="https://github.com/user-attachments/assets/0957eca9-d3ff-492c-9751-c91cf1f211bd" />
 
 - Index crawler
 - Articles crawler
@@ -87,4 +87,5 @@ python apps/Fianance/finance_crawler.py
 ```
 
 You can check the result just at the terminal (will be printed out)
+
 
