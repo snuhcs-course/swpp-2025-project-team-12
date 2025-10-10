@@ -1,10 +1,11 @@
 from django.http import JsonResponse
 from .models import User
 import bcrypt
-from utils.cookie_handler import *
+from utils.token_handler import *
 from utils.validation import validate_password
 from decorators import *
 from S3 import S3Client
+import os
 import json
 
 
@@ -36,7 +37,8 @@ def login(request):
             return JsonResponse({"message": "INVALID PASSWORD"}, status=401)
 
         response = JsonResponse({"message": "LOGIN SUCCESS"}, status=200)
-        set_cookie(response, id)
+        set_cookie(response, "refresh_token", make_refresh_token(id))
+        set_cookie(response, "access_token", make_access_token(id))
         return response
 
 
@@ -93,7 +95,8 @@ def signup(request):
 
         # assume login state, after signup
         response = JsonResponse({"message": "User created successfully"}, status=201)
-        set_cookie(response, id)
+        set_cookie(response, "refresh_token", make_refresh_token(id))
+        set_cookie(response, "access_token", make_access_token(id))
 
         hashed_password = bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt())
         try:
@@ -121,7 +124,7 @@ def withdraw(request, user):
     DELETE: delete user account
     """
 
-    if request.method != "DELETE":
+    if request.method == "DELETE":
         ### DELETE ###
 
         response = JsonResponse({"message": "WITHDRAWAL SUCCESS"}, status=200)
@@ -129,9 +132,9 @@ def withdraw(request, user):
 
         # remove profile from S3
         try:
-            S3Client().delete("profile", user.id)
+            S3Client().delete(os.environ.get("PROFILE_BUCKET_NAME"), user.id)
         except Exception as e:
-            return JsonResponse({ "message": "S3 DELETE FAILED" }, status=500)
+            return JsonResponse({ "message": "PROFILE DELETE FAILED" }, status=500)
 
 
         # remove user from SQL table
