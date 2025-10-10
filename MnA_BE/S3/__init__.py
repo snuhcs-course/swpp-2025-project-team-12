@@ -1,13 +1,16 @@
 import boto3
 import os
 import pandas
+import traceback
+import base64
+import io
+from utils.debug_print import debug_print
 
 class S3Client:
 	"""
 	you can use S3 service with this class.
 	"""
 	__client = None
-	__s3_resource = None
 
 	def __init__(self):
 		__client = boto3.client(
@@ -15,44 +18,77 @@ class S3Client:
 			aws_access_key_id=os.environ['IAM_ACCESS_KEY_ID'],
 			aws_secret_access_key=os.environ['IAM_SECRET_KEY']
 		)
-		__s3_resource = __client.resource('s3')
 
 	def get(self, bucket_name, key):
 		"""
-        Gets the object.
-
-        :param bucket_name: target Bucket name.
-        :param key: The object key.
-
-        :return: The object data in bytes.
+		get object from S3 bucket, and return it's body.
         """
 		try:
-			obj = self.__s3_resource.Object(bucket_name, key)
-			body = obj.get()["Body"]
+			obj = self.__client.get_object(Bucket=bucket_name, Key=key)
 		except:
-			raise Exception(
-				"Couldn't get object '%s' from bucket '%s'.",
-				key, bucket_name)
+			debug_print(traceback.format_exc())
+			raise Exception(f"S3 ERROR: Couldn't get object '{key}' from bucket '{bucket_name}'.")
 
-		return body
+		return obj['Body'].read()
+
+	def get_image_url(self, bucket_name, key):
+		"""
+		get image data from S3 bucket.
+		"""
+		try:
+			obj = self.__client.get_object(Bucket=bucket_name, Key=key)
+			content_type = obj['ContentType']
+			bytes_data = obj['Body'].read()
+			base64_data = base64.b64encode(bytes_data).decode('utf-8')
+
+			return f"data:{content_type};base64,{base64_data}"
+		except:
+			debug_print(traceback.format_exc())
+			raise Exception(f"S3 ERROR: Couldn't get image from bucket '{bucket_name}'.")
+
+	def put_image(self, bucket_name, key, image_url):
+		"""
+		put image data to S3 bucket.
+		"""
+		try:
+			header, base64_data = image_url.split(";base64,")
+			content_type = header.split(":")[1]
+
+			try:
+				bytes_data = base64.b64decode(base64_data)
+			except:
+				raise Exception("S3 ERROR: Invalid base64 data.")
+
+			self.__client.put_object(
+				Bucket=bucket_name,
+				Key=key,
+				Body=io.BytesIO(bytes_data),
+				ContentType=content_type,
+				ACL='public-read'
+			)
+		except:
+			debug_print(traceback.format_exc())
+			raise Exception(f"S3 ERROR: Couldn't put bytes to bucket '{bucket_name}'.")
 
 	def put_file(self, bucket_name, key, path_name):
 		"""
-        Upload data to the object.
-
-
-        :param bucket_name: target Bucket name.
-        :param key: The object key.
-        :param path_name: the file's path that we want to upload.
+		put data from file to S3 bucket.
         """
 		try:
-			bucket = self.__s3_resource.Bucket(bucket_name)
-			if os.path.exists(path_name):
-				bucket.upload_file(path_name, key)
+			pass
 		except:
-			raise Exception(
-				"Couldn't put object '%s' to bucket '%s'.",
-				key, bucket_name)
+			debug_print(traceback.format_exc())
+			raise Exception(f"S3 ERROR: Couldn't put object to bucket '{bucket_name}'.")
+
+	def delete(self, bucket_name, key):
+		"""
+		delete object from S3 bucket.
+		"""
+		try:
+			pass
+		except:
+			debug_print(traceback.format_exc())
+			raise Exception(f"S3 ERROR: Couldn't delete object '{key}' from bucket '{bucket_name}'.")
 
 	def get_dataframe(self, bucket, key) -> pandas.DataFrame:
 		pass
