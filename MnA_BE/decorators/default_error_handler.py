@@ -3,6 +3,9 @@ from utils.debug_print import debug_print
 import traceback
 
 def default_error_handler(function):
+    """
+    ensure server never stopped by unexpected errors
+    """
     def wrapper(*args, **kwargs):
         try:
             return function(*args, **kwargs)

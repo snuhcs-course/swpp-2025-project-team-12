@@ -13,8 +13,9 @@ class S3Client:
 	__client = None
 
 	def __init__(self):
-		__client = boto3.client(
+		self.__client = boto3.client(
 		's3',
+			region_name=os.environ['AWS_REGION'],
 			aws_access_key_id=os.environ['IAM_ACCESS_KEY_ID'],
 			aws_secret_access_key=os.environ['IAM_SECRET_KEY']
 		)
@@ -63,8 +64,7 @@ class S3Client:
 				Bucket=bucket_name,
 				Key=key,
 				Body=io.BytesIO(bytes_data),
-				ContentType=content_type,
-				ACL='public-read'
+				ContentType=content_type
 			)
 		except:
 			debug_print(traceback.format_exc())
@@ -85,7 +85,7 @@ class S3Client:
 		delete object from S3 bucket.
 		"""
 		try:
-			pass
+			self.__client.delete_object(Bucket=bucket_name, Key=key)
 		except:
 			debug_print(traceback.format_exc())
 			raise Exception(f"S3 ERROR: Couldn't delete object '{key}' from bucket '{bucket_name}'.")
