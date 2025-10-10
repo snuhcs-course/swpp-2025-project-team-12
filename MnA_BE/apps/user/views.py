@@ -2,12 +2,14 @@ from django.http import JsonResponse
 from .models import User
 import bcrypt
 from utils.cookie_handler import *
+from utils.validation import validate_password
 from decorators import *
 import json
 
 
 @default_error_handler
 def login(request):
+    # POST ONLY
     if request.method != "POST":
         return JsonResponse({"message": "METHOD NOT ALLOWED"}, status=405)
 
@@ -38,6 +40,7 @@ def login(request):
 @default_error_handler
 @require_auth
 def logout(request, user):
+    # POST ONLY
     if request.method != "POST":
         return JsonResponse({"message": "METHOD NOT ALLOWED"}, status=405)
 
@@ -49,6 +52,7 @@ def logout(request, user):
 
 @default_error_handler
 def signup(request):
+    # POST ONLY
     if request.method != "POST":
         return JsonResponse({"message": "METHOD NOT ALLOWED"}, status=405)
 
@@ -64,6 +68,10 @@ def signup(request):
     # check if user already exists
     if User.objects.filter(id=id).exists():
         return JsonResponse({"message": "USER ALREADY EXISTS"}, status=409)
+
+    # password validation
+    if not validate_password(password):
+        return JsonResponse({ "message": "WRONG PASSWORD FORMAT" }, status=400)
 
     # assume login state, after signup
     response = JsonResponse({"message": "User created successfully"}, status=201)
@@ -87,11 +95,14 @@ def signup(request):
 @default_error_handler
 @require_auth
 def withdraw(request, user):
+    # DELETE ONLY
     if request.method != "DELETE":
         return JsonResponse({"message": "METHOD NOT ALLOWED"}, status=405)
 
     response = JsonResponse({"message": "WITHDRAWAL SUCCESS"}, status=200)
     delete_cookie(response)
+
+    # TODO: additional handling (delete interests lists, profile, etc)
 
     try:
         user.delete()
