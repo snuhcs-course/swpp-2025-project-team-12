@@ -37,7 +37,13 @@ def login(request):
             return JsonResponse({"message": "INVALID PASSWORD"}, status=401)
 
         response = JsonResponse({"message": "LOGIN SUCCESS"}, status=200)
-        set_cookie(response, "refresh_token", make_refresh_token(id))
+        try:
+            refresh_token = make_refresh_token(id)
+            user.refresh_token = refresh_token
+            user.save()
+            set_cookie(response, "refresh_token", refresh_token)
+        except:
+            return JsonResponse({ "message": "TOKEN ISSUE" }, status=500)
         set_cookie(response, "access_token", make_access_token(id))
         return response
 
@@ -95,14 +101,16 @@ def signup(request):
 
         # assume login state, after signup
         response = JsonResponse({"message": "User created successfully"}, status=201)
-        set_cookie(response, "refresh_token", make_refresh_token(id))
+        refresh_token = make_refresh_token(id)
+        set_cookie(response, "refresh_token", refresh_token)
         set_cookie(response, "access_token", make_access_token(id))
 
         hashed_password = bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt())
         try:
             user = User.objects.create(
                 id=id,
-                password=hashed_password.decode('utf-8')
+                password=hashed_password.decode('utf-8'),
+                refresh_token=refresh_token,
             )
             user.save()
         except Exception as e:

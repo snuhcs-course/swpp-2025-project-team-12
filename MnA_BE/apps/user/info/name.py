@@ -20,7 +20,7 @@ def name_view(request, user):
     elif request.method == "POST":
         ### POST ###
 
-        body = json.loads(request.bodu.decode('utf-8'))
+        body = json.loads(request.body.decode('utf-8'))
         name = body.get("name")
 
         if name is None:
@@ -34,6 +34,8 @@ def name_view(request, user):
             user.save()
         except Exception as e:
             return JsonResponse({ "message": "NAME SAVE FAILED" }, status=500)
+
+        return JsonResponse({ "message": "NAME UPDATE SUCCESS" }, status=200)
 
     else:
         return JsonResponse({ "message": "NOT ALLOWED METHOD" }, status=405)
