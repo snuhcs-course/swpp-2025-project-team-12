@@ -29,7 +29,7 @@ SECRET_KEY = "django-insecure-9*#xm@jz&k9%1dpl$nq0d1_&wd0n9qua=krj(ucab+(+xtil+!
 DEBUG = (True if os.environ['DEBUG'] == 'True' else False)
 
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['*']
 
 # Application definition
 
@@ -47,9 +47,11 @@ INSTALLED_APPS = [
     "apps.user",
     "apps.DailyInsight",
     "apps.MarketIndex",
+    "apps.api",
 ]
 
 MIDDLEWARE = [
+    "corsheaders.middleware.CorsMiddleware",
     "django.middleware.security.SecurityMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
