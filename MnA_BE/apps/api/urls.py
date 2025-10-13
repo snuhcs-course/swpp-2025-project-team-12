@@ -10,4 +10,5 @@ urlpatterns = [
     path("reports/<str:symbol>", views.reports_detail, name="reports_detail"),
     path("recommendations/general", views.recommendations_general, name="reco_general"),
     path("recommendations/personalized", views.recommendations_personalized, name="reco_personalized"),
+    path("recommendations/general", views.recommendations_general, name="reco_general"),
 ]
