@@ -4,7 +4,7 @@ from django.db import models
 class RecommendationBatch(models.Model):
     market_date   = models.DateField(help_text="KST 기준 추천 일자")
     risk_profile  = models.CharField(max_length=32)  # 안정형/중립형/공격투자형 등
-    source        = models.CharField(max_length=16, default="mock")  # mock|llm|rule
+    source        = models.CharField(max_length=16, default="db")
     model_id      = models.CharField(max_length=64, null=True, blank=True)
     as_of_utc     = models.DateTimeField()
     notes         = models.TextField(null=True, blank=True)
@@ -18,17 +18,18 @@ class RecommendationItem(models.Model):
     rank     = models.IntegerField()
     ticker   = models.CharField(max_length=16)
     name     = models.CharField(max_length=128)
-    news_titles = models.JSONField(default=list)  # ["타이틀1", ...]
-    news_urls   = models.JSONField(default=list)  # ["https://...", ...]
-    reason      = models.JSONField(default=list)  # ["이유1", ...]
+    news_titles = models.JSONField(default=list)
+    news_urls   = models.JSONField(default=list)
+    reason      = models.JSONField(default=list)
     score       = models.DecimalField(max_digits=6, decimal_places=3, null=True, blank=True)
 
     class Meta:
         db_table = "recommendation_items"
+        ordering = ["rank"]
         indexes = [models.Index(fields=["batch", "rank"]),
                    models.Index(fields=["ticker"])]
 
-class Stock(models.Model):
+'''class Stock(models.Model):
     ticker   = models.CharField(primary_key=True, max_length=16)
     name     = models.CharField(max_length=128)
     exchange = models.CharField(max_length=16)         # KOSPI/KOSDAQ
@@ -63,12 +64,4 @@ class MacroIndex(models.Model):
         db_table = "macro_indices"
         unique_together = (("series", "ts"),)
         indexes = [models.Index(fields=["series", "ts"])]
-
-class AppUser(models.Model):
-    id             = models.CharField(primary_key=True, max_length=64)
-    name           = models.CharField(max_length=64)
-    password_hash  = models.CharField(max_length=128)   # bcrypt 등
-    interests      = models.JSONField(default=list)     # 임시
-
-    class Meta:
-        db_table = "users"
+'''
