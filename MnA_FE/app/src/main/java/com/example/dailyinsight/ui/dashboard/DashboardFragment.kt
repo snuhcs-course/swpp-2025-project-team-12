@@ -1,42 +1,61 @@
 package com.example.dailyinsight.ui.dashboard
 
 import android.os.Bundle
-import android.view.LayoutInflater
 import android.view.View
-import android.view.ViewGroup
-import android.widget.TextView
 import androidx.fragment.app.Fragment
-import androidx.lifecycle.ViewModelProvider
+import androidx.fragment.app.viewModels
+import androidx.lifecycle.lifecycleScope
+import androidx.recyclerview.widget.LinearLayoutManager
+import com.example.dailyinsight.R
+import com.example.dailyinsight.data.LoadResult
 import com.example.dailyinsight.databinding.FragmentDashboardBinding
+import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.launch
+import com.example.dailyinsight.ui.common.showSnack
 
-class DashboardFragment : Fragment() {
+class DashboardFragment : Fragment(R.layout.fragment_dashboard) {
 
     private var _binding: FragmentDashboardBinding? = null
-
-    // This property is only valid between onCreateView and
-    // onDestroyView.
     private val binding get() = _binding!!
 
-    override fun onCreateView(
-        inflater: LayoutInflater,
-        container: ViewGroup?,
-        savedInstanceState: Bundle?
-    ): View {
-        val dashboardViewModel =
-            ViewModelProvider(this).get(DashboardViewModel::class.java)
+    private val viewModel: DashboardViewModel by viewModels()
+    private val adapter by lazy { HistoryAdapter() }
 
-        _binding = FragmentDashboardBinding.inflate(inflater, container, false)
-        val root: View = binding.root
+    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+        super.onViewCreated(view, savedInstanceState)
+        _binding = FragmentDashboardBinding.bind(view)
 
-        val textView: TextView = binding.textDashboard
-        dashboardViewModel.text.observe(viewLifecycleOwner) {
-            textView.text = it
+        binding.recycler.apply {
+            layoutManager = LinearLayoutManager(requireContext())
+            adapter = this@DashboardFragment.adapter
         }
-        return root
+
+        binding.swipe.setOnRefreshListener { viewModel.load(force = true) }
+
+        viewLifecycleOwner.lifecycleScope.launch {
+            viewModel.state.collectLatest { st ->
+                when (st) {
+                    is LoadResult.Loading -> binding.swipe.isRefreshing = true
+                    is LoadResult.Success -> {
+                        binding.swipe.isRefreshing = false
+                        adapter.submitList(st.data.toRows())
+                    }
+                    is LoadResult.Empty -> {
+                        binding.swipe.isRefreshing = false
+                        adapter.submitList(emptyList())
+                        showSnack("기록이 없습니다.")
+                    }
+                    is LoadResult.Error -> {
+                        binding.swipe.isRefreshing = false
+                        showSnack("불러오기 실패: ${st.throwable.message ?: "알 수 없는 오류"}")
+                    }
+                }
+            }
+        }
     }
 
     override fun onDestroyView() {
-        super.onDestroyView()
         _binding = null
+        super.onDestroyView()
     }
 }

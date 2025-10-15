@@ -1,6 +1,14 @@
 <resources>
     <string name="app_name">DailyInsight</string>
-    <string name="title_home">Home</string>
-    <string name="title_dashboard">Dashboard</string>
-    <string name="title_notifications">Notifications</string>
+    <string name="title_home">오늘의 추천</string>
+    <string name="title_dashboard">지난 추천</string>
+    <string name="title_notifications">주요 지수</string>
+    <string name="title_indices">주요 지수</string>
+    <string name="today">오늘</string>
+    <string name="yesterday">어제</string>
+    <string name="index_placeholder">--</string>
+    <!-- 상승/하락 텍스트: +1,234 (3.50%) 같은 형태 -->
+    <string name="change_text">%1$s%2$s (%3$s%%)</string>
+    <!-- 가격 -->
+    <string name="price_won">%1$s</string>
 </resources>
