@@ -5,7 +5,7 @@
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:layout_marginBottom="12dp"
-    app:cardElevation="2dp"
+    app:cardElevation="1dp"
     app:strokeWidth="0dp">
 
     <LinearLayout
@@ -14,55 +14,43 @@
         android:orientation="vertical"
         android:padding="16dp">
 
-        <!-- 상단: 이름 / 시각 -->
+        <!-- 1행: 이름 + 시간 -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:gravity="center_vertical"
-            android:orientation="horizontal">
+            android:orientation="horizontal"
+            android:gravity="center_vertical">
 
             <TextView
-                android:id="@+id/title"
+                android:id="@+id/tvName"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
-                android:text="KOSPI"
-                android:textSize="20sp"
-                android:textStyle="bold"/>
+                android:textStyle="bold"
+                android:textSize="16sp" />
 
             <TextView
-                android:id="@+id/time"
+                android:id="@+id/tvTime"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="09:30"
-                android:textSize="12sp"/>
+                android:textSize="12sp" />
         </LinearLayout>
 
-        <!-- 값 -->
+        <!-- 2행: 지수 값 -->
         <TextView
-            android:id="@+id/value"
+            android:id="@+id/tvValue"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginTop="4dp"
-            android:text="3435.17"
-            android:textSize="28sp"
-            android:textStyle="bold"/>
+            android:textStyle="bold"
+            android:textSize="22sp"
+            android:layout_marginTop="4dp" />
 
-        <!-- 등락/등락률 -->
+        <!-- 3행: 등락 -->
         <TextView
-            android:id="@+id/change"
+            android:id="@+id/tvChange"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginTop="2dp"
-            android:text="+2.30 (+0.09%)"
-            android:textSize="14sp"/>
-
-        <!-- 간단한 그래프 자리(옵션) -->
-        <View
-            android:id="@+id/chart"
-            android:layout_width="match_parent"
-            android:layout_height="120dp"
-            android:layout_marginTop="12dp"
-            android:background="?attr/colorSurfaceVariant"/>
+            android:textSize="13sp"
+            android:layout_marginTop="2dp" />
     </LinearLayout>
 </com.google.android.material.card.MaterialCardView>

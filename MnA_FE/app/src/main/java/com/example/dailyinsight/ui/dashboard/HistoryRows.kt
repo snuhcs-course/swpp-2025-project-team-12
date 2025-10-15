@@ -4,8 +4,8 @@ import com.example.dailyinsight.data.dto.RecommendationDto
 
 // UI에 쓰는 행 모델
 sealed class HistoryRow {
-    data class Header(val title: String) : HistoryRow()
-    data class Item(val rec: RecommendationDto) : HistoryRow()
+    data class Header(val label: String) : HistoryRow()
+    data class Item(val data: RecommendationDto) : HistoryRow()
 }
 
 // 간단 변환: 한 섹션 헤더 + 아이템들

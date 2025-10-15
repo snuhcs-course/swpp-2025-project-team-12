@@ -1,11 +1,10 @@
 package com.example.dailyinsight.data
 
-import com.example.dailyinsight.data.remote.RetrofitClient
+import com.example.dailyinsight.data.dto.IndexDto
+import com.example.dailyinsight.data.dto.RecommendationDto
 
-class Repository {
-    private val api = RetrofitClient.api
-
-    suspend fun today() = runCatching { api.getTodayRecommendations() }
-    suspend fun history() = runCatching { api.getHistoryRecommendations() }
-    suspend fun indices() = runCatching { api.getMainIndices() }
+interface Repository {
+    suspend fun getTodayRecommendations(): List<RecommendationDto>
+    suspend fun getHistoryRecommendations(): Map<String, List<RecommendationDto>>
+    suspend fun getMainIndices(): List<IndexDto>
 }

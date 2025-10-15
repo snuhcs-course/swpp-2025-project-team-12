@@ -1,0 +1,22 @@
+{
+  "data": [
+    {
+      "code": "005930",
+      "name": "삼성전자",
+      "price": 74800,
+      "change": 1200,
+      "change_rate": 1.63,
+      "time": "09:30",
+      "headline": "반도체 업황 개선 기대 재부각"
+    },
+    {
+      "code": "000660",
+      "name": "SK하이닉스",
+      "price": 123000,
+      "change": 800,
+      "change_rate": 0.65,
+      "time": "09:30",
+      "headline": "AI 수요 모멘텀 지속"
+    }
+  ]
+}

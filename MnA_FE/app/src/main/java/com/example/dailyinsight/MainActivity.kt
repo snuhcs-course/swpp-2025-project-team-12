@@ -11,18 +11,19 @@ import com.example.dailyinsight.databinding.ActivityMainBinding
 import androidx.activity.enableEdgeToEdge
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
-
+import com.example.dailyinsight.di.ServiceLocator
 class MainActivity : AppCompatActivity() {
 
     private lateinit var binding: ActivityMainBinding
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        ServiceLocator.init(applicationContext)
+        enableEdgeToEdge()
 
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
-        enableEdgeToEdge()
         //setContentView(R.layout.activity_main)
         ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.container)) { v, insets ->
             val systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
