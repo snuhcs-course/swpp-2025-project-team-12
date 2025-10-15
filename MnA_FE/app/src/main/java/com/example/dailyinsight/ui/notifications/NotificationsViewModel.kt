@@ -1,13 +1,27 @@
 package com.example.dailyinsight.ui.notifications
 
-import androidx.lifecycle.LiveData
-import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
+import com.example.dailyinsight.data.LoadResult
+import com.example.dailyinsight.data.Repository
+import com.example.dailyinsight.data.dto.IndexDto
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.launch
 
 class NotificationsViewModel : ViewModel() {
+    private val repo = Repository()
+    private val _state = MutableStateFlow<LoadResult<List<IndexDto>>>(LoadResult.Loading)
+    val state: StateFlow<LoadResult<List<IndexDto>>> = _state
 
-    private val _text = MutableLiveData<String>().apply {
-        value = "This is notifications Fragment"
+    fun load(force: Boolean = false) {
+        viewModelScope.launch {
+            if (force) _state.value = LoadResult.Loading
+            repo.indices()
+                .onSuccess { list -> _state.value = if (list.isEmpty()) LoadResult.Empty else LoadResult.Success(list) }
+                .onFailure { e -> _state.value = LoadResult.Error(e) }
+        }
     }
-    val text: LiveData<String> = _text
+
+    init { load() }
 }
