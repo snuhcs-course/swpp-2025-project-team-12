@@ -26,10 +26,17 @@ class MainActivity : AppCompatActivity() {
         // menu should be considered as top level destinations.
         val appBarConfiguration = AppBarConfiguration(
             setOf(
-                R.id.navigation_home, R.id.navigation_dashboard, R.id.navigation_notifications
+                R.id.navigation_home, R.id.navigation_dashboard, R.id.navigation_market_index
             )
         )
         setupActionBarWithNavController(navController, appBarConfiguration)
         navView.setupWithNavController(navController)
+    }
+
+    // onSupportNavigateUp()이 있어야지 뒤로가기 버튼이 제대로 작동합니다.
+    override fun onSupportNavigateUp(): Boolean {
+        val navController = findNavController(R.id.nav_host_fragment_activity_main)
+        // The `|| super.onSupportNavigateUp()` provides a fallback.
+        return navController.navigateUp() || super.onSupportNavigateUp()
     }
 }

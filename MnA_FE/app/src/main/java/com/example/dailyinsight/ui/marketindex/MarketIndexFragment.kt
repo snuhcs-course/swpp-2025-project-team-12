@@ -7,6 +7,8 @@ import android.view.ViewGroup
 import android.widget.TextView
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.ViewModelProvider
+import androidx.navigation.fragment.findNavController
+import com.example.dailyinsight.R
 import com.example.dailyinsight.databinding.FragmentMarketIndexBinding
 
 class MarketIndexFragment : Fragment() {
@@ -33,6 +35,18 @@ class MarketIndexFragment : Fragment() {
             textView.text = it
         }
         return root
+    }
+
+    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+        super.onViewCreated(view, savedInstanceState)
+
+        binding.buttonToKospi.setOnClickListener {
+            findNavController().navigate(R.id.action_navigation_market_index_to_stockIndexDetailFragment)
+        }
+
+        binding.buttonToKosdaq.setOnClickListener {
+            findNavController().navigate(R.id.action_navigation_market_index_to_stockIndexDetailFragment)
+        }
     }
 
     override fun onDestroyView() {
