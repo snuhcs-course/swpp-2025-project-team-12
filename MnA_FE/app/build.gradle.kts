@@ -54,4 +54,7 @@ dependencies {
     androidTestImplementation(libs.androidx.espresso.core)
 
     implementation("com.google.android.material:material:1.13.0")
+
+    // For Implementing Graphs
+    implementation("com.github.PhilJay:MPAndroidChart:v3.1.0")
 }
