@@ -12,6 +12,12 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.DailyInsight">
         <activity
+            android:name=".SplashActivity"
+            android:exported="false" />
+        <activity
+            android:name=".SignActivity"
+            android:exported="false" />
+        <activity
             android:name=".MainActivity"
             android:exported="true">
             <intent-filter>
