@@ -12,7 +12,13 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.DailyInsight">
         <activity
-            android:name=".signUp"
+            android:name=".sign.SelectStyle"
+            android:exported="false" />
+        <activity
+            android:name=".selectInterest"
+            android:exported="false" />
+        <activity
+            android:name=".sign.SignUp"
             android:exported="false" />
         <activity
             android:name=".SplashActivity"
