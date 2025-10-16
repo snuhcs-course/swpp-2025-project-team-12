@@ -13,4 +13,9 @@
     <!-- 가격 -->
     <string name="price_won">%1$s</string>
     <string name="no_headline">헤드라인 없음</string>
+    <string name="summary">summary</string>
+    <string name="valuation">valuation</string>
+    <string name="solvency">solvency</string>
+    <string name="dividend">dividend</string>
+
 </resources>

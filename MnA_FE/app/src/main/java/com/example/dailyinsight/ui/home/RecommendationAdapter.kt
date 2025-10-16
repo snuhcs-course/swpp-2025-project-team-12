@@ -66,7 +66,7 @@ class RecommendationAdapter(
     companion object {
         private val DIFF = object : DiffUtil.ItemCallback<RecommendationDto>() {
             override fun areItemsTheSame(oldItem: RecommendationDto, newItem: RecommendationDto): Boolean =
-                oldItem.code == newItem.code
+                oldItem.ticker == newItem.ticker
 
             override fun areContentsTheSame(oldItem: RecommendationDto, newItem: RecommendationDto): Boolean =
                 oldItem == newItem

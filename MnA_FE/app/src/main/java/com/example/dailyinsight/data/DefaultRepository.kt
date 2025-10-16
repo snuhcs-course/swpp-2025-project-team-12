@@ -2,6 +2,7 @@ package com.example.dailyinsight.data
 
 import com.example.dailyinsight.data.dto.IndexDto
 import com.example.dailyinsight.data.dto.RecommendationDto
+import com.example.dailyinsight.data.dto.StockDetailDto
 import com.example.dailyinsight.data.remote.ApiService
 
 class DefaultRepository(
@@ -16,4 +17,9 @@ class DefaultRepository(
 
     override suspend fun getMainIndices(): List<IndexDto> =
         api.getMainIndices().data ?: emptyList()
+
+    override suspend fun getStockDetail(ticker: String): StockDetailDto {
+        return api.getStockDetail(ticker).data
+            ?: throw NoSuchElementException("Stock detail not found for $ticker")
+    }
 }

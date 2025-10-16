@@ -52,7 +52,7 @@ class IndicesAdapter : ListAdapter<IndexDto, IndicesAdapter.VH>(DIFF) {
 
     companion object {
         private val DIFF = object : DiffUtil.ItemCallback<IndexDto>() {
-            override fun areItemsTheSame(old: IndexDto, new: IndexDto) = old.code == new.code
+            override fun areItemsTheSame(old: IndexDto, new: IndexDto) = old.ticker == new.ticker
             override fun areContentsTheSame(old: IndexDto, new: IndexDto) = old == new
         }
     }

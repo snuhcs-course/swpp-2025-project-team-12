@@ -3,7 +3,7 @@ package com.example.dailyinsight.data.remote
 import com.example.dailyinsight.data.dto.*
 import retrofit2.http.GET
 import retrofit2.http.Query
-
+import retrofit2.http.Path
 interface ApiService {
 
     // 헬스체크
@@ -27,4 +27,9 @@ interface ApiService {
     // 주요 지수
     @GET("/api/indices/main")
     suspend fun getMainIndices(): ApiResponse<List<IndexDto>>
+
+    @GET("api/stocks/{ticker}")
+    suspend fun getStockDetail(
+        @Path("ticker") ticker: String
+    ): ApiResponse<StockDetailDto>
 }

@@ -33,11 +33,11 @@ object RetrofitClient {
         val path = req.url.encodedPath
         val body = when {
             path.contains("/api/recommendations/today") ->
-                """{"status":"ok","data":[{"code":"005930","name":"삼성전자","price":1415000,"change":-10000,"changeRate":-0.29,"time":"09:30"}]}"""
+                """{"status":"ok","data":[{"ticker":"005930","name":"삼성전자","price":1415000,"change":-10000,"changeRate":-0.29,"time":"09:30"}]}"""
             path.contains("/api/recommendations/history") ->
-                """{"status":"ok","data":{"2025-10-14":[{"code":"000660","name":"SK하이닉스","price":1234000,"change":12000,"changeRate":0.98,"time":"09:30"}]}}"""
+                """{"status":"ok","data":{"2025-10-14":[{"ticker":"000660","name":"SK하이닉스","price":1234000,"change":12000,"changeRate":0.98,"time":"09:30"}]}}"""
             path.contains("/api/indices/main") ->
-                """{"status":"ok","data":[{"code":"KOSPI","name":"코스피","price":2564.12,"change":-10.32,"changeRate":-0.40,"time":"09:30"}]}"""
+                """{"status":"ok","data":[{"ticker":"KOSPI","name":"코스피","price":2564.12,"change":-10.32,"changeRate":-0.40,"time":"09:30"}]}"""
             else ->
                 """{"status":"ok","data":null}"""
         }

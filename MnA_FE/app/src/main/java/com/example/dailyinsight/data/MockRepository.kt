@@ -4,9 +4,12 @@ import android.content.Context
 import com.example.dailyinsight.data.dto.ApiResponse
 import com.example.dailyinsight.data.dto.IndexDto
 import com.example.dailyinsight.data.dto.RecommendationDto
+import com.example.dailyinsight.data.dto.StockDetailDto
 import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.json.Json
-
+import kotlinx.serialization.json.internal.readJson
+import kotlinx.serialization.ExperimentalSerializationApi
+import kotlinx.serialization.serializer
 class MockRepository(private val context: Context) : Repository {
 
     private val json = Json {
@@ -21,6 +24,9 @@ class MockRepository(private val context: Context) : Repository {
 
     override suspend fun getMainIndices(): List<IndexDto> =
         readWrapped<List<IndexDto>>("api_indices.json")
+
+    override suspend fun getStockDetail(ticker: String): StockDetailDto =
+        readWrapped<StockDetailDto>("detail/stock_${ticker}.json") // assets/detail/stock_005930.jso
 
     // --- helpers ---
     private inline fun <reified T> readWrapped(file: String): T {

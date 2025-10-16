@@ -28,17 +28,13 @@ class DashboardFragment : Fragment(R.layout.fragment_dashboard) {
         val swipe = view.findViewById<androidx.swiperefreshlayout.widget.SwipeRefreshLayout>(R.id.swipe)
 
         adapter = HistoryAdapter { item ->
-            // Safe Args 사용 중이면:
-            val action = DashboardFragmentDirections.actionDashboardToStockDetail(item)
-            findNavController().navigate(action)
-
-            // Safe Args 미사용이면:
-            //val bundle = Bundle().apply { putParcelable("item", item) }
-            //findNavController().navigate(R.id.action_dashboard_to_stock_detail, bundle)
+            val bundle = Bundle().apply { putParcelable("item", item) }
+            findNavController().navigate(R.id.action_dashboard_to_stock_detail, bundle)
         }
 
         rv.layoutManager = LinearLayoutManager(requireContext())
         rv.setHasFixedSize(true)
+
         rv.adapter = adapter
 
         swipe.setOnRefreshListener { viewModel.refresh() }

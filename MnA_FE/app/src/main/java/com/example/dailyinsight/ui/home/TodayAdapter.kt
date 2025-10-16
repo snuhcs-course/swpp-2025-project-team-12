@@ -15,7 +15,7 @@ class TodayAdapter(
     private val onClick: (RecommendationDto) -> Unit = {}
 ) : ListAdapter<RecommendationDto, TodayAdapter.VH>(
     object : DiffUtil.ItemCallback<RecommendationDto>() {
-        override fun areItemsTheSame(o: RecommendationDto, n: RecommendationDto) = o.code == n.code
+        override fun areItemsTheSame(o: RecommendationDto, n: RecommendationDto) = o.ticker == n.ticker
         override fun areContentsTheSame(o: RecommendationDto, n: RecommendationDto) = o == n
     }
 ) {

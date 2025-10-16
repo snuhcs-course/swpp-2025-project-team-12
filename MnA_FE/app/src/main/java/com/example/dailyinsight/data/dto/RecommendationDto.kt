@@ -8,7 +8,7 @@ import kotlinx.serialization.Serializable
 @Parcelize
 @Serializable
 data class RecommendationDto(
-    @SerialName("code")        val code: String,      // "005930"
+    @SerialName("ticker")        val ticker: String,      // "005930"
     @SerialName("name")        val name: String,      // "삼성전자"
     @SerialName("price")       val price: Long,       // 141500
     @SerialName("change")      val change: Long,      // -100
