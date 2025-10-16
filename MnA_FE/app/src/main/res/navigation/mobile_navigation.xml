@@ -19,7 +19,7 @@
 
     <fragment
         android:id="@+id/navigation_notifications"
-        android:name="com.example.dailyinsight.ui.notifications.NotificationsFragment"
-        android:label="@string/title_notifications"
-        tools:layout="@layout/fragment_notifications" />
+        android:name="com.example.dailyinsight.ui.marketindex.MarketIndexFragment"
+        android:label="@string/title_market_index"
+        tools:layout="@layout/fragment_market_index" />
 </navigation>

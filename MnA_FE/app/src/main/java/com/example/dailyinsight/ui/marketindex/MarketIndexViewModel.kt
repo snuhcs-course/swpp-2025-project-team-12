@@ -1,10 +1,10 @@
-package com.example.dailyinsight.ui.notifications
+package com.example.dailyinsight.ui.marketindex
 
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 
-class NotificationsViewModel : ViewModel() {
+class MarketIndexViewModel : ViewModel() {
 
     private val _text = MutableLiveData<String>().apply {
         value = "This is notifications Fragment"
