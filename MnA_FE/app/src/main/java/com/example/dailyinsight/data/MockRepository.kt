@@ -26,7 +26,7 @@ class MockRepository(private val context: Context) : Repository {
         readWrapped<List<IndexDto>>("api_indices.json")
 
     override suspend fun getStockDetail(ticker: String): StockDetailDto =
-        readWrapped<StockDetailDto>("detail/stock_${ticker}.json") // assets/detail/stock_005930.jso
+        readJson<StockDetailDto>("detail/stock_${ticker}.json") // assets/detail/stock_005930.jso
 
     // --- helpers ---
     private inline fun <reified T> readWrapped(file: String): T {
@@ -34,6 +34,11 @@ class MockRepository(private val context: Context) : Repository {
         // JSON은 { "data": ... } 형태라고 가정
         val wrapper = json.decodeFromString<ApiResponse<T>>(text)
         return wrapper.data
+    }
+
+    private inline fun <reified T> readJson(file: String): T {
+        val text = readAsset(file)               // assets에서 문자열로 읽어오는 기존 함수
+        return json.decodeFromString(text)       // 래핑 없이 그대로 디코드
     }
 
     private fun readAsset(file: String): String =
