@@ -12,6 +12,9 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.DailyInsight">
         <activity
+            android:name=".signUp"
+            android:exported="false" />
+        <activity
             android:name=".SplashActivity"
             android:exported="false" />
         <activity
