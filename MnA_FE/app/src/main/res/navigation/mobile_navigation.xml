@@ -31,5 +31,9 @@
         android:id="@+id/stockIndexDetailFragment"
         android:name="com.example.dailyinsight.ui.marketindex.StockIndexDetailFragment"
         android:label="fragment_stock_index_detail"
-        tools:layout="@layout/fragment_stock_index_detail" />
+        tools:layout="@layout/fragment_stock_index_detail">
+        <argument
+            android:name="stockIndexType"
+            app:argType="string" />
+    </fragment>
 </navigation>

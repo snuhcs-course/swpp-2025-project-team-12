@@ -41,11 +41,15 @@ class MarketIndexFragment : Fragment() {
         super.onViewCreated(view, savedInstanceState)
 
         binding.buttonToKospi.setOnClickListener {
-            findNavController().navigate(R.id.action_navigation_market_index_to_stockIndexDetailFragment)
+            val action = MarketIndexFragmentDirections
+                .actionNavigationMarketIndexToStockIndexDetailFragment(stockIndexType = "KOSPI")
+            findNavController().navigate(action)
         }
 
         binding.buttonToKosdaq.setOnClickListener {
-            findNavController().navigate(R.id.action_navigation_market_index_to_stockIndexDetailFragment)
+            val action = MarketIndexFragmentDirections
+                .actionNavigationMarketIndexToStockIndexDetailFragment(stockIndexType = "KOSDAQ")
+            findNavController().navigate(action)
         }
     }
 

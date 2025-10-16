@@ -2,33 +2,20 @@ package com.example.dailyinsight.ui.marketindex
 
 import android.os.Bundle
 import androidx.fragment.app.Fragment
+import androidx.navigation.fragment.navArgs
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import com.example.dailyinsight.R
+import com.example.dailyinsight.databinding.FragmentStockIndexDetailBinding
 
-// TODO: Rename parameter arguments, choose names that match
-// the fragment initialization parameters, e.g. ARG_ITEM_NUMBER
-private const val ARG_PARAM1 = "param1"
-private const val ARG_PARAM2 = "param2"
-
-/**
- * A simple [Fragment] subclass.
- * Use the [StockIndexDetailFragment.newInstance] factory method to
- * create an instance of this fragment.
- */
 class StockIndexDetailFragment : Fragment() {
-    // TODO: Rename and change types of parameters
-    private var param1: String? = null
-    private var param2: String? = null
+    // Use the navArgs delegate to safely retrieve the argument
+    private val args: StockIndexDetailFragmentArgs by navArgs()
 
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-        arguments?.let {
-            param1 = it.getString(ARG_PARAM1)
-            param2 = it.getString(ARG_PARAM2)
-        }
-    }
+    // It's good practice to use ViewBinding here as well
+    private var _binding: FragmentStockIndexDetailBinding? = null
+    private val binding get() = _binding!!
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
@@ -38,23 +25,22 @@ class StockIndexDetailFragment : Fragment() {
         return inflater.inflate(R.layout.fragment_stock_index_detail, container, false)
     }
 
-    companion object {
-        /**
-         * Use this factory method to create a new instance of
-         * this fragment using the provided parameters.
-         *
-         * @param param1 Parameter 1.
-         * @param param2 Parameter 2.
-         * @return A new instance of fragment StockIndexDetailFragment.
-         */
-        // TODO: Rename and change types and number of parameters
-        @JvmStatic
-        fun newInstance(param1: String, param2: String) =
-            StockIndexDetailFragment().apply {
-                arguments = Bundle().apply {
-                    putString(ARG_PARAM1, param1)
-                    putString(ARG_PARAM2, param2)
-                }
-            }
+    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+        super.onViewCreated(view, savedInstanceState)
+
+        // Retrieve the stock index type from the arguments
+        val stockIndexType = args.stockIndexType
+
+        // Now you can use the value, for example, to set a TextView
+        // Assuming you have a TextView with id 'textView_index_title' in your detail fragment layout
+        // binding.textViewIndexTitle.text = stockIndexType
+
+        // You can also use it to fetch the correct data from a ViewModel
+        // e.g., viewModel.loadIndexData(stockIndexType)
+    }
+
+    override fun onDestroyView() {
+        super.onDestroyView()
+        _binding = null
     }
 }
