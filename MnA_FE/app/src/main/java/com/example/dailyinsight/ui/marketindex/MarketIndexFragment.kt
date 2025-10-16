@@ -2,6 +2,9 @@ package com.example.dailyinsight.ui.marketindex
 
 import android.os.Bundle
 import android.view.LayoutInflater
+import android.view.Menu
+import android.view.MenuInflater
+import android.view.MenuItem
 import android.view.View
 import android.view.ViewGroup
 import androidx.core.content.ContextCompat
@@ -30,6 +33,9 @@ class MarketIndexFragment : Fragment() {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
+
+        // Tell the Activity that this fragment has an options menu.
+        setHasOptionsMenu(true)
 
         marketIndexViewModel.marketData.observe(viewLifecycleOwner) { dataMap ->
             // Update KOSPI UI
@@ -69,6 +75,27 @@ class MarketIndexFragment : Fragment() {
             val action = MarketIndexFragmentDirections
                 .actionNavigationMarketIndexToStockIndexDetailFragment(stockIndexType = "KOSDAQ")
             findNavController().navigate(action)
+        }
+    }
+
+    // Inflate the menu resource into the toolbar.
+    override fun onCreateOptionsMenu(menu: Menu, inflater: MenuInflater) {
+        inflater.inflate(R.menu.main_toolbar_menu, menu)
+        super.onCreateOptionsMenu(menu, inflater)
+    }
+
+    // Optional: Handle menu item clicks
+    override fun onOptionsItemSelected(item: MenuItem): Boolean {
+        return when (item.itemId) {
+            R.id.action_notifications -> {
+                // Handle notifications icon tap
+                true
+            }
+            R.id.action_profile -> {
+                // Handle profile icon tap
+                true
+            }
+            else -> super.onOptionsItemSelected(item)
         }
     }
 
