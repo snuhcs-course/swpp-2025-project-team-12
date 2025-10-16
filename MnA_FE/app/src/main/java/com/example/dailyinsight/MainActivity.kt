@@ -19,6 +19,9 @@ class MainActivity : AppCompatActivity() {
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
+        // **MATERIAL DESIGN 3** Set the custom MaterialToolbar from your layout as the support action bar.
+        setSupportActionBar(binding.materialToolbar)
+
         val navView: BottomNavigationView = binding.navView
 
         val navController = findNavController(R.id.nav_host_fragment_activity_main)
