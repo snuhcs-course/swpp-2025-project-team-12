@@ -15,7 +15,7 @@
             android:name=".SplashActivity"
             android:exported="false" />
         <activity
-            android:name=".SignActivity"
+            android:name=".sign.SignActivity"
             android:exported="false" />
         <activity
             android:name=".MainActivity"
