@@ -5,14 +5,17 @@ import android.view.View
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
 import androidx.lifecycle.lifecycleScope
+import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
+import androidx.navigation.fragment.findNavController
 import com.example.dailyinsight.R
 import com.example.dailyinsight.ui.common.LoadResult
 import com.google.android.material.snackbar.Snackbar
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
-import androidx.recyclerview.widget.LinearLayoutManager
-import com.example.dailyinsight.data.dto.RecommendationDto
+import com.example.dailyinsight.ui.dashboard.HistoryAdapter
+import com.example.dailyinsight.ui.dashboard.HistoryRow
+
 class DashboardFragment : Fragment(R.layout.fragment_dashboard) {
 
     private val viewModel: DashboardViewModel by viewModels()
@@ -24,25 +27,20 @@ class DashboardFragment : Fragment(R.layout.fragment_dashboard) {
         val rv = view.findViewById<RecyclerView>(R.id.recycler)
         val swipe = view.findViewById<androidx.swiperefreshlayout.widget.SwipeRefreshLayout>(R.id.swipe)
 
-        adapter = HistoryAdapter()
+        adapter = HistoryAdapter { item ->
+            // Safe Args 사용 중이면:
+            val action = DashboardFragmentDirections.actionDashboardToStockDetail(item)
+            findNavController().navigate(action)
+
+            // Safe Args 미사용이면:
+            //val bundle = Bundle().apply { putParcelable("item", item) }
+            //findNavController().navigate(R.id.action_dashboard_to_stock_detail, bundle)
+        }
 
         rv.layoutManager = LinearLayoutManager(requireContext())
         rv.setHasFixedSize(true)
-
         rv.adapter = adapter
-        // ✅ 임시로 화면에 그려지는지 체크
-        adapter.submitList(
-            listOf(
-                HistoryRow.Header("오늘"),
-                HistoryRow.Item(
-                    RecommendationDto(
-                        code = "005930", name = "삼성전자",
-                        price = 71400, change = -1200, changeRate = -1.65, time = "09:30",
-                        headline = "반도체 업황 기대"
-                    )
-                )
-            )
-        )
+
         swipe.setOnRefreshListener { viewModel.refresh() }
 
         viewLifecycleOwner.lifecycleScope.launch {
@@ -51,7 +49,7 @@ class DashboardFragment : Fragment(R.layout.fragment_dashboard) {
                     is LoadResult.Loading -> swipe.isRefreshing = true
                     is LoadResult.Success -> {
                         swipe.isRefreshing = false
-                        adapter.submitList(st.data)
+                        adapter.submitList(st.data)   // <- HistoryRow 리스트
                     }
                     is LoadResult.Empty -> {
                         swipe.isRefreshing = false
@@ -69,7 +67,8 @@ class DashboardFragment : Fragment(R.layout.fragment_dashboard) {
         viewModel.refresh()
     }
 
-    private fun snackbar(msg: String) {
-        Snackbar.make(requireView(), msg, Snackbar.LENGTH_SHORT).show()
-    }
+    private fun snackbar(msg: String) =
+        com.google.android.material.snackbar.Snackbar
+            .make(requireView(), msg, com.google.android.material.snackbar.Snackbar.LENGTH_SHORT)
+            .show()
 }

@@ -7,20 +7,16 @@ import androidx.core.content.ContextCompat
 import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
-import com.example.dailyinsight.R
 import com.example.dailyinsight.data.dto.RecommendationDto
 import com.example.dailyinsight.databinding.ItemRecommendationBinding
 import java.text.DecimalFormat
 import kotlin.math.abs
 
-/**
- * item_recommendation.xml
- *  - tvName, tvPrice, tvHeadline, tvChange 에 바인딩
- */
-class RecommendationAdapter :
-    ListAdapter<RecommendationDto, RecommendationAdapter.VH>(DIFF) {
+class RecommendationAdapter(
+    private val onItemClick: (RecommendationDto) -> Unit = {}
+) : ListAdapter<RecommendationDto, RecommendationAdapter.VH>(DIFF) {
 
-    class VH(private val binding: ItemRecommendationBinding) :
+    inner class VH(private val binding: ItemRecommendationBinding) :
         RecyclerView.ViewHolder(binding.root) {
 
         private val dfPrice = DecimalFormat("#,##0")
@@ -31,7 +27,7 @@ class RecommendationAdapter :
             // 이름
             tvName.text = d.name
 
-            // 현재가 (쉼표)
+            // 현재가
             tvPrice.text = dfPrice.format(d.price)
 
             // 헤드라인 (nullable → 없으면 GONE)
@@ -47,11 +43,13 @@ class RecommendationAdapter :
             val body = "${sign}${dfChange.format(abs(d.change))} (${sign}${dfRate.format(abs(d.changeRate))}%)"
             tvChange.text = body
 
-            // 한국식: 상승=빨강, 하락=파랑
+            // 상승=빨강, 하락=파랑
             val colorRes =
                 if (d.change >= 0) com.google.android.material.R.color.m3_ref_palette_error40
                 else com.google.android.material.R.color.m3_ref_palette_primary40
             tvChange.setTextColor(ContextCompat.getColor(itemView.context, colorRes))
+
+            root.setOnClickListener { onItemClick(d) }
         }
     }
 
@@ -67,15 +65,11 @@ class RecommendationAdapter :
 
     companion object {
         private val DIFF = object : DiffUtil.ItemCallback<RecommendationDto>() {
-            override fun areItemsTheSame(
-                oldItem: RecommendationDto,
-                newItem: RecommendationDto
-            ): Boolean = oldItem.code == newItem.code
+            override fun areItemsTheSame(oldItem: RecommendationDto, newItem: RecommendationDto): Boolean =
+                oldItem.code == newItem.code
 
-            override fun areContentsTheSame(
-                oldItem: RecommendationDto,
-                newItem: RecommendationDto
-            ): Boolean = oldItem == newItem
+            override fun areContentsTheSame(oldItem: RecommendationDto, newItem: RecommendationDto): Boolean =
+                oldItem == newItem
         }
     }
 }

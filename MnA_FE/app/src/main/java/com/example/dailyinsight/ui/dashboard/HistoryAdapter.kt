@@ -10,6 +10,7 @@ import androidx.recyclerview.widget.RecyclerView
 import com.example.dailyinsight.R
 import com.example.dailyinsight.data.dto.RecommendationDto
 import com.example.dailyinsight.ui.common.setChange
+import java.text.DecimalFormat
 
 class HistoryAdapter(
     private val onClick: (RecommendationDto) -> Unit = {}
@@ -54,12 +55,15 @@ class HistoryAdapter(
         }
     }
 
-    class ItemVH(view: View, private val onClick: (RecommendationDto) -> Unit) : RecyclerView.ViewHolder(view) {
+    class ItemVH(view: View, private val onClick: (RecommendationDto) -> Unit) :
+        RecyclerView.ViewHolder(view) {
+
         private val tvName = view.findViewById<TextView>(R.id.tvName)
-        private val tvScore = view.findViewById<TextView>(R.id.tvScore)   // 점수/가격 등 표기용
-        private val tvDesc = view.findViewById<TextView>(R.id.tvDesc)     // 설명/헤드라인
+        private val tvScore = view.findViewById<TextView>(R.id.tvScore)   // 가격 등
+        private val tvDesc  = view.findViewById<TextView>(R.id.tvDesc)    // 헤드라인
         private val tvChange = view.findViewById<TextView>(R.id.tvChange)
 
+        private val dfPrice = DecimalFormat("#,##0")
         private var current: RecommendationDto? = null
 
         init {
@@ -68,14 +72,19 @@ class HistoryAdapter(
 
         fun bind(d: RecommendationDto) {
             current = d
+
             tvName.text = d.name
-            tvScore.text = "%,d".format(d.price)
-            tvDesc.text = d.headline ?: ""
-            try {
-                tvChange.setChange(d.change.toDouble(), d.changeRate)
-            } catch (_: Throwable) {
-                tvChange.text = "${if (d.change >= 0) "+" else ""}${d.change} (%.2f%%)".format(d.changeRate)
+            tvScore.text = dfPrice.format(d.price)
+
+            if (d.headline.isNullOrBlank()) {
+                tvDesc.visibility = View.GONE
+            } else {
+                tvDesc.visibility = View.VISIBLE
+                tvDesc.text = d.headline
             }
+
+            // 상승/하락 텍스트 & 색상은 setChange에서 처리
+            tvChange.setChange(d.change.toDouble(), d.changeRate)
         }
     }
 }

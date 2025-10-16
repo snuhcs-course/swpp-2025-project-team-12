@@ -4,6 +4,7 @@
     <string name="title_dashboard">지난 추천</string>
     <string name="title_notifications">주요 지수</string>
     <string name="title_indices">주요 지수</string>
+    <string name="title_stock_detail">종목 정보</string>
     <string name="today">오늘</string>
     <string name="yesterday">어제</string>
     <string name="index_placeholder">--</string>
@@ -11,4 +12,5 @@
     <string name="change_text">%1$s%2$s (%3$s%%)</string>
     <!-- 가격 -->
     <string name="price_won">%1$s</string>
+    <string name="no_headline">헤드라인 없음</string>
 </resources>

@@ -12,6 +12,7 @@ import com.example.dailyinsight.R
 import com.example.dailyinsight.databinding.FragmentHomeBinding
 import com.example.dailyinsight.ui.common.LoadResult
 import kotlinx.coroutines.launch
+import androidx.navigation.fragment.findNavController
 
 class HomeFragment : Fragment(R.layout.fragment_home) {
 
@@ -19,7 +20,10 @@ class HomeFragment : Fragment(R.layout.fragment_home) {
     private val binding get() = _binding!!
 
     private val viewModel: HomeViewModel by viewModels()
-    private val adapter = RecommendationAdapter() // 이미 있는 어댑터 사용
+    private val adapter = RecommendationAdapter { item ->
+        val action = HomeFragmentDirections.actionHomeToStockDetail(item)
+        findNavController().navigate(action)
+    }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
