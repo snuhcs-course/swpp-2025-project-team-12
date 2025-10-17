@@ -108,7 +108,8 @@ class MarketIndexFragment : Fragment() {
     ) {
         nameView.text = data.name
         valueView.text = String.format(Locale.getDefault(), "%.2f", data.close)
-        descriptionView.text = data.description
+        // change this to data.description later
+        descriptionView.text = "hahaha"
 
         val sign = if (data.changeAmount >= 0) "+" else ""
         val changeText = String.format(

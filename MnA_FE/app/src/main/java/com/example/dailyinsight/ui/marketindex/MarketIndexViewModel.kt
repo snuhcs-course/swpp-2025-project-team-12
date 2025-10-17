@@ -1,52 +1,52 @@
 package com.example.dailyinsight.ui.marketindex
 
 import android.app.Application
-import androidx.lifecycle.AndroidViewModel
+import android.util.Log
+import androidx.lifecycle.ViewModel
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
+import androidx.lifecycle.viewModelScope
 import com.example.dailyinsight.R
+import com.example.dailyinsight.data.repository.MarketIndexRepository
+import kotlinx.coroutines.launch
 import org.json.JSONObject
 import java.io.InputStream
 
-class MarketIndexViewModel(application: Application) : AndroidViewModel(application) {
+class MarketIndexViewModel : ViewModel() {
 
-    // LiveData to hold the parsed data for KOSPI and KOSDAQ
+    private val repository = MarketIndexRepository()
+
+    // LiveData to hold the fetched data
     private val _marketData = MutableLiveData<Map<String, StockIndexData>>()
     val marketData: LiveData<Map<String, StockIndexData>> = _marketData
 
+    // LiveData for error handling
+    private val _error = MutableLiveData<String>()
+    val error: LiveData<String> = _error
+
     // Load the data when the ViewModel is created
     init {
-        loadMarketData()
+        fetchMarketData()
     }
 
-    private fun loadMarketData() {
-        val jsonData = readJsonFromRaw(R.raw.market_data)
-        val parsedData = parseMarketData(jsonData)
-        _marketData.value = parsedData
-    }
+    private fun fetchMarketData() {
+        // Use viewModelScope to launch a coroutine
 
-    private fun readJsonFromRaw(resourceId: Int): String {
-        val inputStream: InputStream = getApplication<Application>().resources.openRawResource(resourceId)
-        return inputStream.bufferedReader().use { it.readText() }
-    }
+        viewModelScope.launch {
+            try {
+                // The repository now returns the map directly
+                val dataMap = repository.getMarketData()
 
-    private fun parseMarketData(jsonData: String): Map<String, StockIndexData> {
-        val dataMap = mutableMapOf<String, StockIndexData>()
-        val rootObject = JSONObject(jsonData)
-        val dataObject = rootObject.getJSONObject("data")
+                // Manually add the name (key) to each StockIndexData object
+                dataMap.forEach { (key, value) ->
+                    value.name = key
+                }
 
-        // Iterate through keys like "KOSPI", "KOSDAQ"
-        dataObject.keys().forEach { key ->
-            val indexObject = dataObject.getJSONObject(key)
-            val stockIndex = StockIndexData(
-                name = key,
-                close = indexObject.getDouble("close"),
-                changeAmount = indexObject.getDouble("change_amount"),
-                changePercent = indexObject.getDouble("change_percent"),
-                description = indexObject.getString("description")
-            )
-            dataMap[key] = stockIndex
+                _marketData.postValue(dataMap)
+            } catch (e: Exception) {
+                _error.postValue("Failed to fetch data: ${e.message}")
+                Log.e("MarketIndexViewModel", "API Call Failed", e)
+            }
         }
-        return dataMap
     }
 }
