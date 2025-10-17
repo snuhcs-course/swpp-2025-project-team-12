@@ -1,3 +1,5 @@
+# apps/user/views.py  (merged)
+
 from django.http import JsonResponse
 from .models import User
 import bcrypt
@@ -8,49 +10,51 @@ from S3 import S3Client
 import os
 import json
 
+def hello(request):
+    return JsonResponse({"message": "Hello, world!"})
 
 @default_error_handler
 def login(request):
     """
-    POST: login with given 'id' and 'password'
+    POST: login with given 'id' (username) and 'password'
+    - 주의: User PK는 AutoField이므로, 여기서 'id'는 사용자 이름으로 취급한다.
     """
-
-    if request.method == "POST":
-        ### POST ###
-
-        body = json.loads(request.body.decode('utf-8'))
-        id = body.get("id")
-        password = body.get("password")
-
-        if id is None:
-            return JsonResponse({"message": "ID REQUIRED"}, status=400)
-        if password is None:
-            return JsonResponse({"message": "PASSWORD REQUIRED"}, status=400)
-
-        try:
-            user = User.objects.get(id=id)
-        except User.DoesNotExist:
-            return JsonResponse({"message": "USER NOT FOUND"}, status=401)
-
-        # compare passwords
-        if not bcrypt.checkpw(password.encode('utf-8'), user.password.encode('utf-8')):
-            return JsonResponse({"message": "INVALID PASSWORD"}, status=401)
-
-        response = JsonResponse({"message": "LOGIN SUCCESS"}, status=200)
-        try:
-            refresh_token = make_refresh_token(id)
-            user.refresh_token = refresh_token
-            user.save()
-            set_cookie(response, "refresh_token", refresh_token)
-        except:
-            return JsonResponse({ "message": "TOKEN ISSUE" }, status=500)
-        set_cookie(response, "access_token", make_access_token(id))
-        return response
-
-
-    else:
+    if request.method != "POST":
         return JsonResponse({"message": "METHOD NOT ALLOWED"}, status=405)
 
+    try:
+        body = json.loads(request.body.decode("utf-8"))
+    except Exception:
+        return JsonResponse({"message": "INVALID JSON"}, status=400)
+
+    user_id = body.get("id")          # 기존 클라이언트 호환: 'id'를 username으로 사용
+    password = body.get("password")
+
+    if not user_id:
+        return JsonResponse({"message": "ID REQUIRED"}, status=400)
+    if not password:
+        return JsonResponse({"message": "PASSWORD REQUIRED"}, status=400)
+
+    try:
+        # PK가 AutoField이므로 name으로 조회
+        user = User.objects.get(name=user_id)
+    except User.DoesNotExist:
+        return JsonResponse({"message": "USER NOT FOUND"}, status=401)
+
+    if not bcrypt.checkpw(password.encode("utf-8"), user.password.encode("utf-8")):
+        return JsonResponse({"message": "INVALID PASSWORD"}, status=401)
+
+    response = JsonResponse({"message": "LOGIN SUCCESS"}, status=200)
+    try:
+        refresh_token = make_refresh_token(str(user.id))
+        user.refresh_token = refresh_token
+        user.save(update_fields=["refresh_token"])
+        set_cookie(response, "refresh_token", refresh_token)
+    except Exception:
+        return JsonResponse({"message": "TOKEN ISSUE"}, status=500)
+
+    set_cookie(response, "access_token", make_access_token(str(user.id)))
+    return response
 
 
 @default_error_handler
@@ -59,70 +63,62 @@ def logout(request, user):
     """
     POST: logout user
     """
-
-    if request.method == "POST":
-        ### POST ###
-
-        response = JsonResponse({"message": "LOGOUT SUCCESS"}, status=200)
-        delete_cookie(response)
-        return response
-
-
-    else:
+    if request.method != "POST":
         return JsonResponse({"message": "METHOD NOT ALLOWED"}, status=405)
 
+    response = JsonResponse({"message": "LOGOUT SUCCESS"}, status=200)
+    delete_cookie(response)
+    return response
 
 
 @default_error_handler
 def signup(request):
     """
-    POST: create account. require 'id' and 'password'
+    POST: create account. require 'id'(username) and 'password'
+    - PK는 AutoField, 'id'는 User.name으로 저장
     """
-
-    if request.method == "POST":
-        ### POST ###
-
-        body = json.loads(request.body.decode('utf-8'))
-        id = body.get("id")
-        password = body.get("password")
-
-        if id is None:
-            return JsonResponse({"message": "ID REQUIRED"}, status=400)
-        if password is None:
-            return JsonResponse({"message": "PASSWORD REQUIRED"}, status=400)
-
-        # check if user already exists
-        if User.objects.filter(id=id).exists():
-            return JsonResponse({"message": "USER ALREADY EXISTS"}, status=409)
-
-        # password validation
-        if not validate_password(password):
-            return JsonResponse({"message": "WRONG PASSWORD FORMAT"}, status=400)
-
-        # assume login state, after signup
-        response = JsonResponse({"message": "User created successfully"}, status=201)
-        refresh_token = make_refresh_token(id)
-        set_cookie(response, "refresh_token", refresh_token)
-        set_cookie(response, "access_token", make_access_token(id))
-
-        hashed_password = bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt())
-        try:
-            user = User.objects.create(
-                id=id,
-                password=hashed_password.decode('utf-8'),
-                refresh_token=refresh_token,
-            )
-            user.save()
-        except Exception as e:
-            print(e)
-            return JsonResponse({"message": "USER CREATE FAILED"}, status=500)
-
-        return response
-
-
-    else:
+    if request.method != "POST":
         return JsonResponse({"message": "METHOD NOT ALLOWED"}, status=405)
 
+    try:
+        body = json.loads(request.body.decode("utf-8"))
+    except Exception:
+        return JsonResponse({"message": "INVALID JSON"}, status=400)
+
+    user_id = body.get("id")
+    password = body.get("password")
+
+    if not user_id:
+        return JsonResponse({"message": "ID REQUIRED"}, status=400)
+    if not password:
+        return JsonResponse({"message": "PASSWORD REQUIRED"}, status=400)
+
+    if User.objects.filter(name=user_id).exists():
+        return JsonResponse({"message": "USER ALREADY EXISTS"}, status=409)
+
+    if not validate_password(password):
+        return JsonResponse({"message": "WRONG PASSWORD FORMAT"}, status=400)
+
+    hashed = bcrypt.hashpw(password.encode("utf-8"), bcrypt.gensalt()).decode("utf-8")
+
+    try:
+        # 새 유저 생성 (PK는 자동)
+        user = User.objects.create(
+            name=user_id,
+            password=hashed,
+            refresh_token="",   # 아래에서 발급 후 업데이트
+        )
+        refresh_token = make_refresh_token(str(user.id))
+        user.refresh_token = refresh_token
+        user.save(update_fields=["refresh_token"])
+
+        response = JsonResponse({"message": "User created successfully"}, status=201)
+        set_cookie(response, "refresh_token", refresh_token)
+        set_cookie(response, "access_token", make_access_token(str(user.id)))
+        return response
+    except Exception as e:
+        print(e)
+        return JsonResponse({"message": "USER CREATE FAILED"}, status=500)
 
 
 @default_error_handler
@@ -131,29 +127,22 @@ def withdraw(request, user):
     """
     DELETE: delete user account
     """
-
-    if request.method == "DELETE":
-        ### DELETE ###
-
-        response = JsonResponse({"message": "WITHDRAWAL SUCCESS"}, status=200)
-        delete_cookie(response)
-
-        # remove profile from S3
-        try:
-            S3Client().delete(os.environ.get("PROFILE_BUCKET_NAME"), user.id)
-        except Exception as e:
-            return JsonResponse({ "message": "PROFILE DELETE FAILED" }, status=500)
-
-
-        # remove user from SQL table
-        try:
-            user.delete()
-        except Exception as e:
-            return JsonResponse({"message": "USER DELETE FAILED"}, status=500)
-
-
-        return response
-
-
-    else:
+    if request.method != "DELETE":
         return JsonResponse({"message": "METHOD NOT ALLOWED"}, status=405)
+
+    response = JsonResponse({"message": "WITHDRAWAL SUCCESS"}, status=200)
+    delete_cookie(response)
+
+    # remove profile from S3 (키는 문자열로)
+    try:
+        S3Client().delete(os.environ.get("PROFILE_BUCKET_NAME"), str(user.id))
+    except Exception:
+        return JsonResponse({"message": "PROFILE DELETE FAILED"}, status=500)
+
+    # remove user from SQL table
+    try:
+        user.delete()
+    except Exception:
+        return JsonResponse({"message": "USER DELETE FAILED"}, status=500)
+
+    return response
