@@ -30,7 +30,7 @@
 
     <com.google.android.material.button.MaterialButton
         style="?attr/borderlessButtonStyle"
-        android:id="@+id/signUpButton"
+        android:id="@+id/passThroughButton"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="로그인 없이 사용하기"

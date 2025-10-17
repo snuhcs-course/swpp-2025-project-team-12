@@ -5,7 +5,7 @@
     android:id="@+id/main"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context=".sign.SignActivity">
+    tools:context=".ui.sign.SignInActivity">
 
     <com.google.android.material.appbar.AppBarLayout
         android:id="@+id/appBar"
@@ -21,6 +21,7 @@
             >
 
             <com.google.android.material.appbar.MaterialToolbar
+                android:id="@+id/topAppBar"
                 android:layout_width="match_parent"
                 android:layout_height="?attr/actionBarSize"
                 android:elevation="0dp"
@@ -35,7 +36,7 @@
     </com.google.android.material.appbar.AppBarLayout>
 
     <com.google.android.material.textfield.TextInputLayout
-        android:id="@+id/IDTextField"
+        android:id="@+id/IDText"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         app:layout_constraintTop_toTopOf="parent"
@@ -44,6 +45,7 @@
         app:layout_constraintEnd_toEndOf="parent" >
 
         <com.google.android.material.textfield.TextInputEditText
+            android:id="@+id/IDTextField"
             android:layout_width="344dp"
             android:layout_height="wrap_content"
             android:hint="아이디"
@@ -54,15 +56,16 @@
 
 
     <com.google.android.material.textfield.TextInputLayout
-        android:id="@+id/PWTextField"
+        android:id="@+id/PWText"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        app:layout_constraintTop_toBottomOf="@+id/IDTextField"
+        app:layout_constraintTop_toBottomOf="@+id/IDText"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:endIconMode="password_toggle" >
 
         <com.google.android.material.textfield.TextInputEditText
+            android:id="@+id/PWTextField"
             android:layout_width="344dp"
             android:layout_height="wrap_content"
             android:hint="비밀번호" />
@@ -74,7 +77,7 @@
         android:id="@+id/findPWButton"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        app:layout_constraintTop_toBottomOf="@id/PWTextField"
+        app:layout_constraintTop_toBottomOf="@id/PWText"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         android:text="비밀번호를 잊어버렸나요?"/>

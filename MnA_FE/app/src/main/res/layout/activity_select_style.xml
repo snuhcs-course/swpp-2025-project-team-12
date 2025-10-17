@@ -5,7 +5,7 @@
     android:id="@+id/main"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context=".sign.SelectStyle">
+    tools:context=".ui.sign.SetStyleActivity">
 
     <com.google.android.material.appbar.AppBarLayout
         android:id="@+id/appBar"
@@ -21,6 +21,7 @@
             >
 
             <com.google.android.material.appbar.MaterialToolbar
+                android:id="@+id/topAppBar"
                 android:layout_width="match_parent"
                 android:layout_height="?attr/actionBarSize"
                 android:elevation="0dp"
@@ -47,18 +48,21 @@
             style="?attr/materialButtonOutlinedStyle"
             android:layout_width="344dp"
             android:layout_height="wrap_content"
+            android:checkable="true"
             android:text="안전형" />
 
         <com.google.android.material.button.MaterialButton
             style="?attr/materialButtonOutlinedStyle"
             android:layout_width="344dp"
             android:layout_height="wrap_content"
+            android:checkable="true"
             android:text="공격투자형" />
 
         <com.google.android.material.button.MaterialButton
             style="?attr/materialButtonOutlinedStyle"
             android:layout_width="344dp"
             android:layout_height="wrap_content"
+            android:checkable="true"
             android:text="위험중립형" />
 
 
