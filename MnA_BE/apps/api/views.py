@@ -218,9 +218,12 @@ def recommendations_general(request: HttpRequest):
             items.append({
                 "ticker": it.ticker,
                 "name": it.name,
-                "news": it.news_titles,     # FE 규격에 맞춰 title 배열
+                "market": it.market,  # ← 추가
+                "news": it.news_titles,
                 "reason": it.reason,
                 "rank": it.rank,
+                "expected_direction": it.expected_direction,  # ← 추가
+                "conviction": it.conviction,  # ← 추가
             })
         return ok({
             "items": items,
