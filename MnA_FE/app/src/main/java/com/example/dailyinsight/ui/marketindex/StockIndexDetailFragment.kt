@@ -61,7 +61,6 @@ class StockIndexDetailFragment : Fragment() {
     }
 
     private fun updateIndexUI(data: StockIndexData) {
-        binding.stockIndexItem.name.text = data.name
         binding.stockIndexItem.price.text = String.format(Locale.getDefault(), "%.2f", data.close)
 
         val sign = if (data.changeAmount >= 0) "+" else ""
