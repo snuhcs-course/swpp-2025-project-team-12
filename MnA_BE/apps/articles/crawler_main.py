@@ -1,10 +1,12 @@
-import os, json, time
+import os, json, time, argparse
 from datetime import datetime
 from urllib.parse import urlsplit, urlparse, urlunparse, parse_qsl, urlencode
 import feedparser
 from dateutil import tz
 from bs4 import BeautifulSoup
 import re
+import boto3
+from botocore.exceptions import ClientError
 
 from selenium import webdriver
 from selenium.webdriver.chrome.service import Service
@@ -13,8 +15,15 @@ from webdriver_manager.chrome import ChromeDriverManager
 
 GNEWS_URL = "https://news.google.com/rss/headlines/section/topic/BUSINESS?hl=ko&gl=KR&ceid=KR:ko"
 
+# S3 설정
+S3_BUCKET_NAME = "swpp-12-bucket"
+S3_REGION = "ap-northeast-2"
+
 GOOGLE_HOSTS = {"news.google.com", "google.com", "www.google.com"}
 STRIP_QS = {"utm_source","utm_medium","utm_campaign","gclid","fbclid"}
+
+# S3 클라이언트 초기화
+s3_client = boto3.client('s3', region_name=S3_REGION)
 
 def _is_googleish(u: str) -> bool:
     try:
@@ -45,7 +54,9 @@ def setup_driver():
     
     service = Service(ChromeDriverManager().install())
     driver = webdriver.Chrome(service=service, options=options)
+    
     driver.set_page_load_timeout(120)
+    driver.set_script_timeout(120)
     
     return driver
 
@@ -69,7 +80,6 @@ def resolve_google_url_with_browser(driver, google_url: str, max_wait=5):
         return None
 
 def extract_content(driver, url: str):
-    # 본문 추출
     try:
         driver.get(url)
         time.sleep(2)
@@ -107,9 +117,40 @@ def extract_source(url: str) -> str:
     except:
         return "Unknown"
 
-def main():
+def upload_to_s3(local_file_path, date_obj):
+    """S3에 파일 업로드 (파티션 구조)"""
+    try:
+        year = date_obj.strftime("%Y")
+        month = date_obj.strftime("%-m")  # 0 없이
+        day = date_obj.strftime("%-d")    # 0 없이
+        
+        s3_key = f"news-articles/year={year}/month={month}/day={day}/business_top50.json"
+        
+        print(f"\n[S3] Uploading to s3://{S3_BUCKET_NAME}/{s3_key}...")
+        s3_client.upload_file(
+            local_file_path, 
+            S3_BUCKET_NAME, 
+            s3_key,
+            ExtraArgs={'ContentType': 'application/json'}
+        )
+        print(f"[S3] ✓ Upload successful!")
+        print(f"[S3] URL: https://{S3_BUCKET_NAME}.s3.{S3_REGION}.amazonaws.com/{s3_key}")
+        return True
+    except ClientError as e:
+        print(f"[S3] ✗ Upload failed: {e}")
+        return False
+    except Exception as e:
+        print(f"[S3] ✗ Error: {e}")
+        return False
+
+def main(top=50):
+    # 시작 시간 기록
+    start_time = time.time()
+    start_datetime = datetime.now(tz.gettz("Asia/Seoul"))
+    
     print("="*60)
     print("Google News Top 50 (Selenium Method)")
+    print(f"Started at: {start_datetime.strftime('%Y-%m-%d %H:%M:%S')}")
     print("="*60)
     
     print("\nFetching Business Topic RSS...")
@@ -125,7 +166,7 @@ def main():
     
     results = []
     success_count = 0
-    target = 50
+    target = top
     seen_urls = set()
     
     stats = {"filtered": 0, "failed": 0}
@@ -186,24 +227,57 @@ def main():
         driver.quit()
         print("\nBrowser closed.")
     
+    # 종료 시간 계산
+    end_time = time.time()
+    end_datetime = datetime.now(tz.gettz("Asia/Seoul"))
+    elapsed_seconds = end_time - start_time
+    elapsed_minutes = elapsed_seconds / 60
+    
     # 저장
     fetched_at = datetime.now(tz.gettz("Asia/Seoul"))
     date_folder = fetched_at.strftime("%Y%m%d")
     os.makedirs(f"articles/{date_folder}", exist_ok=True)
     out_path = f"articles/{date_folder}/business_top50.json"
     
+    # 메타데이터 포함한 최종 결과
+    final_output = {
+        "metadata": {
+            "start_time": start_datetime.isoformat(),
+            "end_time": end_datetime.isoformat(),
+            "elapsed_seconds": round(elapsed_seconds, 2),
+            "elapsed_minutes": round(elapsed_minutes, 2),
+            "target_count": target,
+            "success_count": success_count,
+            "failed_count": stats["failed"],
+            "filtered_count": stats["filtered"],
+            "total_articles": len(results)
+        },
+        "articles": results
+    }
+    
+    # 로컬 저장
     with open(out_path, "w", encoding="utf-8") as f:
-        json.dump(results, f, ensure_ascii=False, indent=2)
+        json.dump(final_output, f, ensure_ascii=False, indent=2)
     
     print("\n" + "="*60)
     print("FINAL RESULT")
     print("="*60)
+    print(f"Started:  {start_datetime.strftime('%Y-%m-%d %H:%M:%S')}")
+    print(f"Finished: {end_datetime.strftime('%Y-%m-%d %H:%M:%S')}")
+    print(f"Elapsed:  {elapsed_minutes:.2f} minutes ({elapsed_seconds:.2f} seconds)")
     print(f"Succeeded: {success_count}/{target}")
     print(f"Filtered: {stats['filtered']}, Failed: {stats['failed']}")
-    print(f"Saved: {out_path}")
+    print(f"Saved locally: {out_path}")
+    
+    # S3 업로드
+    upload_to_s3(out_path, fetched_at)
+    
     print("="*60)
     
-    return results
+    return final_output
 
 if __name__ == "__main__":
-    main()
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--top', type=int, default=50)
+    args = parser.parse_args()
+    main(args.top)
