@@ -5,7 +5,7 @@ TINY_TEXT = 255
 class User(models.Model):
     id = models.AutoField(primary_key=True, editable=False) # integer increment
     password = models.CharField(max_length=TINY_TEXT)
-    name = models.CharField(max_length=TINY_TEXT, unique=True, editable=False)
+    name = models.CharField(max_length=TINY_TEXT, unique=True)
     refresh_token = models.CharField(max_length=TINY_TEXT, default="")
 
 class Style(models.Model):
