@@ -16,7 +16,7 @@ def profile_view(request, user):
         ### GET ###
 
         try:
-            image_url = S3Client().get_image_url(os.environ.get("PROFILE_BUCKET_NAME"), user.id)
+            image_url = S3Client().get_image_url(os.environ.get("PROFILE_BUCKET_NAME"), str(user.id))
         except Exception as e:
             return JsonResponse({ "message": "S3 GET FAILED, maybe NOT FOUND" }, status=500)
 
@@ -33,7 +33,7 @@ def profile_view(request, user):
             return JsonResponse({ "message": "IMAGE REQUIRED" }, status=400)
 
         try:
-            S3Client().put_image(os.environ.get("PROFILE_BUCKET_NAME"), user.id, image_url)
+            S3Client().put_image(os.environ.get("PROFILE_BUCKET_NAME"), str(user.id), image_url)
         except Exception as e:
             return JsonResponse({ "message": "S3 PUT FAILED" }, status=500)
 
@@ -44,7 +44,7 @@ def profile_view(request, user):
         ### DELETE ###
 
         try:
-            S3Client().delete(os.environ.get("PROFILE_BUCKET_NAME"), user.id)
+            S3Client().delete(os.environ.get("PROFILE_BUCKET_NAME"), str(user.id))
         except Exception as e:
             return JsonResponse({ "message": "PROFILE DELETE FAILED" }, status=400)
 

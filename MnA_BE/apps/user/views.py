@@ -10,14 +10,10 @@ from S3 import S3Client
 import os
 import json
 
-def hello(request):
-    return JsonResponse({"message": "Hello, world!"})
-
 @default_error_handler
 def login(request):
     """
     POST: login with given 'id' (username) and 'password'
-    - 주의: User PK는 AutoField이므로, 여기서 'id'는 사용자 이름으로 취급한다.
     """
     if request.method != "POST":
         return JsonResponse({"message": "METHOD NOT ALLOWED"}, status=405)

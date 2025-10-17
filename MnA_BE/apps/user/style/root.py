@@ -1,0 +1,59 @@
+from django.http import JsonResponse
+from decorators import *
+from apps.user.models import Style
+import json
+
+@default_error_handler
+@require_auth
+def style_view(request, user):
+    """
+        GET: return most recent style
+        POST: create style change history
+    """
+
+    if request.method == "GET":
+        ### GET ###
+
+        try:
+            style_row = user.style_set.all()[0]
+
+            # filtering style columns
+            style = {
+                "interests" : style_row.interests,
+                "strategy"  : style_row.strategy,
+                "create_at" : style_row.create_at
+            }
+        except Exception as e:
+            style = None
+
+        return JsonResponse({ "style": style }, status=200)
+
+
+    elif request.method == 'POST':
+        ### POST ###
+
+        body = json.loads(request.body.decode('utf-8'))
+        interests = body.get('interests')
+        strategy = body.get('strategy')
+
+        if interests is None:
+            return JsonResponse({ "message": "INTERESTS REQUIRED" }, status=400)
+
+        if strategy is None:
+            return JsonResponse({ "message": "STRATEGY REQUIRED" }, status=400)
+
+        try:
+            new_style = Style.objects.create(
+                user        = user,
+                interests   = interests,
+                strategy    = strategy
+            )
+            new_style.save()
+        except Exception as e:
+            return JsonResponse({ "message": "SAVE INTERESTS FAILED" }, status=500)
+
+        return JsonResponse({ "message": "INTERESTS UPDATE SUCCESS" }, status=200)
+
+
+    else:
+        return JsonResponse({ "message": "NOT ALLOWED METHOD" }, status=405)
