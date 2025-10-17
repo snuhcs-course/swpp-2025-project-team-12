@@ -1,4 +1,4 @@
-package com.example.dailyinsight.ui.home
+package com.example.dailyinsight.ui.today
 
 import android.os.Bundle
 import android.view.View
@@ -9,29 +9,29 @@ import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.example.dailyinsight.R
-import com.example.dailyinsight.databinding.FragmentHomeBinding
 import com.example.dailyinsight.ui.common.LoadResult
 import kotlinx.coroutines.launch
 import androidx.navigation.fragment.findNavController
+import com.example.dailyinsight.databinding.FragmentTodayBinding
 
-class HomeFragment : Fragment(R.layout.fragment_home) {
+class TodayFragment : Fragment(R.layout.fragment_today) {
 
-    private var _binding: FragmentHomeBinding? = null
+    private var _binding: FragmentTodayBinding? = null
     private val binding get() = _binding!!
 
-    private val viewModel: HomeViewModel by viewModels()
+    private val viewModel: TodayViewModel by viewModels()
     private val adapter = RecommendationAdapter { item ->
-        val action = HomeFragmentDirections.actionHomeToStockDetail(item)
+        val action = TodayFragmentDirections.actionTodayToStockDetail(item)
         findNavController().navigate(action)
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-        _binding = FragmentHomeBinding.bind(view)
+        _binding = FragmentTodayBinding.bind(view)
 
-        binding.rvHome.layoutManager = LinearLayoutManager(requireContext())
-        binding.rvHome.setHasFixedSize(true)
-        binding.rvHome.adapter = adapter
+        binding.rvToday.layoutManager = LinearLayoutManager(requireContext())
+        binding.rvToday.setHasFixedSize(true)
+        binding.rvToday.adapter = adapter
 
         binding.swipe.setOnRefreshListener { viewModel.refresh() }
 

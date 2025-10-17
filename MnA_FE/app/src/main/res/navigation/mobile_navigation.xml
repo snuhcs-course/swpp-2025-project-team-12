@@ -3,25 +3,25 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/mobile_navigation"
-    app:startDestination="@id/navigation_home">
+    app:startDestination="@id/navigation_today"> <!-- 나중에 로그인 화면을 시작 화면으로 바꾸기 -->
 
     <fragment
-        android:id="@+id/navigation_home"
-        android:name="com.example.dailyinsight.ui.home.HomeFragment"
-        android:label="@string/title_home"
-        tools:layout="@layout/fragment_home">
+        android:id="@+id/navigation_today"
+        android:name="com.example.dailyinsight.ui.today.TodayFragment"
+        android:label="@string/title_today"
+        tools:layout="@layout/fragment_today">
         <action
-            android:id="@+id/action_home_to_stock_detail"
+            android:id="@+id/action_today_to_stock_detail"
             app:destination="@id/stock_detail_fragment" />
     </fragment>
 
     <fragment
-        android:id="@+id/navigation_dashboard"
-        android:name="com.example.dailyinsight.ui.dashboard.DashboardFragment"
-        android:label="@string/title_dashboard"
-        tools:layout="@layout/fragment_dashboard">
+        android:id="@+id/navigation_history"
+        android:name="com.example.dailyinsight.ui.history.HistoryFragment"
+        android:label="@string/title_market_index"
+        tools:layout="@layout/fragment_history">
         <action
-            android:id="@+id/action_dashboard_to_stock_detail"
+            android:id="@+id/action_history_to_stock_detail"
             app:destination="@id/stock_detail_fragment" />
     </fragment>
 

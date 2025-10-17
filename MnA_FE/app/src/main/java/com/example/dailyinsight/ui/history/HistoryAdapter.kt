@@ -1,4 +1,4 @@
-package com.example.dailyinsight.ui.dashboard
+package com.example.dailyinsight.ui.history
 
 import android.view.LayoutInflater
 import android.view.View

@@ -10,6 +10,6 @@ data class HistoryEntry(
 )
 
 sealed class DashboardItem {
-    data class Header(val dateLabel: String): DashboardItem()
-    data class Row(val entry: HistoryEntry): DashboardItem()
+    data class Header(val dateLabel: String) : DashboardItem()
+    data class Row(val entry: HistoryEntry) : DashboardItem()
 }

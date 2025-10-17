@@ -1,4 +1,4 @@
-package com.example.dailyinsight.ui.dashboard
+package com.example.dailyinsight.ui.history
 
 import android.os.Bundle
 import android.view.View
@@ -10,15 +10,12 @@ import androidx.recyclerview.widget.RecyclerView
 import androidx.navigation.fragment.findNavController
 import com.example.dailyinsight.R
 import com.example.dailyinsight.ui.common.LoadResult
-import com.google.android.material.snackbar.Snackbar
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
-import com.example.dailyinsight.ui.dashboard.HistoryAdapter
-import com.example.dailyinsight.ui.dashboard.HistoryRow
 
-class DashboardFragment : Fragment(R.layout.fragment_dashboard) {
+class HistoryFragment : Fragment(R.layout.fragment_history) {
 
-    private val viewModel: DashboardViewModel by viewModels()
+    private val viewModel: HistoryViewModel by viewModels()
     private lateinit var adapter: HistoryAdapter
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
@@ -29,7 +26,7 @@ class DashboardFragment : Fragment(R.layout.fragment_dashboard) {
 
         adapter = HistoryAdapter { item ->
             val bundle = Bundle().apply { putParcelable("item", item) }
-            findNavController().navigate(R.id.action_dashboard_to_stock_detail, bundle)
+            findNavController().navigate(R.id.action_history_to_stock_detail, bundle)
         }
 
         rv.layoutManager = LinearLayoutManager(requireContext())

@@ -1,5 +1,4 @@
-package com.example.dailyinsight.ui.dashboard
-
+package com.example.dailyinsight.ui.history
 import com.example.dailyinsight.data.dto.RecommendationDto
 
 // UI에 쓰는 행 모델

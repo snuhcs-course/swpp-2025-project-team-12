@@ -1,4 +1,4 @@
-package com.example.dailyinsight.data.model
+package com.example.dailyinsight.model
 
 data class ApiResponse<T>(
     val items: List<T>? = null,
@@ -16,12 +16,4 @@ data class HealthResponse(
     val s3: Any? = null,
     val db: Any? = null,
     val asOf: String? = null
-)
-
-data class Recommendation(
-    val ticker: String,
-    val name: String,
-    val news: List<String> = emptyList(),
-    val reason: List<String> = emptyList(),
-    val rank: Int? = null
 )

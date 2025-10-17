@@ -1,4 +1,4 @@
-package com.example.dailyinsight.ui.home
+package com.example.dailyinsight.ui.today
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -10,7 +10,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 
-class HomeViewModel(
+class TodayViewModel(
     private val repo: Repository = ServiceLocator.repository
 ) : ViewModel() {
 

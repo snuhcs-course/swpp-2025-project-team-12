@@ -1,4 +1,4 @@
-package com.example.dailyinsight.ui.dashboard
+package com.example.dailyinsight.ui.history
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -12,7 +12,7 @@ import kotlinx.coroutines.launch
 
 // 히스토리 화면에 쓰는 Row 모델(이미 프로젝트에 유사 파일 있으면 그걸 재사용하세요)
 
-class DashboardViewModel(
+class HistoryViewModel(
     private val repo: Repository = ServiceLocator.repository
 ) : ViewModel() {
 

@@ -1,4 +1,4 @@
-package com.example.dailyinsight.ui.home
+package com.example.dailyinsight.ui.today
 
 import android.view.LayoutInflater
 import android.view.View
