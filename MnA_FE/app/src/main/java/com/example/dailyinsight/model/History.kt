@@ -9,7 +9,7 @@ data class HistoryEntry(
     val changeText: String
 )
 
-sealed class DashboardItem {
-    data class Header(val dateLabel: String) : DashboardItem()
-    data class Row(val entry: HistoryEntry) : DashboardItem()
+sealed class HistoryItem {
+    data class Header(val dateLabel: String) : HistoryItem()
+    data class Row(val entry: HistoryEntry) : HistoryItem()
 }

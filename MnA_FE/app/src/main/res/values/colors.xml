@@ -12,4 +12,5 @@
     <color name="price_up">#D32F2F</color>     <!-- 상승: 빨강 -->
     <color name="price_down">#1976D2</color>   <!-- 하락: 파랑 -->
     <color name="price_flat">#9E9E9E</color>   <!-- 보합: 회색 -->
+    <color name="error">#B3261E</color>
 </resources>

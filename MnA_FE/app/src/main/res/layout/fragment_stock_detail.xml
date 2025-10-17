@@ -42,6 +42,14 @@
             android:layout_marginTop="4dp"
             android:textSize="14sp"/>
 
+        <!-- 등락률(%) -->
+        <TextView
+            android:id="@+id/tvChangeRate"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="2dp"
+            android:textSize="14sp"/>
+
         <TextView
             android:id="@+id/tvTime"
             android:layout_width="wrap_content"
@@ -61,6 +69,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:textSize="15sp"/>
+
         <!-- Net income -->
         <com.google.android.material.card.MaterialCardView
             android:layout_width="match_parent"
@@ -79,6 +88,21 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content" />
 
+                <!-- 요약(옵션) -->
+                <TextView
+                    android:id="@+id/tvNetIncomeAnnual"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="6dp"
+                    android:textSize="13sp" />
+
+                <TextView
+                    android:id="@+id/tvNetIncomeQuarter"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:textSize="13sp" />
+
+                <!-- 표 (필요 시 채움) -->
                 <TableLayout
                     android:id="@+id/tblNetIncome"
                     android:layout_width="match_parent"
@@ -145,7 +169,37 @@
                     android:text="-" />
 
                 <TextView
-                    android:id="@+id/tvPb"
+                    android:id="@+id/tvPeTtm"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="-" />
+
+                <TextView
+                    android:id="@+id/tvForwardPe"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="-" />
+
+                <TextView
+                    android:id="@+id/tvPsTtm"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="-" />
+
+                <TextView
+                    android:id="@+id/tvPriceToBook"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="-" />
+
+                <TextView
+                    android:id="@+id/tvPcfTtm"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="-" />
+
+                <TextView
+                    android:id="@+id/tvPfcfTtm"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="-" />
@@ -172,6 +226,12 @@
 
                 <TextView
                     android:id="@+id/tvCurrentRatio"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="-" />
+
+                <TextView
+                    android:id="@+id/tvQuickRatio"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="-" />
@@ -204,6 +264,12 @@
                     android:layout_height="wrap_content" />
 
                 <TextView
+                    android:id="@+id/tvPayoutRatio"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="-" />
+
+                <TextView
                     android:id="@+id/tvDividendYield"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
@@ -217,5 +283,23 @@
             </LinearLayout>
         </com.google.android.material.card.MaterialCardView>
 
+        <ProgressBar
+            android:id="@+id/progress"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:visibility="gone"
+            android:layout_gravity="center"/>
+
+        <TextView
+            android:id="@+id/tvError"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/error_generic"
+            android:textAppearance="?attr/textAppearanceBody2"
+            android:textColor="@color/error"
+            android:gravity="center"
+            android:padding="12dp"
+            android:visibility="gone"/>
     </LinearLayout>
+
 </androidx.core.widget.NestedScrollView>

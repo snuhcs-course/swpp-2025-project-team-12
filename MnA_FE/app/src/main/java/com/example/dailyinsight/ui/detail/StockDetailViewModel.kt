@@ -17,10 +17,10 @@ class StockDetailViewModel(
     private val _state = MutableStateFlow<LoadResult<StockDetailDto>>(LoadResult.Empty)
     val state: StateFlow<LoadResult<StockDetailDto>> = _state
 
-    fun load(code: String) {
+    fun load(ticker: String) {
         viewModelScope.launch {
             _state.value = LoadResult.Loading
-            _state.value = runCatching { repo.getStockDetail(code) }
+            _state.value = runCatching { repo.getStockDetail(ticker) }
                 .fold(
                     onSuccess = { LoadResult.Success(it) },
                     onFailure = { LoadResult.Error(it) }

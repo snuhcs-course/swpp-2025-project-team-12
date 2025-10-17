@@ -17,5 +17,7 @@
     <string name="valuation">valuation</string>
     <string name="solvency">solvency</string>
     <string name="dividend">dividend</string>
+    <string name="error_generic">error_generic</string>
+
 
 </resources>
