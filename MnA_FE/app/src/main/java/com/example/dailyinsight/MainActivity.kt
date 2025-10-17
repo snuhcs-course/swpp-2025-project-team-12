@@ -6,6 +6,7 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.navigation.findNavController
 import androidx.navigation.fragment.NavHostFragment
 import androidx.navigation.ui.AppBarConfiguration
+import androidx.navigation.ui.NavigationUI
 import androidx.navigation.ui.setupActionBarWithNavController
 import androidx.navigation.ui.setupWithNavController
 import com.example.dailyinsight.databinding.ActivityMainBinding
@@ -20,31 +21,46 @@ class MainActivity : AppCompatActivity() {
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
-        // **MATERIAL DESIGN 3** Set the custom MaterialToolbar from your layout as the support action bar.
-        setSupportActionBar(binding.materialToolbar)
-
-        // Get the NavHostFragment from the FragmentManager
+        // Find the NavController
+        // First, Get the NavHostFragment from the FragmentManager
         val navHostFragment = supportFragmentManager
             .findFragmentById(R.id.nav_host_fragment_activity_main) as NavHostFragment
-
-        val navView: BottomNavigationView = binding.navView
-
+        // Then we have the navController
         val navController = navHostFragment.navController
+
         // Passing each menu ID as a set of Ids because each
         // menu should be considered as top level destinations.
+        // This prevents the back arrow (Up button) from showing on these screens.
         val appBarConfiguration = AppBarConfiguration(
             setOf(
                 R.id.navigation_home, R.id.navigation_dashboard, R.id.navigation_market_index
             )
         )
-        setupActionBarWithNavController(navController, appBarConfiguration)
-        navView.setupWithNavController(navController)
 
-        // **THIS IS THE FIX FOR THE TITLE**
+        // This is the magic line that does many things
+        // It connects your CollapsingToolbarLayout, Toolbar, and NavController.
+        // It will automatically handle title updates (including arguments) and the Up button.
+        // Without it, you would have needed all these code:
+        //
+        // **MATERIAL DESIGN 3** Set the custom MaterialToolbar from your layout as the support action bar.
+        // setSupportActionBar(binding.materialToolbar)
+        //
+        // setupActionBarWithNavController(navController, appBarConfiguration)
+        //
         // Listen for navigation changes and set the title on the CollapsingToolbarLayout.
-        navController.addOnDestinationChangedListener { _, destination, _ ->
-            binding.collapsingToolbarLayout.title = destination.label
-        }
+        // navController.addOnDestinationChangedListener { _, destination, _ ->
+        //     binding.collapsingToolbarLayout.title = destination.label
+        // }
+        NavigationUI.setupWithNavController(
+            binding.collapsingToolbarLayout,
+            binding.materialToolbar,
+            navController,
+            appBarConfiguration
+        )
+
+        // Connect your BottomNavigationView for navigation
+        val navView: BottomNavigationView = binding.navView
+        navView.setupWithNavController(navController)
     }
 
     // onSupportNavigateUp()이 있어야지 뒤로가기 버튼이 제대로 작동합니다.

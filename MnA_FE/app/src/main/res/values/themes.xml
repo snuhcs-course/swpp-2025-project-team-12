@@ -19,4 +19,7 @@
         <!-- This is a Material Design 3 attribute that defines the color for "surface" components. This includes your AppBarLayout, MaterialCardView, menus, and more. By setting this to white, you ensure these components also have a white background, creating a consistent look. -->
         <item name="colorSurface">@color/white</item>
     </style>
+    <style name="TextAppearance.App.DisplaySmallEmphasis" parent="TextAppearance.Material3.DisplaySmall">
+        <item name="android:textStyle">bold</item>
+    </style>
 </resources>
