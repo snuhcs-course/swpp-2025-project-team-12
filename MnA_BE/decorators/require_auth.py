@@ -39,7 +39,7 @@ def require_auth(function):
                 return JsonResponse({ "message": "TOKEN EXPIRED" }, status=401)
 
         try:
-            user = User.objects.get(id=user_id)
+            user = User.objects.get(name=user_id)
         except Exception as e:
             return JsonResponse({"message": "UNEXPECTED ERROR (USER NOT FOUND)"}, status=500)
         kwargs["user"] = user
