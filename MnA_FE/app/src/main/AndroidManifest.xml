@@ -9,22 +9,36 @@
         android:allowBackup="true"
         android:dataExtractionRules="@xml/data_extraction_rules"
         android:fullBackupContent="@xml/backup_rules"
-        android:icon="@mipmap/ic_launcher"
+        android:icon="@mipmap/icon_daily_insight"
         android:label="@string/app_name"
-        android:roundIcon="@mipmap/ic_launcher_round"
+        android:roundIcon="@mipmap/icon_daily_insight_round"
         android:supportsRtl="true"
         android:usesCleartextTraffic="true"
         android:theme="@style/Theme.DailyInsight">
         <activity
-            android:name=".MainActivity"
-            android:exported="true"
-            android:label="@string/app_name">
+            android:name=".ui.sign.SetStyleActivity"
+            android:exported="false" />
+        <activity
+            android:name=".ui.sign.SetInterestActivity"
+            android:exported="false" />
+        <activity
+            android:name=".ui.sign.SignUpActivity"
+            android:exported="false" />
+        <activity
+            android:name=".ui.sign.SignInActivity"
+            android:exported="false" />
+        <activity
+            android:name=".ui.start.StartActivity"
+            android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+        <activity
+            android:name=".MainActivity"
+            android:exported="false" />
     </application>
 
 </manifest>
