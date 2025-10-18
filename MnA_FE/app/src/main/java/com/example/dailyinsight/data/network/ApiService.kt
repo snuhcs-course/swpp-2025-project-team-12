@@ -1,7 +1,9 @@
 package com.example.dailyinsight.data.network
 
 import okhttp3.Cookie
+import com.example.dailyinsight.ui.marketindex.StockIndexData
 import retrofit2.Call
+import retrofit2.http.GET
 import retrofit2.http.Body
 import retrofit2.http.POST
 
@@ -25,6 +27,9 @@ data class SignUpResponse(
 )
 
 interface ApiService {
+    @GET("marketindex/stockindex/latest")
+    suspend fun getStockIndex(): ApiResponse
+
     @POST("apps/user/login")
     suspend fun logIn(
         @Body request: LogInRequest
