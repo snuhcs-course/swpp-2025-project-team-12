@@ -98,13 +98,12 @@ The app will launch starting from the **Splash** screen → **Sign in / Sign up*
 | **Detail View** | Shows financial data and LLM-generated reasoning. |
 | **History Tab** | Shows previous recommendations with timestamps. |
 | **Index Information** | Displays KOSPI/KOSDAQ with trend summary. |
-| **Profile Tab** | Allows interest update and logout. |
 
 ---
 
-## 5. Demo Videos
+## 5. Demo Video
 
-Full Demo (Android + Backend)  
+Demo video  
 https://youtube.com/shorts/MVdy5fdfMh8
 
 ---
