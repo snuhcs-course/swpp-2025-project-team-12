@@ -7,9 +7,14 @@ from utils.token_handler import *
 from utils.validation import validate_password
 from decorators import *
 from S3 import S3Client
+from django.views.decorators.csrf import csrf_exempt
 import os
 import json
 
+def hello(request):
+    return JsonResponse({"message": "Hello, world!"})
+
+@csrf_exempt
 @default_error_handler
 def login(request):
     """
@@ -66,7 +71,7 @@ def logout(request, user):
     delete_cookie(response)
     return response
 
-
+@csrf_exempt
 @default_error_handler
 def signup(request):
     """
