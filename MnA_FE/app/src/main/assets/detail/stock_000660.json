@@ -1,0 +1,45 @@
+{
+  "ticker": "000660",
+  "name": "SK하이닉스",
+  "price": 123000,
+  "change": 800,
+  "change_rate": 0.65,
+  "chart": [
+    { "t": 1719897600000, "v": 680.0 },
+    { "t": 1722489600000, "v": 705.0 }
+  ],
+  "market_cap": "88.120 B",
+  "shares_outstanding": "7.32 B",
+  "net_income": {
+    "annual": [
+      { "period": "2022", "value": "1.210 B" },
+      { "period": "2021", "value": "1.085 B" },
+      { "period": "2020", "value": "0.950 B" }
+    ],
+    "quarter": [
+      { "period": "Q1", "value": "280 B" },
+      { "period": "Q2", "value": "295 B" },
+      { "period": "Q3", "value": "-"   },
+      { "period": "Q4", "value": "-"   }
+    ]
+  },
+  "valuation": {
+    "pe_annual": "9.10",
+    "pe_ttm": "10.25",
+    "forward_pe": "8.50",
+    "ps_ttm": "1.80",
+    "pb": "1.22",
+    "pcf_ttm": "6.10",
+    "pfcf_ttm": "5.92"
+  },
+  "solvency": {
+    "current_ratio": "1.55",
+    "quick_ratio": "1.20",
+    "de_ratio": "0.65"
+  },
+  "dividend": {
+    "payout_ratio": "18.00%",
+    "yield": "1.10%",
+    "latest_exdate": "2024-03-28"
+  }
+}

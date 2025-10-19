@@ -1,0 +1,45 @@
+{
+  "ticker": "373220",
+  "name": "LG에너지솔루션",
+  "price": 356000,
+  "change": -4000,
+  "change_rate": -1.11,
+  "chart": [
+    { "t": 1719897600000, "v": 1120.0 },
+    { "t": 1722489600000, "v": 1095.0 }
+  ],
+  "market_cap": "84.500 B",
+  "shares_outstanding": "0.24 B",
+  "net_income": {
+    "annual": [
+      { "period": "2022", "value": "0.720 B" },
+      { "period": "2021", "value": "0.610 B" },
+      { "period": "2020", "value": "0.480 B" }
+    ],
+    "quarter": [
+      { "period": "Q1", "value": "155 B" },
+      { "period": "Q2", "value": "160 B" },
+      { "period": "Q3", "value": "-"   },
+      { "period": "Q4", "value": "-"   }
+    ]
+  },
+  "valuation": {
+    "pe_annual": "28.10",
+    "pe_ttm": "27.20",
+    "forward_pe": "24.50",
+    "ps_ttm": "3.10",
+    "pb": "2.60",
+    "pcf_ttm": "17.40",
+    "pfcf_ttm": "16.10"
+  },
+  "solvency": {
+    "current_ratio": "1.45",
+    "quick_ratio": "1.20",
+    "de_ratio": "0.38"
+  },
+  "dividend": {
+    "payout_ratio": "12.00%",
+    "yield": "0.40%",
+    "latest_exdate": "2024-03-29"
+  }
+}
