@@ -1,3 +1,4 @@
+from django.db import IntegrityError
 from django.http import JsonResponse
 from decorators import *
 from utils.validation import validate_name
@@ -32,6 +33,8 @@ def name_view(request, user):
         try:
             user.name = name
             user.save()
+        except IntegrityError:
+            return JsonResponse({ "message": "NAME ALREADY EXISTS" }, status=409)
         except Exception as e:
             return JsonResponse({ "message": "NAME SAVE FAILED" }, status=500)
 
