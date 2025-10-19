@@ -2,7 +2,6 @@ package com.example.dailyinsight.data
 
 import android.content.Context
 import com.example.dailyinsight.data.dto.ApiResponse
-import com.example.dailyinsight.data.dto.IndexDto
 import com.example.dailyinsight.data.dto.RecommendationDto
 import com.example.dailyinsight.data.dto.StockDetailDto
 import kotlinx.serialization.decodeFromString
@@ -21,9 +20,6 @@ class MockRepository(private val context: Context) : Repository {
 
     override suspend fun getHistoryRecommendations(): Map<String, List<RecommendationDto>> =
         readWrapped<Map<String, List<RecommendationDto>>>("api_history.json")
-
-    override suspend fun getMainIndices(): List<IndexDto> =
-        readWrapped<List<IndexDto>>("api_indices.json")
 
     override suspend fun getStockDetail(ticker: String): StockDetailDto =
         readJson<StockDetailDto>("detail/stock_${ticker}.json") // assets/detail/stock_005930.jso

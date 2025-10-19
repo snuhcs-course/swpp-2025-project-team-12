@@ -6,30 +6,28 @@ import retrofit2.http.Query
 import retrofit2.http.Path
 interface ApiService {
 
-    // 헬스체크
+    // 헬스체크 (루트 경로) → 절대 경로로 우회
     @GET("/health")
     suspend fun health(): ApiResponse<HealthResponse>
 
-    // 오늘의 추천 (범용)
-    @GET("/api/recommendations/today")
+    // 오늘의 추천 (상대 경로; /api 제거)
+    @GET("recommendations/today")
     suspend fun getTodayRecommendations(): ApiResponse<List<RecommendationDto>>
 
-    // 지난 추천(히스토리) — API.md 에 맞춰 엔드포인트/응답 감싸기
-    @GET("/api/recommendations/history")
+    // 지난 추천(히스토리)
+    @GET("recommendations/history")
     suspend fun getHistoryRecommendations(): ApiResponse<Map<String, List<RecommendationDto>>>
 
-    // 개인화 추천 (로그인 유저일 때)
-    @GET("/api/recommendations/personalized")
+    // 개인화 추천
+    @GET("recommendations/personalized")
     suspend fun getPersonalizedRecommendations(
         @Query("userId") userId: String
     ): ApiResponse<List<RecommendationDto>>
 
-    // 주요 지수
-    @GET("/api/indices/main")
-    suspend fun getMainIndices(): ApiResponse<List<IndexDto>>
-
-    @GET("api/stocks/{ticker}")
+    // 종목 상세 (상대 경로; /api 제거)
+    @GET("stocks/{ticker}")
     suspend fun getStockDetail(
         @Path("ticker") ticker: String
     ): ApiResponse<StockDetailDto>
 }
+

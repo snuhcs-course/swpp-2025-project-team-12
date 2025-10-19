@@ -3,13 +3,15 @@
     xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:fillViewport="true">
+    android:fillViewport="true"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
 
     <LinearLayout
         android:orientation="vertical"
         android:padding="16dp"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content">
+        android:layout_height="wrap_content"
+        >
 
         <!-- Header -->
         <TextView
@@ -33,8 +35,10 @@
             android:layout_height="wrap_content"
             android:layout_marginTop="12dp"
             android:textStyle="bold"
-            android:textSize="28sp"/>
+            android:textSize="34sp"
+            android:textColor="?attr/colorOnSurface"/>
 
+        <!-- Change (한 줄: -5 (-0,72%)) -->
         <TextView
             android:id="@+id/tvChange"
             android:layout_width="wrap_content"
@@ -42,13 +46,14 @@
             android:layout_marginTop="4dp"
             android:textSize="14sp"/>
 
-        <!-- 등락률(%) -->
+        <!-- 등락률(%) 안 보이게 설정 -->
         <TextView
             android:id="@+id/tvChangeRate"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginTop="2dp"
-            android:textSize="14sp"/>
+            android:layout_marginTop="6dp"
+            android:textSize="14sp"
+            android:visibility="gone"/>
 
         <TextView
             android:id="@+id/tvTime"
@@ -70,11 +75,87 @@
             android:layout_height="wrap_content"
             android:textSize="15sp"/>
 
+        <com.google.android.material.card.MaterialCardView
+            android:id="@+id/cardChart"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="12dp">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:padding="16dp">
+
+                <!-- 차트 -->
+                <com.github.mikephil.charting.charts.LineChart
+                    android:id="@+id/lineChart"
+                    android:layout_width="match_parent"
+                    android:layout_height="240dp"
+                    android:layout_marginTop="16dp" />
+
+                <!-- Segmented pill -->
+                <com.google.android.material.button.MaterialButtonToggleGroup
+                    android:id="@+id/btnGroupRange"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:paddingTop="8dp"
+                    app:singleSelection="true"
+                    app:selectionRequired="true"
+                    app:checkedButton="@id/btn6M">
+
+                    <!-- 각 버튼은 높이 고정 + 폭 가중치로 균등 분배 -->
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/btn1W"
+                        style="@style/Widget.DI.SegButton"
+                        android:layout_width="0dp"
+                        android:layout_height="40dp"
+                        android:layout_weight="1"
+                        android:text="@string/_1W"/>
+
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/btn3M"
+                        style="@style/Widget.DI.SegButton"
+                        android:layout_width="0dp"
+                        android:layout_height="40dp"
+                        android:layout_weight="1"
+                        android:text="@string/_3M"/>
+
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/btn6M"
+                        style="@style/Widget.DI.SegButton"
+                        android:layout_width="0dp"
+                        android:layout_height="40dp"
+                        android:layout_weight="1"
+                        android:text="@string/_6M"/>
+
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/btn9M"
+                        style="@style/Widget.DI.SegButton"
+                        android:layout_width="0dp"
+                        android:layout_height="40dp"
+                        android:layout_weight="1"
+                        android:text="@string/_9M"/>
+
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/btn1Y"
+                        style="@style/Widget.DI.SegButton"
+                        android:layout_width="0dp"
+                        android:layout_height="40dp"
+                        android:layout_weight="1"
+                        android:text="@string/_1Y"/>
+
+                </com.google.android.material.button.MaterialButtonToggleGroup>
+
+            </LinearLayout>
+        </com.google.android.material.card.MaterialCardView>
+
         <!-- Net income -->
         <com.google.android.material.card.MaterialCardView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="12dp">
+            android:layout_marginTop="12dp"
+            android:clipToPadding="false">
 
             <LinearLayout
                 android:orientation="vertical"
@@ -88,59 +169,70 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content" />
 
-                <!-- 요약(옵션) -->
-                <TextView
-                    android:id="@+id/tvNetIncomeAnnual"
+                <!-- 요약 2줄 (라벨-값) -->
+                <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_marginTop="6dp"
-                    android:textSize="13sp" />
+                    android:layout_marginTop="12dp"
+                    android:orientation="vertical">
 
-                <TextView
-                    android:id="@+id/tvNetIncomeQuarter"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:textSize="13sp" />
+                    <!-- Market Cap -->
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal">
 
-                <!-- 표 (필요 시 채움) -->
+                        <TextView
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:text="@string/market_cap"
+                            android:textColor="?attr/colorOnSurfaceVariant"
+                            android:textSize="13sp"/>
+
+                        <TextView
+                            android:id="@+id/tvMarketCap"
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:gravity="end"
+                            android:textStyle="bold"
+                            android:textSize="13sp"/>
+                    </LinearLayout>
+
+                    <!-- Current Share Outstanding -->
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal"
+                        android:layout_marginTop="6dp">
+
+                        <TextView
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:text="@string/current_share_outstanding"
+                            android:textColor="?attr/colorOnSurfaceVariant"
+                            android:textSize="13sp"/>
+
+                        <TextView
+                            android:id="@+id/tvSharesOutstanding"
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:gravity="end"
+                            android:textStyle="bold"
+                            android:textSize="13sp"/>
+                    </LinearLayout>
+                </LinearLayout>
+
+                <!-- 표 -->
                 <TableLayout
                     android:id="@+id/tblNetIncome"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:stretchColumns="1,2,3"
-                    android:layout_marginTop="8dp"/>
-            </LinearLayout>
-        </com.google.android.material.card.MaterialCardView>
-
-        <!-- Summary -->
-        <com.google.android.material.card.MaterialCardView
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="12dp">
-
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:orientation="vertical"
-                android:padding="16dp">
-
-                <TextView
-                    style="@style/TextAppearance.Material3.TitleMedium"
-                    android:text="@string/summary"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content" />
-
-                <TextView
-                    android:id="@+id/tvMarketCap"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="-" />
-
-                <TextView
-                    android:id="@+id/tvSharesOutstanding"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="-" />
+                    android:layout_marginTop="12dp"
+                    android:stretchColumns="1,2,3"/>
             </LinearLayout>
         </com.google.android.material.card.MaterialCardView>
 
@@ -162,47 +254,12 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content" />
 
-                <TextView
-                    android:id="@+id/tvPeAnnual"
-                    android:layout_width="wrap_content"
+                <TableLayout
+                    android:id="@+id/tblValuation"
+                    android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:text="-" />
-
-                <TextView
-                    android:id="@+id/tvPeTtm"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="-" />
-
-                <TextView
-                    android:id="@+id/tvForwardPe"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="-" />
-
-                <TextView
-                    android:id="@+id/tvPsTtm"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="-" />
-
-                <TextView
-                    android:id="@+id/tvPriceToBook"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="-" />
-
-                <TextView
-                    android:id="@+id/tvPcfTtm"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="-" />
-
-                <TextView
-                    android:id="@+id/tvPfcfTtm"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="-" />
+                    android:layout_marginTop="8dp"
+                    android:stretchColumns="1" />
             </LinearLayout>
         </com.google.android.material.card.MaterialCardView>
 
@@ -224,23 +281,12 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content" />
 
-                <TextView
-                    android:id="@+id/tvCurrentRatio"
-                    android:layout_width="wrap_content"
+                <TableLayout
+                    android:id="@+id/tblSolvency"
+                    android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:text="-" />
-
-                <TextView
-                    android:id="@+id/tvQuickRatio"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="-" />
-
-                <TextView
-                    android:id="@+id/tvDebtToEquity"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="-" />
+                    android:layout_marginTop="8dp"
+                    android:stretchColumns="1" />
             </LinearLayout>
         </com.google.android.material.card.MaterialCardView>
 
@@ -263,23 +309,12 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content" />
 
-                <TextView
-                    android:id="@+id/tvPayoutRatio"
-                    android:layout_width="wrap_content"
+                <TableLayout
+                    android:id="@+id/tblDividend"
+                    android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:text="-" />
-
-                <TextView
-                    android:id="@+id/tvDividendYield"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="-" />
-
-                <TextView
-                    android:id="@+id/tvLatestExDate"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="-" />
+                    android:layout_marginTop="8dp"
+                    android:stretchColumns="1" />
             </LinearLayout>
         </com.google.android.material.card.MaterialCardView>
 

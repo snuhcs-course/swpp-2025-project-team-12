@@ -2,7 +2,7 @@ package com.example.dailyinsight.data.dto
 
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
-
+import kotlinx.serialization.json.JsonNames
 @Serializable
 data class StockDetailDto(
     @SerialName("market_cap") val marketCap: String? = null,
@@ -12,6 +12,11 @@ data class StockDetailDto(
     @SerialName("solvency")  val solvency: Solvency  = Solvency(),
     @SerialName("dividend")  val dividend: Dividend  = Dividend(),
 
+
+    // price 시계열 맵(날짜→값)을 담아올 자리
+    @JsonNames("price_financial_info", "priceFinancialInfo")
+    val priceFinancialInfo: PriceFinancialInfoDto? = null,
+
     // (옵션) 상단 헤더/차트/표용 보강 필드들
     @SerialName("ticker") val ticker: String? = null,
     @SerialName("name")   val name: String? = null,
@@ -20,6 +25,12 @@ data class StockDetailDto(
     @SerialName("change_rate") val changeRate: Double? = null,
     @SerialName("chart") val chart: List<ChartPoint>? = null,
     @SerialName("net_income") val netIncome: NetIncome? = null
+)
+
+@Serializable
+data class PriceFinancialInfoDto(
+    // pandas.Series가 { "YYYY-MM-DD": 70100, ... } 형태로 올 때 수용
+    @SerialName("price") val price: Map<String, Double>? = null
 )
 
 @Serializable
