@@ -42,14 +42,18 @@ class TodayFragment : Fragment(R.layout.fragment_today) {
                         is LoadResult.Loading -> binding.swipe.isRefreshing = true
                         is LoadResult.Success -> {
                             binding.swipe.isRefreshing = false
+                            binding.tvEmptyMessage.visibility = View.GONE // 메시지 숨김
+                            binding.rvToday.visibility = View.VISIBLE // 목록 보여줌
                             adapter.submitList(st.data)
                         }
                         is LoadResult.Error -> {
                             binding.swipe.isRefreshing = false
-                            // TODO: error 표시
+                            snackbar("데이터 로딩 실패: ${st.throwable.message ?: "알 수 없는 오류"}")
                         }
                         is LoadResult.Empty -> {
                             binding.swipe.isRefreshing = false
+                            binding.tvEmptyMessage.visibility = View.VISIBLE // 메시지 보여줌
+                            binding.rvToday.visibility = View.GONE // 목록 숨김
                             adapter.submitList(emptyList())
                         }
                     }
@@ -57,6 +61,11 @@ class TodayFragment : Fragment(R.layout.fragment_today) {
             }
         }
     }
+    private fun snackbar(msg: String) =
+        com.google.android.material.snackbar.Snackbar
+            .make(requireView(), msg, com.google.android.material.snackbar.Snackbar.LENGTH_SHORT)
+            .show()
+
 
     override fun onDestroyView() {
         _binding = null
