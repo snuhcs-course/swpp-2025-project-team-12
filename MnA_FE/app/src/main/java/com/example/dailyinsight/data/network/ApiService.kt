@@ -25,13 +25,13 @@ data class SignUpResponse(
 )
 
 interface ApiService {
-    @POST("apps/user/login")
-    suspend fun logIn(
+    @POST("user/login")
+    fun logIn(
         @Body request: LogInRequest
     ) : Call<LogInResponse>
 
-    @POST("apps/user/signup")
-    suspend fun signUp(
+    @POST("user/signup")
+    fun signUp(
         @Body request: SignUpRequest
     ) : Call<SignUpResponse>
 }
