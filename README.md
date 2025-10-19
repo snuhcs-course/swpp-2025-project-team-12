@@ -6,8 +6,7 @@
 |:--|:--|
 | **Backend (Django on AWS EC2)** | Daily article crawler, market index crawler, stock data crawler, JWT-based authentication, user interest management |
 | **Frontend (Android Studio - Kotlin)** | Splash → Sign in / Sign up → Home (Recommendation List) → Detail → History → Index → Profile UI implemented |
-| **Integration** | Backend REST API connected to Android client for login and recommendation display |
-| **Recommendation Feature** | LLM analyzes crawled data (S3) and generates daily general/personalized recommendations |
+| **Integration** | Backend REST API connected to Android client for login display |
 
 ---
 
