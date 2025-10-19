@@ -1,67 +1,97 @@
 package com.example.dailyinsight.ui.history
 
 import android.os.Bundle
+import android.view.LayoutInflater
 import android.view.View
+import android.view.ViewGroup
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
-import androidx.recyclerview.widget.RecyclerView
+// RecyclerView/SwipeRefreshLayout
 import androidx.navigation.fragment.findNavController
 import com.example.dailyinsight.R
+import com.example.dailyinsight.databinding.FragmentHistoryBinding
 import com.example.dailyinsight.ui.common.LoadResult
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 
 class HistoryFragment : Fragment(R.layout.fragment_history) {
 
+    private var _binding: FragmentHistoryBinding? = null
+    private val binding get() = _binding!!
+
     private val viewModel: HistoryViewModel by viewModels()
     private lateinit var adapter: HistoryAdapter
+
+
+    override fun onCreateView(
+        inflater: LayoutInflater, container: ViewGroup?,
+        savedInstanceState: Bundle?
+    ): View {
+        _binding = FragmentHistoryBinding.inflate(inflater, container, false)
+        return binding.root
+    }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        val rv = view.findViewById<RecyclerView>(R.id.recycler)
-        val swipe = view.findViewById<androidx.swiperefreshlayout.widget.SwipeRefreshLayout>(R.id.swipe)
-
+        // 어댑터 초기화 및 RecyclerView 설정 (binding 사용)
         adapter = HistoryAdapter { item ->
-            val bundle = Bundle().apply { putParcelable("item", item) }
-            findNavController().navigate(R.id.action_history_to_stock_detail, bundle)
+            val action = HistoryFragmentDirections.actionHistoryToStockDetail(item)
+            findNavController().navigate(action)
         }
 
-        rv.layoutManager = LinearLayoutManager(requireContext())
-        rv.setHasFixedSize(true)
+        binding.recycler.layoutManager = LinearLayoutManager(requireContext())
+        binding.recycler.setHasFixedSize(true)
+        binding.recycler.adapter = adapter
 
-        rv.adapter = adapter
-
-        swipe.setOnRefreshListener { viewModel.refresh() }
+        binding.swipe.setOnRefreshListener { viewModel.refresh() }
 
         viewLifecycleOwner.lifecycleScope.launch {
             viewModel.state.collectLatest { st ->
+                binding.swipe.isRefreshing = st is LoadResult.Loading // 로딩 상태일 때만 true
+
                 when (st) {
-                    is LoadResult.Loading -> swipe.isRefreshing = true
+                    is LoadResult.Loading -> {
+                        // 로딩 중일 때는 목록과 메시지 둘 다 숨길 수도 있음 (선택 사항)
+                        binding.recycler.visibility = View.GONE
+                        //binding.tvEmptyMessage.visibility = View.GONE
+                    }
                     is LoadResult.Success -> {
-                        swipe.isRefreshing = false
-                        adapter.submitList(st.data)   // <- HistoryRow 리스트
+                        // 성공 시: 메시지 숨기고 목록 보여줌
+                        binding.tvEmptyMessage2.visibility = View.GONE
+                        binding.recycler.visibility = View.VISIBLE
+                        adapter.submitList(st.data)
                     }
                     is LoadResult.Empty -> {
-                        swipe.isRefreshing = false
-                        adapter.submitList(emptyList())
-                        snackbar("기록이 없습니다.")
+                        // 비었을 때: 메시지 보여주고 목록 숨김
+                        binding.tvEmptyMessage2.visibility = View.VISIBLE
+                        binding.recycler.visibility = View.GONE
+                        adapter.submitList(emptyList()) // 목록 비우기
+
                     }
                     is LoadResult.Error -> {
-                        swipe.isRefreshing = false
-                        snackbar("불러오기 실패: ${st.throwable.message ?: "알 수 없는 오류"}")
+                        binding.recycler.visibility = View.GONE
+                        binding.tvEmptyMessage2.text = "불러오기 실패"
+                        snackbar("불러오기 실패: ${st.throwable.message ?: "알 수 없는 오류"}") // Snackbar 대신 TextView 사용 가능
                     }
                 }
             }
         }
 
-        viewModel.refresh()
+    }
+
+    override fun onDestroyView() {
+        super.onDestroyView()
+        _binding = null // 메모리 누수 방지
     }
 
     private fun snackbar(msg: String) =
         com.google.android.material.snackbar.Snackbar
             .make(requireView(), msg, com.google.android.material.snackbar.Snackbar.LENGTH_SHORT)
             .show()
+
+
+
 }

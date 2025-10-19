@@ -16,6 +16,17 @@
         app:layout_constraintStart_toStartOf="parent"
         tools:ignore="HardcodedText"/>
 
+    <TextView
+        android:id="@+id/tvEmptyMessage2"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="지난 추천이 없습니다."
+        android:visibility="gone"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent" />
+
     <androidx.swiperefreshlayout.widget.SwipeRefreshLayout
         android:id="@+id/swipe"
         android:layout_width="0dp"
@@ -33,7 +44,8 @@
             android:paddingStart="12dp"
             android:paddingEnd="12dp"
             android:paddingTop="8dp"
-            android:paddingBottom="8dp"
+            android:paddingBottom="80dp"
+            app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager"
             tools:listitem="@layout/item_history_row"/>
     </androidx.swiperefreshlayout.widget.SwipeRefreshLayout>
 
