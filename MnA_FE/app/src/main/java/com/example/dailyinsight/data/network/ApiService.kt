@@ -26,7 +26,7 @@ data class SignUpResponse(
 )
 
 interface ApiService {
-    @GET("marketindex/stockindex/latest/")
+    @GET("marketindex/stockindex/latest")
     suspend fun getStockIndex(): ApiResponse
 
     @POST("apps/user/login")
