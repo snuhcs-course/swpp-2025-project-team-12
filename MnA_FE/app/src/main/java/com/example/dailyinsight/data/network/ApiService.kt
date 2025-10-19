@@ -1,11 +1,13 @@
 package com.example.dailyinsight.data.network
 
+import com.example.dailyinsight.data.dto.StockIndexHistoryResponse
 import okhttp3.Cookie
-import com.example.dailyinsight.ui.marketindex.StockIndexData
 import retrofit2.Call
 import retrofit2.http.GET
 import retrofit2.http.Body
 import retrofit2.http.POST
+import retrofit2.http.Path
+import retrofit2.http.Query
 
 data class LogInRequest(
     val id: String,
@@ -28,6 +30,12 @@ data class SignUpResponse(
 interface ApiService {
     @GET("marketindex/stockindex/latest")
     suspend fun getStockIndex(): ApiResponse
+
+    @GET("marketindex/stockindex/history/{index_type}/")
+    suspend fun getHistoricalData(
+        @Path("index_type") indexType: String,
+        @Query("days") days: Int
+    ): StockIndexHistoryResponse
 
     @POST("user/login")
     fun logIn(
