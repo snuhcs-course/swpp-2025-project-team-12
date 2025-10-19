@@ -26,6 +26,25 @@
     </fragment>
 
     <fragment
+        android:id="@+id/navigation_market_index"
+        android:name="com.example.dailyinsight.ui.marketindex.MarketIndexFragment"
+        android:label="@string/title_market_index"
+        tools:layout="@layout/fragment_market_index" >
+        <!-- action: MarketIndex -> StockIndexDetail-->
+        <action
+            android:id="@+id/action_navigation_market_index_to_stockIndexDetailFragment"
+            app:destination="@id/stockIndexDetailFragment" />
+    </fragment>
+    <fragment
+        android:id="@+id/stockIndexDetailFragment"
+        android:name="com.example.dailyinsight.ui.marketindex.StockIndexDetailFragment"
+        android:label="{stockIndexType}"
+        tools:layout="@layout/fragment_stock_index_detail">
+        <argument
+            android:name="stockIndexType"
+            app:argType="string" />
+    </fragment>
+    <fragment
         android:id="@+id/stock_detail_fragment"
         android:name="com.example.dailyinsight.ui.detail.StockDetailFragment"
         android:label="@string/title_stock_detail">

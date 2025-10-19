@@ -3,8 +3,7 @@
     <string name="title_today">오늘의 추천</string>
     <string name="title_history">지난 추천</string>
     <string name="title_market_index">주요 지수</string>
-    <string name="title_indices">주요 지수</string>
-    <string name="title_stock_detail"></string>
+    <string name="title_stock_index_detail">코스피</string>
     <string name="today">오늘</string>
     <string name="yesterday">어제</string>
     <string name="index_placeholder">--</string>
@@ -26,9 +25,4 @@
     <string name="_9M">9M</string>
     <string name="_1Y">1Y</string>
     <string name="no_chart_data">no chart data</string>
-
-
-
-
-
 </resources>

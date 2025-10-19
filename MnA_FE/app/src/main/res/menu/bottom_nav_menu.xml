@@ -12,7 +12,7 @@
         android:title="@string/title_history" /> <!-- 지난 추천 -->
     <item
         android:id="@+id/navigation_market_index"
-        android:icon="@drawable/ic_notifications_black_24dp"
-        android:title="@string/title_market_index" /> <!-- 주요 지수 -->
+        android:icon="@drawable/ic_baseline_candlestick_chart_24"
+        android:title="@string/title_market_index" />
 
 </menu>

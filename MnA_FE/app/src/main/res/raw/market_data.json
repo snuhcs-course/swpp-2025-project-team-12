@@ -1,0 +1,27 @@
+{
+  "status": "success",
+  "data": {
+    "KOSPI": {
+      "change_amount": 93.38,
+      "change_percent": 2.7,
+      "close": 3549.21,
+      "date": "2025-10-02",
+      "high": 3565.96,
+      "low": 3512.16,
+      "open": 3525.48,
+      "volume": 402100,
+      "description": "All is good"
+    },
+    "KOSDAQ": {
+      "change_amount": 8.91,
+      "change_percent": 1.05,
+      "close": 854.25,
+      "date": "2025-10-02",
+      "high": 854.87,
+      "low": 848.75,
+      "open": 853.4,
+      "volume": 800,
+      "description": "All is good"
+    }
+  }
+}
