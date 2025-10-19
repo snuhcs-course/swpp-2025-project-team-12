@@ -1,0 +1,45 @@
+{
+  "ticker": "035420",
+  "name": "NAVER",
+  "price": 184000,
+  "change": -1000,
+  "change_rate": -0.54,
+  "chart": [
+    { "t": 1719897600000, "v": 820.0 },
+    { "t": 1722489600000, "v": 815.0 }
+  ],
+  "market_cap": "49.330 B",
+  "shares_outstanding": "0.65 B",
+  "net_income": {
+    "annual": [
+      { "period": "2022", "value": "0.420 B" },
+      { "period": "2021", "value": "0.505 B" },
+      { "period": "2020", "value": "0.390 B" }
+    ],
+    "quarter": [
+      { "period": "Q1", "value": "95 B" },
+      { "period": "Q2", "value": "88 B" },
+      { "period": "Q3", "value": "-"  },
+      { "period": "Q4", "value": "-"  }
+    ]
+  },
+  "valuation": {
+    "pe_annual": "27.40",
+    "pe_ttm": "26.10",
+    "forward_pe": "23.50",
+    "ps_ttm": "3.90",
+    "pb": "2.85",
+    "pcf_ttm": "18.10",
+    "pfcf_ttm": "16.90"
+  },
+  "solvency": {
+    "current_ratio": "1.12",
+    "quick_ratio": "1.01",
+    "de_ratio": "0.48"
+  },
+  "dividend": {
+    "payout_ratio": "9.00%",
+    "yield": "0.30%",
+    "latest_exdate": "2024-03-27"
+  }
+}

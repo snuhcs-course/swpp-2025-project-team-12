@@ -1,0 +1,4 @@
+[
+  {"ticker":"KOSPI","name":"코스피","price":2643.21,"change":12.34,"changeRate":0.47,"time":"09:30"},
+  {"ticker":"KOSDAQ","name":"코스닥","price":859.12,"change":-3.21,"changeRate":-0.37,"time":"09:30"}
+]

@@ -1,0 +1,64 @@
+{
+  "data": {
+    "오늘": [
+      {
+        "ticker": "005930",
+        "name": "삼성전자",
+        "price": 74800,
+        "change": 1200,
+        "change_rate": 1.63,
+        "time": "09:30",
+        "headline": "반도체 업황 개선 기대 재부각"
+      },
+      {
+        "ticker": "000660",
+        "name": "SK하이닉스",
+        "price": 123000,
+        "change": 800,
+        "change_rate": 0.65,
+        "time": "09:30",
+        "headline": "AI 수요 모멘텀 지속"
+      }
+    ],
+    "어제": [
+      {
+        "ticker": "035420",
+        "name": "NAVER",
+        "price": 184000,
+        "change": -1000,
+        "change_rate": -0.54,
+        "time": "15:30",
+        "headline": "콘텐츠/클라우드 투자 비용 반영"
+      },
+      {
+        "ticker": "035720",
+        "name": "카카오",
+        "price": 44700,
+        "change": 700,
+        "change_rate": 1.59,
+        "time": "15:30",
+        "headline": null
+      }
+    ],
+    "2025-10-14": [
+      {
+        "ticker": "373220",
+        "name": "LG에너지솔루션",
+        "price": 356000,
+        "change": -4000,
+        "change_rate": -1.11,
+        "time": "15:30",
+        "headline": "전기차 둔화 우려로 약세"
+      },
+      {
+        "ticker": "051910",
+        "name": "LG화학",
+        "price": 516000,
+        "change": 9000,
+        "change_rate": 1.78,
+        "time": "15:30",
+        "headline": "양극재 사업 회복 기대"
+      }
+    ]
+  }
+}

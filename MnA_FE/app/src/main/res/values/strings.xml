@@ -1,8 +1,29 @@
 <resources>
     <string name="app_name">DailyInsight</string>
-    <string name="title_home">Home</string>
-    <string name="title_dashboard">Dashboard</string>
+    <string name="title_today">오늘의 추천</string>
+    <string name="title_history">지난 추천</string>
     <string name="title_market_index">주요 지수</string>
-
+    <string name="title_stock_detail">종목 상세</string> 
     <string name="title_stock_index_detail">코스피</string>
+    <string name="today">오늘</string>
+    <string name="yesterday">어제</string>
+    <string name="index_placeholder">--</string>
+    <!-- 상승/하락 텍스트: +1,234 (3.50%) 같은 형태 -->
+    <string name="change_text">%1$s%2$s (%3$s%%)</string>
+    <string name="price_won">%1$s</string>
+    <string name="no_headline">헤드 라인 없음</string>
+    <string name="net_income">Net Income</string>
+    <string name="market_cap">Market Cap</string>
+    <string name="current_share_outstanding">Current Share Outstanding</string>
+    <string name="summary">summary</string>
+    <string name="valuation">Valuation</string>
+    <string name="solvency">Solvency</string>
+    <string name="dividend">Dividend</string>
+    <string name="error_generic">error_generic</string>
+    <string name="_1W">1W</string>
+    <string name="_3M">3M</string>
+    <string name="_6M">6M</string>
+    <string name="_9M">9M</string>
+    <string name="_1Y">1Y</string>
+    <string name="no_chart_data">no chart data</string>
 </resources>
