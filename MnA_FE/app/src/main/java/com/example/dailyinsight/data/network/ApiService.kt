@@ -7,7 +7,6 @@ import retrofit2.http.GET
 import retrofit2.http.Body
 import retrofit2.http.POST
 
-
 data class LogInRequest(
     val id: String,
     val password: String
@@ -27,7 +26,7 @@ data class SignUpResponse(
 )
 
 interface ApiService {
-    @GET("marketindex/stockindex/latest")
+    @GET("marketindex/stockindex/latest/")
     suspend fun getStockIndex(): ApiResponse
 
     @POST("apps/user/login")
