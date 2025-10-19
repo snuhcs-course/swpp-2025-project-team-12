@@ -7,17 +7,18 @@ from utils.token_handler import *
 from utils.validation import validate_password
 from decorators import *
 from S3 import S3Client
+from django.views.decorators.csrf import csrf_exempt
 import os
 import json
 
 def hello(request):
     return JsonResponse({"message": "Hello, world!"})
 
+@csrf_exempt
 @default_error_handler
 def login(request):
     """
     POST: login with given 'id' (username) and 'password'
-    - 주의: User PK는 AutoField이므로, 여기서 'id'는 사용자 이름으로 취급한다.
     """
     if request.method != "POST":
         return JsonResponse({"message": "METHOD NOT ALLOWED"}, status=405)
@@ -70,7 +71,7 @@ def logout(request, user):
     delete_cookie(response)
     return response
 
-
+@csrf_exempt
 @default_error_handler
 def signup(request):
     """
