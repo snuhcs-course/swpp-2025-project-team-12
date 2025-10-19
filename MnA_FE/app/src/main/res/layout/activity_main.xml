@@ -20,6 +20,7 @@
             android:layout_width="match_parent"
             android:layout_height="120dp"
             android:fitsSystemWindows="true"
+            app:contentScrim="@android:color/white"
             app:layout_scrollFlags="scroll|exitUntilCollapsed|snap"
             app:expandedTitleTextAppearance="@style/TextAppearance.App.DisplaySmallEmphasis"
             app:collapsedTitleTextAppearance="?attr/textAppearanceTitleLarge">
