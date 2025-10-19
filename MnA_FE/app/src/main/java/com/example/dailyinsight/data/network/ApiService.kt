@@ -30,7 +30,7 @@ interface ApiService {
     suspend fun getStockIndex(): ApiResponse
 
     @POST("apps/user/login")
-    suspend fun logIn(
+    fun logIn(
         @Body request: LogInRequest
     ) : Call<LogInResponse>
 
