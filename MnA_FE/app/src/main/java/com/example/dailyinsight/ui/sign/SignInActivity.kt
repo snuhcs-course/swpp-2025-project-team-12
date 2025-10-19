@@ -53,29 +53,28 @@ class SignInActivity : AppCompatActivity() {
 
             val request = LogInRequest(id = id, password = password)
 
-            lifecycleScope.launch {
-                RetrofitInstance.api.logIn(request)
-                    .enqueue(object : retrofit2.Callback<LogInResponse> {
-                        override fun onResponse(
-                            call: Call<LogInResponse>,
-                            response: retrofit2.Response<LogInResponse>
-                        ) {
-                            if (response.isSuccessful) {
-                                val intent = Intent(this@SignInActivity, MainActivity::class.java)
-                                finishAffinity()
-                                startActivity(intent)
-                            } else {
-                                val result = response.body()
-                                Toast.makeText(this@SignInActivity, result?.message, Toast.LENGTH_SHORT).show()
-                            }
+            RetrofitInstance.api.logIn(request)
+                .enqueue(object : retrofit2.Callback<LogInResponse> {
+                    override fun onResponse(
+                        call: Call<LogInResponse>,
+                        response: retrofit2.Response<LogInResponse>
+                    ) {
+                        if (response.isSuccessful) {
+                            val intent = Intent(this@SignInActivity, MainActivity::class.java)
+                            finishAffinity()
+                            startActivity(intent)
+                        } else {
+                            val result = response.body()
+                            Toast.makeText(this@SignInActivity, result?.message, Toast.LENGTH_SHORT).show()
                         }
+                    }
 
-                        override fun onFailure(call: Call<LogInResponse>, t: Throwable) {
-                            Toast.makeText(this@SignInActivity, "failed to login", Toast.LENGTH_SHORT)
-                                .show()
-                        }
-                    })
-            }
+                    override fun onFailure(call: Call<LogInResponse>, t: Throwable) {
+                        Toast.makeText(this@SignInActivity, "failed to login", Toast.LENGTH_SHORT)
+                            .show()
+                    }
+                })
+
         }
 
         val signUpButton = findViewById<MaterialButton>(R.id.signUpButton)
