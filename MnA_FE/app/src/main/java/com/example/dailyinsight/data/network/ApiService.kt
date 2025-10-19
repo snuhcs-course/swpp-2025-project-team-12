@@ -29,7 +29,7 @@ interface ApiService {
     @GET("marketindex/stockindex/latest/")
     suspend fun getStockIndex(): ApiResponse
 
-    @POST("apps/user/login")
+    @POST("user/login")
     fun logIn(
         @Body request: LogInRequest
     ) : Call<LogInResponse>

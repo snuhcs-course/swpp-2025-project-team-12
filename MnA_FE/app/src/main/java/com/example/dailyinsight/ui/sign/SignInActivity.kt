@@ -16,6 +16,7 @@ import com.google.android.material.button.MaterialButton
 import com.google.android.material.textfield.TextInputEditText
 import kotlinx.coroutines.launch
 import retrofit2.Call
+import com.google.gson.Gson
 
 class SignInActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -64,8 +65,9 @@ class SignInActivity : AppCompatActivity() {
                             finishAffinity()
                             startActivity(intent)
                         } else {
-                            val result = response.body()
-                            Toast.makeText(this@SignInActivity, result?.message, Toast.LENGTH_SHORT).show()
+                            val result = response.errorBody()?.string()
+                            val message = Gson().fromJson(result, LogInResponse::class.java).message
+                            Toast.makeText(this@SignInActivity, message, Toast.LENGTH_SHORT).show()
                         }
                     }
 

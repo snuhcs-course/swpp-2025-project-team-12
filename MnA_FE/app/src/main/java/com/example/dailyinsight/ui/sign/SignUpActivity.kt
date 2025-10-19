@@ -21,6 +21,7 @@ import com.google.android.material.textfield.TextInputEditText
 import kotlinx.coroutines.launch
 import retrofit2.Call
 import kotlin.math.sign
+import com.google.gson.Gson
 
 class SignUpActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -68,8 +69,9 @@ class SignUpActivity : AppCompatActivity() {
                             val intent = Intent(this@SignUpActivity, SetInterestActivity::class.java)
                             startActivity(intent)
                         } else {
-                            val result = response.body()
-                            Toast.makeText(this@SignUpActivity, result?.message, Toast.LENGTH_SHORT).show()
+                            val result = response.errorBody()?.string()
+                            val message = Gson().fromJson(result, LogInResponse::class.java).message
+                            Toast.makeText(this@SignUpActivity, message, Toast.LENGTH_SHORT).show()
                         }
                     }
 
