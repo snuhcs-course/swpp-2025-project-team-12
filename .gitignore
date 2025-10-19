@@ -9,3 +9,5 @@ __pycache__/
 
 ### MarketIndex
 stockindex/MnA_FE/.idea/
+
+.vscode/

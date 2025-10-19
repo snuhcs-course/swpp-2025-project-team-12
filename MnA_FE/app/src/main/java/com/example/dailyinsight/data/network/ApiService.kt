@@ -35,8 +35,8 @@ interface ApiService {
         @Body request: LogInRequest
     ) : Call<LogInResponse>
 
-    @POST("apps/user/signup")
-    suspend fun signUp(
+    @POST("user/signup")
+    fun signUp(
         @Body request: SignUpRequest
     ) : Call<SignUpResponse>
 }
