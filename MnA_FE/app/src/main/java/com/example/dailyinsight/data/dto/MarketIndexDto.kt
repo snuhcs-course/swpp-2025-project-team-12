@@ -1,6 +1,17 @@
 package com.example.dailyinsight.data.dto
 
+import com.example.dailyinsight.ui.marketindex.StockIndexData
 import com.google.gson.annotations.SerializedName
+
+// ============ Market Index DTOs ============
+
+data class StockIndexLatestResponse(
+    @SerializedName("status")
+    val status: String,
+
+    @SerializedName("data")
+    val data: Map<String, StockIndexData>
+)
 
 // The top-level response object
 data class StockIndexHistoryResponse(
