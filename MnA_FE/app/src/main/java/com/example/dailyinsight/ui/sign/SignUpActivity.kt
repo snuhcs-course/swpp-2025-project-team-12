@@ -10,11 +10,11 @@ import androidx.core.view.WindowInsetsCompat
 import androidx.lifecycle.lifecycleScope
 import com.example.dailyinsight.MainActivity
 import com.example.dailyinsight.R
-import com.example.dailyinsight.data.network.LogInRequest
-import com.example.dailyinsight.data.network.LogInResponse
+import com.example.dailyinsight.data.dto.LogInRequest
+import com.example.dailyinsight.data.dto.LogInResponse
+import com.example.dailyinsight.data.dto.SignUpRequest
+import com.example.dailyinsight.data.dto.SignUpResponse
 import com.example.dailyinsight.data.network.RetrofitInstance
-import com.example.dailyinsight.data.network.SignUpRequest
-import com.example.dailyinsight.data.network.SignUpResponse
 import com.google.android.material.appbar.MaterialToolbar
 import com.google.android.material.button.MaterialButton
 import com.google.android.material.textfield.TextInputEditText

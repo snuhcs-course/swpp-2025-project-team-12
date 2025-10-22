@@ -7,8 +7,8 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.lifecycleScope
 import com.example.dailyinsight.MainActivity
 import com.example.dailyinsight.R
-import com.example.dailyinsight.data.network.LogInRequest
-import com.example.dailyinsight.data.network.LogInResponse
+import com.example.dailyinsight.data.dto.LogInRequest
+import com.example.dailyinsight.data.dto.LogInResponse
 import com.example.dailyinsight.data.network.RetrofitInstance
 import com.example.dailyinsight.ui.start.StartActivity
 import com.google.android.material.appbar.MaterialToolbar
