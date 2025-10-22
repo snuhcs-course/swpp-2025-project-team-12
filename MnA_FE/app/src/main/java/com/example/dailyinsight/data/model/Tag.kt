@@ -1,0 +1,30 @@
+package com.example.dailyinsight.data.model
+
+enum class Tag(val korean: String) {
+    IT_SERVICES("IT서비스"),
+    CONSTRUCTION("건설"),
+    METALS("금속"),
+    MACHINERY_EQUIPMENT("기계.장비"),
+    OTHER_FINANCIAL_COMPANIES("기타금융"),
+    OTHER_MANUFACTURING("기타제조"),
+    AGRICULTURE_FORESTRY_FISHING("농업, 임업 및 어업"),
+    INSURANCE("보험"),
+    REAL_ESTATE("부동산"),
+    NON_METALS("비금속"),
+    TEXTILES_APPAREL("섬유.의류"),
+    ENTERTAINMENT_CULTURE("오락.문화"),
+    TRANSPORTATION_WAREHOUSING("운송.창고"),
+    TRANSPORTATION_EQUIPMENT_COMPONENTS("운송장비.부품"),
+    DISTRIBUTION("유통"),
+    BANK("은행"),
+    FOODS_BEVERAGES_TOBACCO("음식료.담배"),
+    MEDICAL_PRECISION_INSTRUMENTS("의료.정밀기기"),
+    GENERAL_SERVICES("일반서비스"),
+    ELECTRICITY_GAS("전기.가스"),
+    ELECTRICAL_EQUIPMENT_ELECTRONICS("전기.전자"),
+    PHARMACEUTICALS("제약"),
+    PAPER_FOREST_PRODUCTS("종이.목재"),
+    SECURITIES("증권"),
+    TELECOMMUNICATIONS("통신"),
+    CHEMICALS("화학")
+}

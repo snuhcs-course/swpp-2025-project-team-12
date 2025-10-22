@@ -53,7 +53,7 @@
             android:text="안전형" />
 
         <com.google.android.material.button.MaterialButton
-            style="?attr/materialButtonOutlinedStyle"
+            style="@style/Widget.Material3.Button.OutlinedButton"
             android:id="@+id/styleAggressive"
             android:layout_width="344dp"
             android:layout_height="wrap_content"

@@ -65,7 +65,6 @@ class SetStyleActivity : AppCompatActivity() {
 
 
         toNextButton.setOnClickListener {
-            // TODO - send style to server
             style = when {
                 none.isChecked -> Style.NONE
                 stable.isChecked -> Style.STABLE
@@ -73,6 +72,7 @@ class SetStyleActivity : AppCompatActivity() {
                 neutral.isChecked -> Style.NEUTRAL
                 else -> Style.NONE
             }
+            // TODO - send style to server
             // and then
             val intent = Intent(this, MainActivity::class.java)
             finishAffinity()
