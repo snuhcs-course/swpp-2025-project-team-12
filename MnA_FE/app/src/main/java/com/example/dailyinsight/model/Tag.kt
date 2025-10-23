@@ -1,4 +1,4 @@
-package com.example.dailyinsight.data.model
+package com.example.dailyinsight.model
 
 enum class Tag(val korean: String) {
     IT_SERVICES("IT서비스"),

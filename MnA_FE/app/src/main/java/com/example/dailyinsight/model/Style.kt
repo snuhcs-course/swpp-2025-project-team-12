@@ -1,4 +1,4 @@
-package com.example.dailyinsight.data.model
+package com.example.dailyinsight.model
 
 enum class Style {
     STABLE,

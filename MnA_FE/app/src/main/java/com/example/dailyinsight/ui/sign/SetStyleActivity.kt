@@ -2,17 +2,14 @@ package com.example.dailyinsight.ui.sign
 
 import android.content.Intent
 import android.os.Bundle
-import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
-import androidx.core.view.ViewCompat
-import androidx.core.view.WindowInsetsCompat
 
 import com.google.android.material.button.MaterialButton
 
 import com.example.dailyinsight.MainActivity
 import com.example.dailyinsight.R
 import com.google.android.material.appbar.MaterialToolbar
-import com.example.dailyinsight.data.model.Style
+import com.example.dailyinsight.model.Style
 import com.google.android.material.checkbox.MaterialCheckBox
 
 class SetStyleActivity : AppCompatActivity() {

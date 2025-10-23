@@ -2,15 +2,13 @@ package com.example.dailyinsight.ui.sign
 
 import android.content.Intent
 import android.os.Bundle
-import android.view.ContextThemeWrapper
 import android.view.LayoutInflater
 import android.view.ViewGroup.LayoutParams
 import android.widget.LinearLayout
-import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.children
 import com.example.dailyinsight.R
-import com.example.dailyinsight.data.model.Tag
+import com.example.dailyinsight.model.Tag
 import com.example.dailyinsight.utils.dp
 import com.google.android.material.appbar.MaterialToolbar
 import com.google.android.material.button.MaterialButton
