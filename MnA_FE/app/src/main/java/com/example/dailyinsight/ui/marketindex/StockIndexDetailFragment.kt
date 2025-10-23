@@ -80,15 +80,21 @@ class StockIndexDetailFragment : Fragment() {
     private fun setupChart(dataPoints: List<ChartDataPoint>) {
         val entries = dataPoints.map { Entry(it.timestamp.toFloat(), it.closePrice) }
 
+        // Determine if the trend is upward by comparing the first and last points
+        val isUpwardTrend = dataPoints.last().closePrice >= dataPoints.first().closePrice
+        // Select the appropriate color and fill drawable based on the trend
+        val lineColorRes = if (isUpwardTrend) R.color.positive_red else R.color.negative_blue
+        val fillDrawableRes = if (isUpwardTrend) R.drawable.chart_fade_red else R.drawable.chart_fade_blue
+
         val dataSet = LineDataSet(entries, "Stock Index Price").apply {
-            color = ContextCompat.getColor(requireContext(), R.color.purple_200)
+            color = ContextCompat.getColor(requireContext(), lineColorRes)
             valueTextColor = Color.BLACK
             setDrawValues(false)
             setDrawCircles(false)
             lineWidth = 2f
             mode = LineDataSet.Mode.CUBIC_BEZIER
             setDrawFilled(true)
-            fillDrawable = ContextCompat.getDrawable(requireContext(), R.drawable.chart_fade_blue)
+            fillDrawable = ContextCompat.getDrawable(requireContext(), fillDrawableRes)
         }
 
         val lineData = LineData(dataSet)

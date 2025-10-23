@@ -13,21 +13,27 @@ class RecommendationBatch(models.Model):
         db_table = "recommendation_batches"
         unique_together = (("market_date", "risk_profile"),)
 
+
 class RecommendationItem(models.Model):
-    batch    = models.ForeignKey(RecommendationBatch, on_delete=models.CASCADE, related_name="items")
-    rank     = models.IntegerField()
-    ticker   = models.CharField(max_length=16)
-    name     = models.CharField(max_length=128)
+    batch       = models.ForeignKey(RecommendationBatch, on_delete=models.CASCADE, related_name="items")
+    rank        = models.IntegerField()
+    ticker      = models.CharField(max_length=16)
+    name        = models.CharField(max_length=128)
+    market      = models.CharField(max_length=10, default="KOSPI") # KOSPI/KOSDAQ/
     news_titles = models.JSONField(default=list)
     news_urls   = models.JSONField(default=list)
     reason      = models.JSONField(default=list)
+    expected_direction = models.CharField(max_length=10, default="neutral")  # up/down/neutral
+    conviction  = models.FloatField(default=0.5)
     score       = models.DecimalField(max_digits=6, decimal_places=3, null=True, blank=True)
 
     class Meta:
         db_table = "recommendation_items"
         ordering = ["rank"]
-        indexes = [models.Index(fields=["batch", "rank"]),
-                   models.Index(fields=["ticker"])]
+        indexes = [
+            models.Index(fields=["batch", "rank"]),
+            models.Index(fields=["ticker"])
+        ]
 
 '''class Stock(models.Model):
     ticker   = models.CharField(primary_key=True, max_length=16)

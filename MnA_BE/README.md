@@ -7,7 +7,19 @@ TODO
 * activate and deactivate virtual environment
 ```
     .venv/scripts/activate
+```
+```
     deactivate
+```
+
+* python package installation
+```
+    pip install -r requirements.txt
+```
+
+* update python packages
+```
+    pip freeze > requirements.txt
 ```
 
 * run server
@@ -17,7 +29,7 @@ TODO
 
 * DB management
 ```
-    python manage.py makemigrations DailyInsight --pythonpath="apps"
+    python manage.py makemigrations api --pythonpath="apps"
 ```
 ```
     python manage.py makemigrations user --pythonpath="apps"

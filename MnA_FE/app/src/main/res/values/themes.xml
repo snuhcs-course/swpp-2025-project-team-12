@@ -10,14 +10,15 @@
         <item name="colorSecondaryVariant">@color/teal_700</item>
         <item name="colorOnSecondary">@color/black</item>
         <!-- Status bar color. -->
-        <item name="android:statusBarColor">@android:color/transparent</item>
+        <item name="android:navigationBarColor">@android:color/white</item>
+        <item name="android:statusBarColor">@android:color/white</item>
         <item name="android:windowLightStatusBar" tools:targetApi="m">true</item>
         <!-- Customize your theme here. -->
 
         <!--This attribute sets the default background color for the entire app window. It's the color you see behind all your layouts and fragments.-->
-        <item name="android:windowBackground">@color/white</item>
+        <item name="android:windowBackground">@android:color/white</item>
         <!-- This is a Material Design 3 attribute that defines the color for "surface" components. This includes your AppBarLayout, MaterialCardView, menus, and more. By setting this to white, you ensure these components also have a white background, creating a consistent look. -->
-        <item name="colorSurface">@color/white</item>
+        <item name="colorSurface">@android:color/white</item>
     </style>
     <style name="TextAppearance.App.DisplaySmallEmphasis" parent="TextAppearance.Material3.DisplaySmall">
         <item name="android:textStyle">bold</item>

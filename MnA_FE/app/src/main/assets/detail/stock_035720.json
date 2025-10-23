@@ -1,0 +1,45 @@
+{
+  "ticker": "035720",
+  "name": "카카오",
+  "price": 44700,
+  "change": 700,
+  "change_rate": 1.59,
+  "chart": [
+    { "t": 1719897600000, "v": 380.0 },
+    { "t": 1722489600000, "v": 395.0 }
+  ],
+  "market_cap": "20.950 B",
+  "shares_outstanding": "0.90 B",
+  "net_income": {
+    "annual": [
+      { "period": "2022", "value": "0.210 B" },
+      { "period": "2021", "value": "0.265 B" },
+      { "period": "2020", "value": "0.190 B" }
+    ],
+    "quarter": [
+      { "period": "Q1", "value": "48 B" },
+      { "period": "Q2", "value": "52 B" },
+      { "period": "Q3", "value": "-"  },
+      { "period": "Q4", "value": "-"  }
+    ]
+  },
+  "valuation": {
+    "pe_annual": "35.20",
+    "pe_ttm": "32.80",
+    "forward_pe": "28.40",
+    "ps_ttm": "2.40",
+    "pb": "2.10",
+    "pcf_ttm": "15.50",
+    "pfcf_ttm": "14.00"
+  },
+  "solvency": {
+    "current_ratio": "1.30",
+    "quick_ratio": "1.14",
+    "de_ratio": "0.42"
+  },
+  "dividend": {
+    "payout_ratio": "5.00%",
+    "yield": "0.20%",
+    "latest_exdate": "2024-03-27"
+  }
+}

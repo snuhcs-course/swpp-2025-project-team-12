@@ -3,7 +3,6 @@
     xmlns:tools="http://schemas.android.com/tools">
     <uses-permission android:name="android.permission.INTERNET"/>
 
-
     <!-- usesCleartextTraffic has Security Risks, but is needed for local dev on HTTP -->
     <application
         android:allowBackup="true"
@@ -15,6 +14,7 @@
         android:supportsRtl="true"
         android:usesCleartextTraffic="true"
         android:theme="@style/Theme.DailyInsight">
+
         <activity
             android:name=".ui.sign.SetStyleActivity"
             android:exported="false" />
@@ -32,13 +32,13 @@
             android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
-
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
         <activity
             android:name=".MainActivity"
             android:exported="false" />
+
     </application>
 
 </manifest>
