@@ -4,7 +4,7 @@ from django.http import JsonResponse
 from .models import User
 import bcrypt
 from utils.token_handler import *
-from utils.validation import validate_password
+from utils.validation import validate_password, validate_name
 from decorators import *
 from S3 import S3Client
 from django.views.decorators.csrf import csrf_exempt
@@ -97,8 +97,12 @@ def signup(request):
     if User.objects.filter(name=user_id).exists():
         return JsonResponse({"message": "USER ALREADY EXISTS"}, status=409)
 
-    if not validate_password(password):
-        return JsonResponse({"message": "WRONG PASSWORD FORMAT"}, status=400)
+
+    try:
+        validate_password(password)
+        validate_name(user_id)
+    except Exception as e:
+        return JsonResponse({ "message": f"INVALID ID OR PASSWORD FORMAT {e}" }, status=400)
 
     hashed = bcrypt.hashpw(password.encode("utf-8"), bcrypt.gensalt()).decode("utf-8")
 
