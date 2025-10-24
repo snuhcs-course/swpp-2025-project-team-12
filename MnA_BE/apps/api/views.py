@@ -8,6 +8,7 @@ from apps.common.mock_data import MOCK_INDICES, MOCK_ARTICLES, mock_recommendati
 from .utils import get_pagination, ok, degraded, iso_now
 import pytz, datetime as _dt
 from apps.api.models import RecommendationBatch, RecommendationItem
+from decorators import default_error_handler
 
 KST = pytz.timezone("Asia/Seoul")
 
@@ -22,7 +23,7 @@ INDICES_SOURCE    = os.getenv("INDICES_SOURCE",  "mock")   # mock | s3
 def _market_date_kst():
     return _dt.datetime.now(KST).strftime("%Y-%m-%d")
 
-
+@default_error_handler
 @require_GET
 def health(request: HttpRequest):
     """
@@ -64,6 +65,7 @@ def health(request: HttpRequest):
         "asOf": iso_now()
     })
 
+@default_error_handler
 @require_GET
 def indices(request: HttpRequest):
     """
@@ -86,6 +88,7 @@ def indices(request: HttpRequest):
     # Mock fallback
     return ok(MOCK_INDICES)
 
+@default_error_handler
 @require_GET
 def articles_top(request: HttpRequest):
     """
@@ -125,6 +128,7 @@ def articles_top(request: HttpRequest):
         "source": "mock"
     })
 
+@default_error_handler
 @require_GET
 def company_profiles(request: HttpRequest):
     """
@@ -185,6 +189,8 @@ def company_profiles(request: HttpRequest):
     except Exception as e:
         return degraded(str(e), source="s3", total=0, limit=limit, offset=offset)
 
+
+@default_error_handler
 @require_GET
 def recommendations_general(request: HttpRequest):
     """
@@ -251,6 +257,7 @@ def recommendations_general(request: HttpRequest):
         "personalized": False,
     })
 
+@default_error_handler
 @require_GET
 def recommendations_personalized(request: HttpRequest):
     """
@@ -277,6 +284,8 @@ def recommendations_personalized(request: HttpRequest):
     except Exception as e:
         return degraded(str(e), source="mock", total=0, limit=limit, offset=offset)
 
+
+@default_error_handler
 @require_GET
 def reports_detail(request: HttpRequest, symbol: str):
     """
