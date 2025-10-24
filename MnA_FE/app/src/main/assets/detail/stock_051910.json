@@ -1,0 +1,45 @@
+{
+  "ticker": "051910",
+  "name": "LG화학",
+  "price": 516000,
+  "change": 9000,
+  "change_rate": 1.78,
+  "chart": [
+    { "t": 1719897600000, "v": 980.0 },
+    { "t": 1722489600000, "v": 1010.0 }
+  ],
+  "market_cap": "36.400 B",
+  "shares_outstanding": "0.07 B",
+  "net_income": {
+    "annual": [
+      { "period": "2022", "value": "0.950 B" },
+      { "period": "2021", "value": "1.120 B" },
+      { "period": "2020", "value": "0.780 B" }
+    ],
+    "quarter": [
+      { "period": "Q1", "value": "235 B" },
+      { "period": "Q2", "value": "240 B" },
+      { "period": "Q3", "value": "-"   },
+      { "period": "Q4", "value": "-"   }
+    ]
+  },
+  "valuation": {
+    "pe_annual": "15.60",
+    "pe_ttm": "14.90",
+    "forward_pe": "13.10",
+    "ps_ttm": "1.25",
+    "pb": "1.05",
+    "pcf_ttm": "9.80",
+    "pfcf_ttm": "9.10"
+  },
+  "solvency": {
+    "current_ratio": "1.60",
+    "quick_ratio": "1.32",
+    "de_ratio": "0.50"
+  },
+  "dividend": {
+    "payout_ratio": "22.00%",
+    "yield": "1.90%",
+    "latest_exdate": "2024-03-28"
+  }
+}

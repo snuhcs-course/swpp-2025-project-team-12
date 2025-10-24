@@ -1,0 +1,34 @@
+{
+  "ticker": "005930",
+  "name": "삼성전자",
+  "price": 74800,
+  "change": 1200,
+  "change_rate": 1.63,
+  "chart": [
+    { "t": 1719897600000, "v": 700.0 },
+    { "t": 1722489600000, "v": 715.0 }
+  ],
+  "market_cap": "10.436 B",
+  "shares_outstanding": "15.02 B",
+  "net_income": {
+    "annual":  [
+      { "period": "2022", "value": "1.631 B" },
+      { "period": "2021", "value": "1.523 B" },
+      { "period": "2020", "value": "1.489 B" }
+    ],
+    "quarter": [
+      { "period": "Q1", "value": "454 B" }, { "period": "Q2", "value": "362 B" },
+      { "period": "Q3", "value": "-"     }, { "period": "Q4", "value": "-"     }
+    ]
+  },
+  "valuation": {
+    "pe_annual": "6.40", "pe_ttm": "6.80", "forward_pe": "-",
+    "ps_ttm": "1.53", "pb": "0.98", "pcf_ttm": "4.82", "pfcf_ttm": "5.18"
+  },
+  "solvency": {
+    "current_ratio": "-", "quick_ratio": "-", "de_ratio": "-"
+  },
+  "dividend": {
+    "payout_ratio": "51.37%", "yield": "7.50%", "latest_exdate": "2022-03-28"
+  }
+}
