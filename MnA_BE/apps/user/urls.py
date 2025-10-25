@@ -3,7 +3,9 @@ from . import views
 from .info import urlpatterns as info_urls
 from .style import urlpatterns as style_urls
 
+
 urlpatterns = [
+    path('csrf', views.get_csrf_cookie, name='get_csrf_cookie'),
     path('login', views.login, name='login'),
     path('logout', views.logout, name='logout'),
     path('signup', views.signup, name='signup'),

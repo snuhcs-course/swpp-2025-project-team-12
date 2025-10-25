@@ -11,10 +11,18 @@ from django.views.decorators.csrf import csrf_exempt
 import os
 import json
 
-def hello(request):
-    return JsonResponse({"message": "Hello, world!"})
+from django.utils.decorators import method_decorator
+from django.views.decorators.csrf import ensure_csrf_cookie, csrf_protect
 
-@csrf_exempt
+@default_error_handler
+@ensure_csrf_cookie
+def get_csrf_cookie(request):
+    """
+    GET: Set CSRF cookie
+    """
+    return JsonResponse({ "message": "CSRF COOKIE SET" }, status=200)
+
+@csrf_protect
 @default_error_handler
 def login(request):
     """
@@ -59,6 +67,7 @@ def login(request):
 
 
 @default_error_handler
+@csrf_protect
 @require_auth
 def logout(request, user):
     """
@@ -71,8 +80,9 @@ def logout(request, user):
     delete_cookie(response)
     return response
 
-@csrf_exempt
+
 @default_error_handler
+@csrf_protect
 def signup(request):
     """
     POST: create account. require 'id'(username) and 'password'
@@ -123,6 +133,7 @@ def signup(request):
 
 
 @default_error_handler
+@csrf_protect
 @require_auth
 def withdraw(request, user):
     """
