@@ -1,51 +1,12 @@
 # apps/api/views.py
-import os
-from django.http import HttpRequest, JsonResponse
+
+from django.http import HttpRequest
 from django.views.decorators.http import require_GET
 from S3.finance import FinanceS3Client
-from Mocks.mock_data import MOCK_INDICES, MOCK_ARTICLES, mock_recommendations
-from utils.time import iso_now
+from Mocks.mock_data import MOCK_INDICES, MOCK_ARTICLES
 from utils.pagination import get_pagination
-import pytz, datetime as _dt
-from apps.api.models import RecommendationBatch, RecommendationItem
-
-########################################
-### Settings
-########################################
-FINANCE_BUCKET    = os.getenv("FINANCE_BUCKET_NAME")
-S3_PREFIX_COMPANY = os.getenv("S3_PREFIX_COMPANY_PROFILE", "company-profile/")
-S3_PREFIX_PRICE   = os.getenv("S3_PREFIX_PRICE_FIN",      "price-financial-info/")
-S3_PREFIX_INDICES = os.getenv("S3_PREFIX_INDICES",        "stock-index/")
-S3_PREFIX_ARTICLE = os.getenv("S3_PREFIX_ARTICLES",       "articles/")
-
-ARTICLES_SOURCE   = os.getenv("ARTICLES_SOURCE", "mock")   # mock | s3
-INDICES_SOURCE    = os.getenv("INDICES_SOURCE",  "mock")   # mock | s3
-
-
-
-########################################
-### Utils
-########################################
-KST = pytz.timezone("Asia/Seoul")
-
-def _market_date_kst():
-    return _dt.datetime.now(KST).strftime("%Y-%m-%d")
-
-def ok(payload: dict, status=200, **meta):
-    if "asOf" not in payload:
-        payload["asOf"] = iso_now()
-    if meta:
-        payload.update(meta)
-    return JsonResponse(payload, status=status, json_dumps_params={"ensure_ascii": False})
-
-def degraded(msg: str, source="s3", status=200, **extra):
-    return ok({"degraded": True, "error": str(msg)[:200], "source": source}, status=status, **extra)
-
-
-
-########################################
-### Views
-########################################
+from utils.for_api import *
+from apps.api.constants import *
 
 @require_GET
 def health(request: HttpRequest):
@@ -110,49 +71,6 @@ def indices(request: HttpRequest):
     return ok(MOCK_INDICES)
 
 @require_GET
-def articles_top(request: HttpRequest):
-    """
-    GET /api/articles/top?limit=<int>&offset=<int>
-    상위 기사: 페이지네이션 적용
-    """
-    limit, offset = get_pagination(request, default_limit=10, max_limit=50)
-    
-    if ARTICLES_SOURCE == "s3":
-        try:
-            data, ts = FinanceS3Client().get_latest_json(
-                FINANCE_BUCKET,
-                S3_PREFIX_ARTICLE
-            )
-
-            if data:
-                items = data.get("items", [])
-                total = len(items)
-                page_items = items[offset:offset+limit]
-                return ok({
-                    "items": page_items,
-                    "total": total,
-                    "limit": limit,
-                    "offset": offset,
-                    "asOf": ts,
-                    "source": "s3"
-                })
-        except Exception as e:
-            return degraded(str(e), source="s3", total=0, limit=limit, offset=offset)
-    
-    # Mock fallback
-    items = MOCK_ARTICLES.get("items", [])
-    total = len(items)
-    page_items = items[offset:offset+limit]
-    return ok({
-        "items": page_items,
-        "total": total,
-        "limit": limit,
-        "offset": offset,
-        "asOf": MOCK_ARTICLES.get("asOf", iso_now()),
-        "source": "mock"
-    })
-
-@require_GET
 def company_profiles(request: HttpRequest):
     """
     GET /api/company-profiles?limit=<int>&offset=<int>&market=kospi|kosdaq&date=YYYY-MM-DD
@@ -214,98 +132,6 @@ def company_profiles(request: HttpRequest):
         
     except Exception as e:
         return degraded(str(e), source="s3", total=0, limit=limit, offset=offset)
-
-@require_GET
-def recommendations_general(request: HttpRequest):
-    """
-    GET /api/recommendations/general?limit=&offset=&date=YYYY-MM-DD&risk=공격투자형
-    1) DB 배치가 있으면 DB 결과 서빙
-    2) 없으면 기존 mock 결과 폴백
-    """
-    limit, offset = get_pagination(request, default_limit=10, max_limit=100)
-    risk = request.GET.get("risk", "공격투자형")
-    date_q = request.GET.get("date")
-
-    # KST 기준 market_date 결정
-    if date_q:
-        try:
-            market_date = _dt.datetime.strptime(date_q, "%Y-%m-%d").date()
-        except ValueError:
-            market_date = _dt.datetime.now(KST).date()
-    else:
-        market_date = _dt.datetime.now(KST).date()
-
-    # --- DB 우선 경로 ---
-    batch = RecommendationBatch.objects.filter(
-        market_date=market_date, risk_profile=risk
-    ).first()
-
-    if batch:
-        qs = RecommendationItem.objects.filter(batch=batch).order_by("rank")
-        total = qs.count()
-        items = []
-        for it in qs[offset:offset+limit]:
-            items.append({
-                "ticker": it.ticker,
-                "name": it.name,
-                "market": it.market,  # ← 추가
-                "news": it.news_titles,
-                "reason": it.reason,
-                "rank": it.rank,
-                "expected_direction": it.expected_direction,  # ← 추가
-                "conviction": it.conviction,  # ← 추가
-            })
-        return ok({
-            "items": items,
-            "total": total,
-            "limit": limit,
-            "offset": offset,
-            "asOf": batch.as_of_utc.isoformat(),
-            "source": batch.source,               # "mock" or "llm"
-            "marketDate": market_date.strftime("%Y-%m-%d"),
-            "personalized": False,
-        })
-
-    # --- 폴백: 기존 mock ---
-    data = mock_recommendations()
-    src_items = data.get("items", [])
-    page_items = src_items[offset:offset+limit]
-    return ok({
-        "items": page_items,
-        "total": len(src_items),
-        "limit": limit,
-        "offset": offset,
-        "asOf": data.get("asOf", iso_now()),
-        "source": data.get("source", "mock"),
-        "marketDate": _market_date_kst(),
-        "personalized": False,
-    })
-
-@require_GET
-def recommendations_personalized(request: HttpRequest):
-    """
-    GET /api/recommendations/personalized?limit=<int>&offset=<int>
-    개인화 추천 (Iter3에서 프로필 DB 연동)
-    """
-    limit, offset = get_pagination(request, default_limit=10, max_limit=100)
-    
-    try:
-        # TODO: 프로필 interests[] 연동 + P17 호출
-        data = mock_recommendations()
-        items = data.get("items", [])
-        total = len(items)
-        page_items = items[offset:offset+limit]
-        
-        return ok({
-            "items": page_items,
-            "total": total,
-            "limit": limit,
-            "offset": offset,
-            "asOf": iso_now(),
-            "source": "mock-personalized"
-        })
-    except Exception as e:
-        return degraded(str(e), source="mock", total=0, limit=limit, offset=offset)
 
 @require_GET
 def reports_detail(request: HttpRequest, symbol: str):
