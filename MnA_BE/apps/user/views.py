@@ -1,10 +1,12 @@
 # apps/user/views.py  (merged)
 
 from django.http import JsonResponse
+from django.views.decorators.http import require_POST
+
 from .models import User
 import bcrypt
 from utils.token_handler import *
-from utils.validation import validate_password
+from utils.validation import validate_password, validate_name
 from decorators import *
 from S3 import S3Client
 from django.views.decorators.csrf import csrf_exempt
@@ -16,12 +18,11 @@ def hello(request):
 
 @csrf_exempt
 @default_error_handler
+@require_POST
 def login(request):
     """
     POST: login with given 'id' (username) and 'password'
     """
-    if request.method != "POST":
-        return JsonResponse({"message": "METHOD NOT ALLOWED"}, status=405)
 
     try:
         body = json.loads(request.body.decode("utf-8"))
@@ -59,28 +60,24 @@ def login(request):
 
 
 @default_error_handler
+@require_POST
 @require_auth
 def logout(request, user):
     """
     POST: logout user
     """
-    if request.method != "POST":
-        return JsonResponse({"message": "METHOD NOT ALLOWED"}, status=405)
-
     response = JsonResponse({"message": "LOGOUT SUCCESS"}, status=200)
     delete_cookie(response)
     return response
 
 @csrf_exempt
 @default_error_handler
+@require_POST
 def signup(request):
     """
     POST: create account. require 'id'(username) and 'password'
     - PK는 AutoField, 'id'는 User.name으로 저장
     """
-    if request.method != "POST":
-        return JsonResponse({"message": "METHOD NOT ALLOWED"}, status=405)
-
     try:
         body = json.loads(request.body.decode("utf-8"))
     except Exception:
@@ -97,8 +94,12 @@ def signup(request):
     if User.objects.filter(name=user_id).exists():
         return JsonResponse({"message": "USER ALREADY EXISTS"}, status=409)
 
-    if not validate_password(password):
-        return JsonResponse({"message": "WRONG PASSWORD FORMAT"}, status=400)
+
+    try:
+        validate_password(password)
+        validate_name(user_id)
+    except Exception as e:
+        return JsonResponse({ "message": f"INVALID ID OR PASSWORD FORMAT {e}" }, status=400)
 
     hashed = bcrypt.hashpw(password.encode("utf-8"), bcrypt.gensalt()).decode("utf-8")
 
