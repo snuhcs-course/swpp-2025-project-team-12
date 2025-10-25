@@ -7,9 +7,11 @@ import okhttp3.logging.HttpLoggingInterceptor
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.ResponseBody.Companion.toResponseBody
 import okhttp3.Protocol
+import okhttp3.JavaNetCookieJar
 import android.util.Log
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
+import java.net.CookieManager
 import java.net.HttpURLConnection
 
 /**
@@ -31,6 +33,7 @@ object RetrofitInstance {
                 if (MOCK_MODE) addInterceptor(MockInterceptor())
                 addInterceptor(logging)
             }
+            .cookieJar(JavaNetCookieJar(CookieManager()))
             .build()
     }
 
