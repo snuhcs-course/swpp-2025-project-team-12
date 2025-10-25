@@ -1,10 +1,9 @@
 # apps/api/views.py
 import os
-from typing import Any, Dict
 from django.http import HttpRequest
 from django.views.decorators.http import require_GET
-from apps.common.s3_reader import read_latest_parquet_df, read_latest_json, find_latest_object
-from apps.common.mock_data import MOCK_INDICES, MOCK_ARTICLES, mock_recommendations
+from S3.s3_reader import read_latest_parquet_df, read_latest_json, find_latest_object
+from Mocks.mock_data import MOCK_INDICES, MOCK_ARTICLES, mock_recommendations
 from .utils import get_pagination, ok, degraded, iso_now
 import pytz, datetime as _dt
 from apps.api.models import RecommendationBatch, RecommendationItem
