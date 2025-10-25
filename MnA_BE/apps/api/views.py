@@ -1,15 +1,18 @@
 # apps/api/views.py
 import os
-from django.http import HttpRequest
+from django.http import HttpRequest, JsonResponse
 from django.views.decorators.http import require_GET
-from S3.s3_reader import read_latest_parquet_df, read_latest_json, find_latest_object
+from S3.finance import FinanceS3Client
 from Mocks.mock_data import MOCK_INDICES, MOCK_ARTICLES, mock_recommendations
-from .utils import get_pagination, ok, degraded, iso_now
+from utils.time import iso_now
+from utils.pagination import get_pagination
 import pytz, datetime as _dt
 from apps.api.models import RecommendationBatch, RecommendationItem
 
-KST = pytz.timezone("Asia/Seoul")
-
+########################################
+### Settings
+########################################
+FINANCE_BUCKET    = os.getenv("FINANCE_BUCKET_NAME")
 S3_PREFIX_COMPANY = os.getenv("S3_PREFIX_COMPANY_PROFILE", "company-profile/")
 S3_PREFIX_PRICE   = os.getenv("S3_PREFIX_PRICE_FIN",      "price-financial-info/")
 S3_PREFIX_INDICES = os.getenv("S3_PREFIX_INDICES",        "stock-index/")
@@ -18,9 +21,31 @@ S3_PREFIX_ARTICLE = os.getenv("S3_PREFIX_ARTICLES",       "articles/")
 ARTICLES_SOURCE   = os.getenv("ARTICLES_SOURCE", "mock")   # mock | s3
 INDICES_SOURCE    = os.getenv("INDICES_SOURCE",  "mock")   # mock | s3
 
+
+
+########################################
+### Utils
+########################################
+KST = pytz.timezone("Asia/Seoul")
+
 def _market_date_kst():
     return _dt.datetime.now(KST).strftime("%Y-%m-%d")
 
+def ok(payload: dict, status=200, **meta):
+    if "asOf" not in payload:
+        payload["asOf"] = iso_now()
+    if meta:
+        payload.update(meta)
+    return JsonResponse(payload, status=status, json_dumps_params={"ensure_ascii": False})
+
+def degraded(msg: str, source="s3", status=200, **extra):
+    return ok({"degraded": True, "error": str(msg)[:200], "source": source}, status=status, **extra)
+
+
+
+########################################
+### Views
+########################################
 
 @require_GET
 def health(request: HttpRequest):
@@ -28,28 +53,23 @@ def health(request: HttpRequest):
     GET /api/health
     각 소스별 최신 객체의 존재/시각 확인
     """
-    def check_s3_source(prefix):
-        obj = find_latest_object(prefix)
-        if not obj:
-            return {"ok": False, "latest": None}
-        # 날짜 추출 시도 (파일명에서 YYYY-MM-DD 패턴)
-        key = obj["Key"]
-        date_str = None
-        if "/" in key:
-            filename = key.split("/")[-1]
-            # 간단히 YYYY-MM-DD.확장자 형태 가정
-            if filename.count("-") >= 2:
-                date_str = filename.split(".")[0]  # 2025-10-01
-        return {
-            "ok": True,
-            "latest": date_str or obj["LastModified"].strftime("%Y-%m-%d")
-        }
+
+    company_profile_head = (FinanceS3Client()
+    .check_source(
+        FINANCE_BUCKET,
+        S3_PREFIX_COMPANY
+    ))
+    price_financial_head = (FinanceS3Client()
+    .check_source(
+        FINANCE_BUCKET,
+        S3_PREFIX_COMPANY
+    ))
     
     s3_status = {
         "ok": True,
         "latest": {
-            "companyProfile": check_s3_source(S3_PREFIX_COMPANY)["latest"],
-            "priceFinancial": check_s3_source(S3_PREFIX_PRICE)["latest"]
+            "companyProfile": company_profile_head["latest"],
+            "priceFinancial": price_financial_head["latest"]
         }
     }
     
@@ -71,7 +91,11 @@ def indices(request: HttpRequest):
     """
     if INDICES_SOURCE == "s3":
         try:
-            data, ts = read_latest_json(S3_PREFIX_INDICES)
+            data, ts = FinanceS3Client().get_latest_json(
+                FINANCE_BUCKET,
+                S3_PREFIX_INDICES
+            )
+
             if data:
                 return ok({
                     "kospi": data.get("kospi", {"value": 0, "changePct": 0}),
@@ -95,7 +119,11 @@ def articles_top(request: HttpRequest):
     
     if ARTICLES_SOURCE == "s3":
         try:
-            data, ts = read_latest_json(S3_PREFIX_ARTICLE)
+            data, ts = FinanceS3Client().get_latest_json(
+                FINANCE_BUCKET,
+                S3_PREFIX_ARTICLE
+            )
+
             if data:
                 items = data.get("items", [])
                 total = len(items)
@@ -136,7 +164,10 @@ def company_profiles(request: HttpRequest):
     symbol = request.GET.get("symbol")  # 특정 심볼 조회용 (선택)
     
     try:
-        df, ts = read_latest_parquet_df(S3_PREFIX_COMPANY)
+        df, ts = FinanceS3Client().get_latest_json(
+            FINANCE_BUCKET,
+            S3_PREFIX_COMPANY
+        )
         if df is None or len(df) == 0:
             return degraded("no parquet found", source="s3", total=0, limit=limit, offset=offset)
         
@@ -283,7 +314,10 @@ def reports_detail(request: HttpRequest, symbol: str):
     상세 리포트: 회사 프로필 + (선택) 가격/지표 + 기사 요약
     """
     try:
-        profile_df, ts_prof = read_latest_parquet_df(S3_PREFIX_COMPANY)
+        profile_df, ts_prof = FinanceS3Client().get_latest_json(
+            FINANCE_BUCKET,
+            S3_PREFIX_COMPANY
+        )
         profile = None
         
         if profile_df is not None and symbol in profile_df.index:
