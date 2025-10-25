@@ -6,7 +6,7 @@ import bcrypt
 from utils.token_handler import *
 from utils.validation import validate_password
 from decorators import *
-from S3 import S3Client
+from S3.base import S3Client
 from django.views.decorators.csrf import csrf_exempt
 import os
 import json
