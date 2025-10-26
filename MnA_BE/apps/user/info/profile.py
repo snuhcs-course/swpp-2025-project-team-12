@@ -1,6 +1,6 @@
 from django.http import JsonResponse
 from decorators import *
-from S3 import S3Client
+from S3.base import S3Client
 import json
 import os
 

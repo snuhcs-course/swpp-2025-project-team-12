@@ -7,9 +7,9 @@ import traceback
 import mimetypes
 from io import BytesIO
 from typing import Optional
+import pandas as pd
 
 import boto3
-import pandas as pd  # pandas as pandas → pd로 통일
 
 # debug_print 폴백
 try:
@@ -17,7 +17,6 @@ try:
 except Exception:  # util이 없으면 print로 대체
     def debug_print(msg):
         print(msg)
-
 
 def _get_env(*keys: str, default: Optional[str] = None) -> Optional[str]:
     """
