@@ -45,7 +45,6 @@ INSTALLED_APPS = [
     # custom apps
     "corsheaders",
     "apps.user",
-    "apps.DailyInsight",
     "apps.MarketIndex",
     "apps.api",
 ]
