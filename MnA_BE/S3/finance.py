@@ -24,7 +24,6 @@ class FinanceS3Client(S3Client):
         secret_key = _get_env("FINANCE_IAM_SECRET_KEY", "FINANCE_AWS_SECRET_ACCESS_KEY")
 
     ):
-        print(access_key, secret_key)
         super().__init__(access_key, secret_key)
 
     # --- pandas helpers ---
