@@ -20,7 +20,7 @@ import java.net.HttpURLConnection
  * Base URL: http://10.0.2.2:8000/ (for Android emulator)
  */
 object RetrofitInstance {
-    private const val BASE_URL = "http://10.0.2.2:8000/"
+    private const val BASE_URL = "http://ec2-3-34-197-82.ap-northeast-2.compute.amazonaws.com:8000/"
 
     // Toggle: true = today/history network calls return mock responses
     private const val MOCK_MODE = true

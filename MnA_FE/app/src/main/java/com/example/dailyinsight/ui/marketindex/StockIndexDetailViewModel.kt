@@ -8,6 +8,7 @@ import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
+import com.example.dailyinsight.data.dto.StockIndexData
 import com.example.dailyinsight.data.dto.StockIndexHistoryItem // New import
 import com.example.dailyinsight.data.repository.MarketIndexRepository
 import kotlinx.coroutines.launch
@@ -30,6 +31,14 @@ class StockIndexDetailViewModel(application: Application, private val stockIndex
     private val _error = MutableLiveData<String>()
     val error: LiveData<String> = _error
 
+    // --- ADD LIVE DATA FOR 1-YEAR HIGH/LOW ---
+    private val _yearHigh = MutableLiveData<Double>()
+    val yearHigh: LiveData<Double> = _yearHigh
+
+    private val _yearLow = MutableLiveData<Double>()
+    val yearLow: LiveData<Double> = _yearLow
+    // --- END ---
+
     init {
         loadData()
     }
@@ -47,6 +56,15 @@ class StockIndexDetailViewModel(application: Application, private val stockIndex
                 val historicalDataList = repository.getHistoricalData(stockIndexType, 365) // This now returns a List
                 val chartPoints = parseHistoryListToChartPoints(historicalDataList) // Pass the list to the parser
                 _historicalData.postValue(chartPoints)
+
+                // --- ADD LOGIC TO CALCULATE 1-YEAR HIGH/LOW ---
+                if (historicalDataList.isNotEmpty()) {
+                    val yearHigh = historicalDataList.maxOfOrNull { it.close }
+                    val yearLow = historicalDataList.minOfOrNull { it.close }
+                    _yearHigh.postValue(yearHigh)
+                    _yearLow.postValue(yearLow)
+                }
+                // --- END ---
 
             } catch (e: Exception) {
                 _error.postValue("Failed to fetch data: ${e.message}")
