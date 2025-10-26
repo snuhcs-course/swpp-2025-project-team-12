@@ -2,7 +2,7 @@ package com.example.dailyinsight.data.repository
 
 import com.example.dailyinsight.data.dto.StockIndexHistoryItem // New import
 import com.example.dailyinsight.data.network.RetrofitInstance
-import com.example.dailyinsight.ui.marketindex.StockIndexData
+import com.example.dailyinsight.data.dto.StockIndexData
 
 class MarketIndexRepository {
     private val apiService = RetrofitInstance.api

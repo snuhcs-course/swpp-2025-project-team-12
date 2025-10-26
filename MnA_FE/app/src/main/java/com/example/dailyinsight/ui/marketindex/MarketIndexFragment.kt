@@ -12,6 +12,7 @@ import androidx.fragment.app.Fragment
 import androidx.lifecycle.ViewModelProvider
 import androidx.navigation.fragment.findNavController
 import com.example.dailyinsight.R
+import com.example.dailyinsight.data.dto.StockIndexData
 import com.example.dailyinsight.databinding.FragmentMarketIndexBinding
 import java.util.Locale
 
@@ -109,7 +110,7 @@ class MarketIndexFragment : Fragment() {
         nameView.text = data.name
         valueView.text = String.format(Locale.getDefault(), "%.2f", data.close)
         // change this to data.description later
-        descriptionView.text = "hahaha"
+        descriptionView.text = "LLM generated description"
 
         val sign = if (data.changeAmount >= 0) "+" else ""
         val changeText = String.format(
