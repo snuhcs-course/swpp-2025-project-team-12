@@ -68,14 +68,12 @@ class UserViewsTest(TestCase):
             res = self.client.post(reverse("signup"), data=json.dumps(body), content_type="application/json")
             self.assertEqual(res.status_code, 400)
 
-    @patch("apps.user.views.validate_password", return_value=True)
-    def test_signup_user_exists(self, _):
+    def test_signup_user_exists(self):
         body = {"id": self.user.name, "password": "1234abcd!"}
         res = self.client.post(reverse("signup"), data=json.dumps(body), content_type="application/json")
         self.assertEqual(res.status_code, 409)
 
-    @patch("apps.user.views.validate_password", return_value=False)
-    def test_signup_wrong_password_format(self, _):
+    def test_signup_wrong_password_format(self):
         body = {"id": "userx", "password": "short"}
         res = self.client.post(reverse("signup"), data=json.dumps(body), content_type="application/json")
         self.assertEqual(res.status_code, 400)
@@ -130,15 +128,12 @@ class UserViewsTest(TestCase):
     # -----------------------------
     # withdraw
     # -----------------------------
-    @patch("apps.user.views.S3Client")
-    def test_withdraw_success_with_real_token(self, mock_s3):
+    def test_withdraw_success_with_real_token(self):
         """access_token 쿠키 + 실제 유효한 JWT"""
         token = self.make_jwt(self.user.id)
         self.client.cookies["access_token"] = token
 
-        mock_s3.return_value.delete.return_value = True
         res = self.client.delete(reverse("withdraw"))
-        print(res.json()["message"])
         self.assertEqual(res.status_code, 200)
         self.assertEqual(res.json()["message"], "WITHDRAWAL SUCCESS")
 

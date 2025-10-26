@@ -5,6 +5,7 @@ import io
 import base64
 import traceback
 import mimetypes
+from io import BytesIO
 from typing import Optional
 
 import boto3
@@ -68,7 +69,7 @@ class S3Client:
 
     def delete(self, bucket: str, key: str) -> None:
         try:
-            self._client.delete_object(Bucket=bucket, Key=key)
+            return self._client.delete_object(Bucket=bucket, Key=key)
         except Exception:
             debug_print(traceback.format_exc())
             raise Exception(f"S3 ERROR: Couldn't delete object '{key}' from bucket '{bucket}'.")

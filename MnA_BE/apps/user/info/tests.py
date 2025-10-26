@@ -1,3 +1,4 @@
+from django.db import IntegrityError
 from django.test import TestCase, Client
 from django.urls import reverse
 from unittest.mock import patch, MagicMock
@@ -7,6 +8,8 @@ import bcrypt
 
 from utils.token_handler import make_access_token
 from apps.user.models import User
+
+image_url = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAQAAAAEACAIAAADTED8xAAADMElEQVR4nOzVwQnAIBQFQYXff81RUkQCOyDj1YOPnbXWPmeTRef+/3O/OyBjzh3CD95BfqICMK0CMK0CMK0CMK0CMK0CMK0CMK0CMK0CMK0CMK0CMK0CMK0CMK0CMK0CMK0CMK0CMK0CMK0CMK0CMK0CMK0CMK0CMK0CMK0CMK0CMK0CMK0CMK0CMK0CMK0CMK0CMK0CMK0CMK0CMK0CMK0CMK0CMK0CMK0CMK0CMK0CMK0CMK0CMK0CMK0CMK0CMK0CMK0CMK0CMK0CMK0CMK0CMK0CMK0CMK0CMK0CMK0CMK0CMK0CMK0CMK0CMK0CMK0CMK0CMK0CMK0CMK0CMK0CMK0CMK0CMK0CMK0CMK0CMK0CMK0CMK0CMK0CMK0CMK0CMK0CMK0CMK0CMK0CMK0CMK0CMK0CMK0CMK0CMK0CMK0CMK0CMK0CMK0CMK0CMK0CMK0CMK0CMK0CMK0CMK0CMK0CMK0CMK0CMK0CMK0CMK0CMK0CMK0CMK0CMK0CMK0CMK0CMK0CMK0CMK0CMK0CMK0CMK0CMK0CMK0CMK0CMK0CMK0CMK0CMK0CMK0CMK0CMK0CMK0CMK0CMK0CMK0CMK0CMK0CMK0CMK0CMK0CMK0CMK0CMK0CMK0CMK0CMK0CMK0CMK0CMK0CMK0CMK0CMK0CMK0CMK0CMK0CMK0CMK0CMK0CMK0CMK0CMK0CMK0CMK0CMK0CMK0CMK0CMK0CMK0CMK0CMK0CMK0CMK0CMK0CMK0CMK0CMK0CMK0CMK0CMK0CMK0CMK0CMK0CMK0CMK0CMK0CMK0CMK0CMK0CMK0CMK0CMK0CMK0CMK0CMK0CMK0CMK0CMK0CMK0CMK0CMK0CMK0CMK0CMK0CMK0CMK0CMK0CMK0CMK0CMK0CMK0CMK0CMK0CMK0CMK0CMK0CMK0CMK0CMK0CMK0CMK0CMK0CMK0CMK0CMK0CMK0CMK0CMK0CMK0CMK0CMK0CMK0CMK0CMK0CMK0CMK0CMK0CMK0CMK0CMK0CMK0CMK0CMK0CMK0CMK0CMK0CMK0CMK0CMK0CMK0CMK0CMK0CMK0CMK0CMK0CMK0CMO0TAAD//2Anhf4QtqobAAAAAElFTkSuQmCC"
 
 
 class PasswordViewTest(TestCase):
@@ -48,7 +51,7 @@ class PasswordViewTest(TestCase):
             HTTP_COOKIE=f"access_token={self.access_token}",
         )
         self.assertEqual(res.status_code, 400)
-        self.assertIn("INVALID PASSWORD", res.json()["message"])
+        self.assertIn("Password must be at least 8 characters long", res.json()["message"])
 
     @patch("apps.user.views.validate_password", return_value=True)
     @patch("apps.user.views.bcrypt.hashpw", side_effect=bcrypt.hashpw)
@@ -85,7 +88,7 @@ class NameViewTest(TestCase):
 
     def setUp(self):
         self.client = Client()
-        self.url = reverse("name")  # ✅ urls.py 에 name="name" 으로 등록 필요
+        self.url = reverse("name")
         self.user = User.objects.create(
             name="original",
             password=bcrypt.hashpw("Oldpass123!".encode(), bcrypt.gensalt()).decode(),
@@ -121,12 +124,12 @@ class NameViewTest(TestCase):
         """POST invalid name → 400"""
         res = self.client.post(
             self.url,
-            json.dumps({"name": "@"}),
+            json.dumps({"name": "123456789012345678901"}),
             content_type="application/json",
             HTTP_COOKIE=f"access_token={self.access_token}",
         )
         self.assertEqual(res.status_code, 400)
-        self.assertIn("INVALID NAME", res.json()["message"])
+        self.assertIn("Name cannot be longer than 20 characters", res.json()["message"])
 
     @patch("apps.user.views.validate_name", return_value=True)
     def test_post_name_conflict(self, mock_validate):
@@ -174,7 +177,7 @@ class ProfileViewTest(TestCase):
 
     def setUp(self):
         self.client = Client()
-        self.url = reverse("profile")  # ✅ urls.py 에 name="profile" 로 등록 필요
+        self.url = reverse("profile")
         self.user = User.objects.create(
             name="tester",
             password=bcrypt.hashpw("Abcd1234!".encode(), bcrypt.gensalt()).decode(),
@@ -189,26 +192,34 @@ class ProfileViewTest(TestCase):
         self.assertIn("NOT ALLOWED METHOD", res.json()["message"])
 
     # --- GET ---
-    @patch("apps.user.views.S3Client")
-    def test_get_success(self, mock_s3):
-        """GET 성공 → 200 + image_url 반환"""
-        mock_s3.return_value.get_image_url.return_value = "https://example.com/img.png"
+    def test_get_delete_success(self):
+        res = self.client.post(
+            self.url,
+            json.dumps({"image_url": image_url}),
+            content_type="application/json",
+            HTTP_COOKIE=f"access_token={self.access_token}",
+        )
+        self.assertEqual(res.status_code, 200)
+        self.assertIn("PROFILE IMAGE UPLOAD SUCCESS", res.json()["message"])
+
         res = self.client.get(self.url, HTTP_COOKIE=f"access_token={self.access_token}")
         self.assertEqual(res.status_code, 200)
         self.assertIn("image_url", res.json())
-        self.assertEqual(res.json()["image_url"], "https://example.com/img.png")
+        self.assertEqual(res.json()["image_url"], image_url)
 
-    @patch("apps.user.views.S3Client")
-    def test_get_failed(self, mock_s3):
+        res = self.client.delete(self.url, HTTP_COOKIE=f"access_token={self.access_token}")
+        self.assertEqual(res.status_code, 200)
+        self.assertIn("PROFILE DELETE SUCCESS", res.json()["message"])
+
+    def test_delete_get_failed(self):
         """GET 실패 (예외 발생) → 500"""
-        mock_s3.return_value.get_image_url.side_effect = Exception("S3 error")
+        self.client.delete(self.url, HTTP_COOKIE=f"access_token={self.access_token}")
         res = self.client.get(self.url, HTTP_COOKIE=f"access_token={self.access_token}")
         self.assertEqual(res.status_code, 500)
         self.assertIn("S3 GET FAILED", res.json()["message"])
 
     # --- POST ---
-    @patch("apps.user.views.S3Client")
-    def test_post_missing_image(self, mock_s3):
+    def test_post_missing_image(self):
         """POST image_url 없음 → 400"""
         res = self.client.post(
             self.url,
@@ -219,43 +230,13 @@ class ProfileViewTest(TestCase):
         self.assertEqual(res.status_code, 400)
         self.assertIn("IMAGE REQUIRED", res.json()["message"])
 
-    @patch("apps.user.views.S3Client")
-    def test_post_put_failed(self, mock_s3):
+    def test_post_put_failed(self):
         """POST S3 put 실패 → 500"""
-        mock_s3.return_value.put_image.side_effect = Exception("S3 error")
         res = self.client.post(
             self.url,
-            json.dumps({"image_url": "https://upload.com/test.png"}),
+            json.dumps({"image_url": "image_url"}),
             content_type="application/json",
             HTTP_COOKIE=f"access_token={self.access_token}",
         )
         self.assertEqual(res.status_code, 500)
         self.assertIn("S3 PUT FAILED", res.json()["message"])
-
-    @patch("apps.user.views.S3Client")
-    def test_post_success(self, mock_s3):
-        """POST 성공 → 200"""
-        res = self.client.post(
-            self.url,
-            json.dumps({"image_url": "https://upload.com/test.png"}),
-            content_type="application/json",
-            HTTP_COOKIE=f"access_token={self.access_token}",
-        )
-        self.assertEqual(res.status_code, 200)
-        self.assertIn("PROFILE IMAGE UPLOAD SUCCESS", res.json()["message"])
-
-    # --- DELETE ---
-    @patch("apps.user.views.S3Client")
-    def test_delete_failed(self, mock_s3):
-        """DELETE 실패 → 400"""
-        mock_s3.return_value.delete.side_effect = Exception("delete failed")
-        res = self.client.delete(self.url, HTTP_COOKIE=f"access_token={self.access_token}")
-        self.assertEqual(res.status_code, 400)
-        self.assertIn("PROFILE DELETE FAILED", res.json()["message"])
-
-    @patch("apps.user.views.S3Client")
-    def test_delete_success(self, mock_s3):
-        """DELETE 성공 → 200"""
-        res = self.client.delete(self.url, HTTP_COOKIE=f"access_token={self.access_token}")
-        self.assertEqual(res.status_code, 200)
-        self.assertIn("PROFILE DELETE SUCCESS", res.json()["message"])

@@ -4,5 +4,5 @@ from .page import get_page
 
 urlpatterns = [
     path('', style_view, name='style'),
-    path('page/<int:page_index>', get_page, name='page'),
+    path('page/<int:page_index>', get_page, name='style_page'),
 ]
