@@ -12,6 +12,7 @@ import android.util.Log
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
 import java.net.CookieManager
+import java.net.CookiePolicy
 import java.net.HttpURLConnection
 
 /**
@@ -27,13 +28,28 @@ object RetrofitInstance {
     private val logging = HttpLoggingInterceptor().apply {
         level = HttpLoggingInterceptor.Level.BODY
     }
+    val cookieManager = CookieManager()
+
     private val client by lazy {
+        cookieManager.setCookiePolicy(CookiePolicy.ACCEPT_ALL)
         OkHttpClient.Builder()
+            .cookieJar(JavaNetCookieJar(cookieManager))
+            .addInterceptor { chain ->
+                val original = chain.request()
+                val cookies = cookieManager.cookieStore.cookies
+                    .filter { original.url.host.contains(it.domain) }
+                    .joinToString("; ") { "${it.name}=${it.value}" }
+
+                val requestWithCookie = original.newBuilder()
+                    .header("Cookie", cookies)
+                    .build()
+
+                chain.proceed(requestWithCookie)
+            }
             .apply {
                 if (MOCK_MODE) addInterceptor(MockInterceptor())
                 addInterceptor(logging)
             }
-            .cookieJar(JavaNetCookieJar(CookieManager()))
             .build()
     }
 

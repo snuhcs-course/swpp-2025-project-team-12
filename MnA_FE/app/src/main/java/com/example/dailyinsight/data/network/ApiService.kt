@@ -51,4 +51,9 @@ interface ApiService {
     fun signUp(
         @Body request: SignUpRequest
     ): Call<SignUpResponse>
+
+    @POST("user/style/")
+    fun setStyle(
+        @Body request: SetStyleRequest
+    ): Call<SetStyleResponse>
 }

@@ -5,6 +5,7 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.ViewGroup.LayoutParams
 import android.widget.LinearLayout
+import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.children
 import com.example.dailyinsight.R
@@ -50,12 +51,11 @@ class SetInterestActivity : AppCompatActivity() {
             }
             // set listener on the button : enable toNextButton if any selected else disable
             button.setOnClickListener {
-                if(button.isChecked) {
+                if (button.isChecked) {
                     checkCount++
                     toNextButton.isEnabled = true
-                }
-                else checkCount--
-                if(checkCount <= 0) toNextButton.isEnabled = false
+                } else checkCount--
+                if (checkCount <= 0) toNextButton.isEnabled = false
             }
             // add the button on the scroll view
             buttonGroup.addView(button)
@@ -65,25 +65,29 @@ class SetInterestActivity : AppCompatActivity() {
         // if selected, enable toNextButton, disable any selection
         // else, restore the enable values
         none.setOnCheckedChangeListener { buttonView, isChecked ->
-            if(isChecked) {
+            if (isChecked) {
                 toNextButton.isEnabled = true
                 buttonGroup.children.forEach { it.isEnabled = false }
-            }
-            else {
-                if(checkCount <= 0) toNextButton.isEnabled = false
+            } else {
+                if (checkCount <= 0) toNextButton.isEnabled = false
                 buttonGroup.children.forEach { it.isEnabled = true }
             }
         }
 
         // to the next button
-        // send selected interests to the server
+        // send selected interests to the next activity
         // and go to the next activity : style selection
         toNextButton.setOnClickListener {
-            // TODO - send interests to server
-            buttonGroup.children.forEach {  }
+            val interests = buttonGroup.children.filterIsInstance<MaterialButton>()
+                .filter { it.isChecked }
+                .map { it.text.toString() }
+                .toList() as ArrayList<String>
+
+//            Toast.makeText(this, interests.joinToString(), Toast.LENGTH_SHORT).show()
 
             // and then
             val intent = Intent(this, SetStyleActivity::class.java)
+            intent.putStringArrayListExtra("interests", interests)
             startActivity(intent)
         }
     }
