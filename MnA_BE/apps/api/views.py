@@ -211,7 +211,7 @@ def recommendations_general(request: HttpRequest):
         "offset": offset,
         "asOf": data.get("asOf", iso_now()),
         "source": data.get("source", "mock"),
-        "marketDate": _market_date_kst(),
+        "marketDate": market_date_kst(),
         "personalized": False,
     })
 

@@ -7,6 +7,7 @@ import traceback
 import mimetypes
 from io import BytesIO
 from typing import Optional
+import pandas as pd
 
 import boto3
 
