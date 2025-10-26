@@ -14,6 +14,7 @@ from selenium.webdriver.chrome.options import Options
 from webdriver_manager.chrome import ChromeDriverManager
 
 GNEWS_URL = "https://news.google.com/rss/headlines/section/topic/BUSINESS?hl=ko&gl=KR&ceid=KR:ko"
+SECOND_LEVEL_HINTS = {"co", "com", "org", "net", "gov", "edu", "ac", "or", "go", "ne", "re", "sc"}
 
 # S3 설정
 S3_BUCKET_NAME = "swpp-12-bucket"
@@ -104,19 +105,35 @@ def extract_content(driver, url: str):
         return None
 
 def extract_source(url: str) -> str:
-    """URL에서 언론사 이름 추출"""
+    """
+    URL에서 언론사명(주요 2차 도메인)을 추출.
+    - news.naver.com  -> naver
+    - news.mk.co.kr   -> mk
+    - www.bbc.co.uk   -> bbc
+    - chosun.com      -> chosun
+    """
     try:
-        parsed = urlparse(url)
-        domain = parsed.netloc
-        if domain.startswith('www.'):
+        domain = urlparse(url).netloc.lower()
+        if domain.startswith("www."):
             domain = domain[4:]
-        parts = domain.split('.')
-        if len(parts) >= 2:
-            return parts[0]
-        return domain
-    except:
-        return "Unknown"
+        parts = [p for p in domain.split(".") if p]
 
+        if len(parts) == 1:
+            return parts[0]
+
+        # ccTLD (마지막 레이블이 2글자: kr, uk, jp ...)
+        if len(parts[-1]) == 2:
+            # ex) *.co.kr / *.ac.kr / *.co.uk 등 → 실도메인은 -3번째
+            if len(parts) >= 3 and parts[-2] in SECOND_LEVEL_HINTS:
+                return parts[-3]
+            # ex) *.kr (2레벨 도메인 바로 앞) → -2
+            return parts[-2]
+
+        # 일반 gTLD (.com, .org 등) → 2차 도메인
+        return parts[-2]
+    except Exception:
+        return "Unknown"
+    
 def upload_to_s3(local_file_path, date_obj):
     """S3에 파일 업로드 (파티션 구조)"""
     try:
