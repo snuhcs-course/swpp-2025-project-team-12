@@ -1,6 +1,5 @@
 package com.example.dailyinsight.data.dto
 
-import com.example.dailyinsight.ui.marketindex.StockIndexData
 import com.google.gson.annotations.SerializedName
 
 // ============ Market Index DTOs ============
@@ -33,4 +32,36 @@ data class StockIndexHistoryItem(
 
     @SerializedName("close")
     val close: Double
+)
+
+data class StockIndexData(
+    @SerializedName("name")
+    var name: String,
+
+    @SerializedName("close")
+    val close: Double,
+
+    @SerializedName("change_amount")
+    val changeAmount: Double,
+
+    @SerializedName("change_percent")
+    val changePercent: Double,
+
+    @SerializedName("description")
+    val description: String,
+
+    @SerializedName("date")
+    val date: String,
+
+    @SerializedName("high")
+    val high: Double,
+
+    @SerializedName("low")
+    val low: Double,
+
+    @SerializedName("open")
+    val open: Double,
+
+    @SerializedName("volume")
+    val volume: Long
 )
