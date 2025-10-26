@@ -7,6 +7,14 @@ KST = pytz.timezone("Asia/Seoul")
 def market_date_kst():
     return _dt.datetime.now(KST).strftime("%Y-%m-%d")
 
+def get_path_with_date(content):
+    cur_dt = _dt.datetime.now(KST)
+    year    = cur_dt.year
+    month   = cur_dt.month
+    day     = cur_dt.day
+
+    return f"year={year}/month={month}/content={content}/{year}-{month}-{day}"
+
 def ok(payload: dict, status=200, **meta):
     if "asOf" not in payload:
         payload["asOf"] = iso_now()
