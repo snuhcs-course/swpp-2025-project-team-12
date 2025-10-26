@@ -1,16 +1,25 @@
+import os
 from django.http import JsonResponse
 from .stockindex_manager import StockindexManager
+from S3.finance import FinanceS3Client
+from utils.for_api import get_path_with_date
 
 def stockindex_latest(request):
     """Get the latest closing price for each index from the JSON data."""
     manager = StockindexManager()
     latest_data = manager.get_latest()
 
+    llm_output = FinanceS3Client().get_json(
+        bucket=os.environ.get('FINANCE_BUCKET_NAME'),
+        key=f"llm_output/{get_path_with_date('index_info')}"
+    )
+
     # The manager's get_latest() already returns the data in a perfect format.
     # We just need to wrap it in our standard API response structure.
     return JsonResponse({
-        'status': 'success',
-        'data': latest_data
+        'status'    : 'success',
+        'data'      : latest_data,
+        'llm_output': llm_output
     })
 
 
