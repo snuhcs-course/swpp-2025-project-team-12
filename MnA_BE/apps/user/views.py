@@ -11,9 +11,6 @@ from django.views.decorators.csrf import csrf_exempt
 import os
 import json
 
-def hello(request):
-    return JsonResponse({"message": "Hello, world!"})
-
 @csrf_exempt
 @default_error_handler
 def login(request):
@@ -136,9 +133,14 @@ def withdraw(request, user):
 
     # remove profile from S3 (키는 문자열로)
     try:
-        S3Client().delete(os.environ.get("PROFILE_BUCKET_NAME"), str(user.id))
-    except Exception:
-        return JsonResponse({"message": "PROFILE DELETE FAILED"}, status=500)
+        S3Client().get(os.environ.get("PROFILE_BUCKET_NAME"), str(user.id))
+
+        try:
+            S3Client().delete(os.environ.get("PROFILE_BUCKET_NAME"), str(user.id))
+        except Exception:
+            return JsonResponse({"message": "PROFILE DELETE FAILED"}, status=500)
+    except: # File Not exists
+        pass
 
     # remove user from SQL table
     try:
