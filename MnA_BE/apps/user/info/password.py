@@ -21,8 +21,11 @@ def password_view(request, user):
 
     if password is None:
         return JsonResponse({ "message": "PASSWORD IS REQUIRED" }, status=400)
-    if not validate_password(password):
-        return JsonResponse({ "message": "INVALID PASSWORD" }, status=400)
+
+    try:
+        validate_password(password)
+    except Exception as e:
+        return JsonResponse({ "message": f"{e}" }, status=400)
 
     hashed = bcrypt.hashpw(password.encode("utf-8"), bcrypt.gensalt()).decode("utf-8")
 
