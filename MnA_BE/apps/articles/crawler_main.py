@@ -13,8 +13,19 @@ from selenium.webdriver.chrome.service import Service
 from selenium.webdriver.chrome.options import Options
 from webdriver_manager.chrome import ChromeDriverManager
 
-GNEWS_URL = "https://news.google.com/rss/headlines/section/topic/BUSINESS?hl=ko&gl=KR&ceid=KR:ko"
-SECOND_LEVEL_HINTS = {"co", "com", "org", "net", "gov", "edu", "ac", "or", "go", "ne", "re", "sc"}
+# 섹션별 크롤링 설정 (총 100개)
+SECTIONS = [
+    {"name": "BUSINESS", "count": 50},
+    {"name": "TECHNOLOGY", "count": 10},
+    {"name": "HEALTH", "count": 10},
+    {"name": "WORLD", "count": 10},
+    {"name": "NATION", "count": 10},
+    {"name": "SCIENCE", "count": 10},
+]
+
+def get_gnews_url(section):
+    """섹션별 Google News RSS URL 생성"""
+    return f"https://news.google.com/rss/headlines/section/topic/{section}?hl=ko&gl=KR&ceid=KR:ko"
 
 # S3 설정
 S3_BUCKET_NAME = "swpp-12-bucket"
@@ -23,7 +34,7 @@ S3_REGION = "ap-northeast-2"
 GOOGLE_HOSTS = {"news.google.com", "google.com", "www.google.com"}
 STRIP_QS = {"utm_source","utm_medium","utm_campaign","gclid","fbclid"}
 
-# S3 클라이언트 초기화
+# S3 클라이언트 초기화 (환경변수에서 자격 증명 자동 로드)
 s3_client = boto3.client('s3', region_name=S3_REGION)
 
 def _is_googleish(u: str) -> bool:
@@ -42,9 +53,6 @@ def normalize_url(u: str) -> str:
     except:
         return u
 
-def is_stock_related(title: str) -> bool:
-    return True
-
 def setup_driver():
     options = Options()
     options.add_argument('--headless')
@@ -53,37 +61,73 @@ def setup_driver():
     options.add_argument('--disable-gpu')
     options.add_argument('user-agent=Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36')
     
-    service = Service(ChromeDriverManager().install())
+    # 🔥 속도 개선 1: 이미지 로딩 차단
+    prefs = {
+        'profile.default_content_setting_values': {
+            'images': 2,  # 이미지 차단
+        },
+        'profile.managed_default_content_settings': {
+            'images': 2
+        }
+    }
+    options.add_experimental_option('prefs', prefs)
+    
+    # 🔥 속도 개선 2: 불필요한 기능 비활성화
+    options.add_argument('--disable-extensions')
+    options.add_argument('--disable-infobars')
+    options.add_argument('--disable-logging')
+    options.add_argument('--log-level=3')
+    options.add_argument('--blink-settings=imagesEnabled=false')
+    
+    # ChromeDriver 설정 (환경 자동 감지)
+    import platform
+    system = platform.system()
+    
+    if system == "Linux":
+        # GCP 서버 (Ubuntu): 직접 경로 사용 (빠름)
+        service = Service('/usr/bin/chromedriver')
+    else:
+        # 로컬 (Mac/Windows): ChromeDriverManager 사용
+        service = Service(ChromeDriverManager().install())
+    
     driver = webdriver.Chrome(service=service, options=options)
     
-    driver.set_page_load_timeout(120)
-    driver.set_script_timeout(120)
+    # 타임아웃 설정 (서버 환경 고려)
+    driver.set_page_load_timeout(30)
+    driver.set_script_timeout(30)
     
     return driver
 
-def resolve_google_url_with_browser(driver, google_url: str, max_wait=5):
-    try:
-        print(f"    [Browser] Navigating: {google_url[:80]}...")
-        driver.get(google_url)
-        time.sleep(max_wait)
-        
-        final_url = driver.current_url
-        
-        if not _is_googleish(final_url):
-            print(f"    [Browser] ✓ Resolved: {final_url[:70]}...")
-            return final_url
-        
-        print(f"    [Browser] ✗ Still on Google")
-        return None
-        
-    except Exception as e:
-        print(f"    [Browser] ✗ Error: {e}")
-        return None
+def resolve_google_url_with_browser(driver, google_url: str, max_wait=3, max_retries=2):
+    """Google News URL을 실제 기사 URL로 리디렉션 (재시도 포함)"""
+    for attempt in range(max_retries):
+        try:
+            driver.get(google_url)
+            time.sleep(max_wait)
+            
+            final_url = driver.current_url
+            
+            if not _is_googleish(final_url):
+                return final_url
+            
+            return None
+            
+        except Exception as e:
+            if attempt < max_retries - 1:
+                print(f"    [Browser] ⟳ Retry {attempt+1}/{max_retries-1}...")
+                time.sleep(2)
+                continue
+            print(f"    [Browser] ✗ Failed after {max_retries} attempts")
+            return None
 
-def extract_content(driver, url: str):
+def extract_content(driver, url: str, retry=False):
+    """기사 본문 추출 (재시도 시 더 긴 대기)"""
     try:
         driver.get(url)
-        time.sleep(2)
+        
+        # 재시도 시 더 오래 대기 (JS 렌더링 완료 보장)
+        wait_time = 3.5 if retry else 1.5
+        time.sleep(wait_time)
         
         html = driver.page_source
         soup = BeautifulSoup(html, "lxml")
@@ -101,47 +145,109 @@ def extract_content(driver, url: str):
         return None
         
     except Exception as e:
-        print(f"    [Content] Error: {e}")
+        print(f"    [Content] Error: {str(e)[:50]}...")
         return None
 
 def extract_source(url: str) -> str:
-    """
-    URL에서 언론사명(주요 2차 도메인)을 추출.
-    - news.naver.com  -> naver
-    - news.mk.co.kr   -> mk
-    - www.bbc.co.uk   -> bbc
-    - chosun.com      -> chosun
-    """
+    """URL에서 언론사 이름 추출"""
     try:
-        domain = urlparse(url).netloc.lower()
-        if domain.startswith("www."):
+        parsed = urlparse(url)
+        domain = parsed.netloc
+        if domain.startswith('www.'):
             domain = domain[4:]
-        parts = [p for p in domain.split(".") if p]
-
-        if len(parts) == 1:
+        parts = domain.split('.')
+        if len(parts) >= 2:
             return parts[0]
-
-        # ccTLD (마지막 레이블이 2글자: kr, uk, jp ...)
-        if len(parts[-1]) == 2:
-            # ex) *.co.kr / *.ac.kr / *.co.uk 등 → 실도메인은 -3번째
-            if len(parts) >= 3 and parts[-2] in SECOND_LEVEL_HINTS:
-                return parts[-3]
-            # ex) *.kr (2레벨 도메인 바로 앞) → -2
-            return parts[-2]
-
-        # 일반 gTLD (.com, .org 등) → 2차 도메인
-        return parts[-2]
-    except Exception:
+        return domain
+    except:
         return "Unknown"
+
+def crawl_section(driver, section_name, target_count, seen_urls):
+    """특정 섹션 크롤링"""
+    print(f"\n{'='*60}")
+    print(f"📰 Section: {section_name} (Target: {target_count})")
+    print(f"{'='*60}")
     
+    rss_url = get_gnews_url(section_name)
+    feed = feedparser.parse(rss_url)
+    print(f"RSS entries found: {len(feed.entries)}")
+    
+    if not feed.entries:
+        print(f"⚠️ No entries found for {section_name}")
+        return [], {"filtered": 0, "failed": 0}
+    
+    results = []
+    success_count = 0
+    stats = {"filtered": 0, "failed": 0}
+    
+    for idx, entry in enumerate(feed.entries):
+        if success_count >= target_count:
+            break
+            
+        title = entry.title.strip()
+        print(f"\n[{section_name} {idx+1}] {title[:50]}...")
+        
+        google_url = entry.get("link", "")
+        if not google_url:
+            print("  ✗ No link")
+            stats["failed"] += 1
+            continue
+        
+        original_url = resolve_google_url_with_browser(driver, google_url)
+        
+        if not original_url:
+            print("  ✗ URL resolve failed")
+            stats["failed"] += 1
+            continue
+        
+        original_url = normalize_url(original_url)
+        
+        if original_url in seen_urls:
+            print("  ✗ Duplicate")
+            stats["filtered"] += 1
+            continue
+        seen_urls.add(original_url)
+        
+        content = extract_content(driver, original_url)
+        
+        # 실패 시 한 번 더 시도 (더 긴 대기 시간)
+        if not content:
+            print("  ⟳ Retrying with longer wait...")
+            content = extract_content(driver, original_url, retry=True)
+        
+        if content and len(content) >= 100:
+            print(f"  ✓ {len(content)} chars")
+            success_count += 1
+            
+            fetched_at = datetime.now(tz.gettz("Asia/Seoul"))
+            
+            results.append({
+                "title": title,
+                "url": original_url,
+                "source": extract_source(original_url),
+                "section": section_name,
+                "published_at": entry.get("published", ""),
+                "fetched_at": fetched_at.isoformat(),
+                "content": content,
+                "content_length": len(content),
+            })
+        else:
+            print("  ✗ Content extraction failed")
+            stats["failed"] += 1
+        
+        time.sleep(0.5)
+    
+    print(f"\n✓ {section_name}: {success_count}/{target_count} collected")
+    return results, stats
+
 def upload_to_s3(local_file_path, date_obj):
     """S3에 파일 업로드 (파티션 구조)"""
     try:
         year = date_obj.strftime("%Y")
-        month = date_obj.strftime("%-m")  # 0 없이
-        day = date_obj.strftime("%-d")    # 0 없이
+        month = str(int(date_obj.strftime('%m')))
+        day = str(int(date_obj.strftime('%d')))
         
-        s3_key = f"news-articles/year={year}/month={month}/day={day}/business_top50.json"
+        s3_key = f"news-articles/year={year}/month={month}/day={day}/multi_section_top100.json"
         
         print(f"\n[S3] Uploading to s3://{S3_BUCKET_NAME}/{s3_key}...")
         s3_client.upload_file(
@@ -151,7 +257,6 @@ def upload_to_s3(local_file_path, date_obj):
             ExtraArgs={'ContentType': 'application/json'}
         )
         print(f"[S3] ✓ Upload successful!")
-        print(f"[S3] URL: https://{S3_BUCKET_NAME}.s3.{S3_REGION}.amazonaws.com/{s3_key}")
         return True
     except ClientError as e:
         print(f"[S3] ✗ Upload failed: {e}")
@@ -160,89 +265,44 @@ def upload_to_s3(local_file_path, date_obj):
         print(f"[S3] ✗ Error: {e}")
         return False
 
-def main(top=50):
+def main():
     # 시작 시간 기록
     start_time = time.time()
     start_datetime = datetime.now(tz.gettz("Asia/Seoul"))
     
     print("="*60)
-    print("Google News Top 50 (Selenium Method)")
+    print("Google News Multi-Section Crawler")
     print(f"Started at: {start_datetime.strftime('%Y-%m-%d %H:%M:%S')}")
     print("="*60)
+    print("\n📋 Crawling Plan:")
+    for section in SECTIONS:
+        print(f"  - {section['name']}: {section['count']} articles")
+    print(f"\n🎯 Total Target: {sum(s['count'] for s in SECTIONS)} articles")
     
-    print("\nFetching Business Topic RSS...")
-    feed = feedparser.parse(GNEWS_URL)
-    print(f"RSS entries: {len(feed.entries)}")
-    
-    if not feed.entries:
-        print("No entries found!")
-        return []
-    
-    print("\nStarting browser...")
+    print("\n🌐 Starting browser...")
     driver = setup_driver()
     
-    results = []
-    success_count = 0
-    target = top
+    all_results = []
     seen_urls = set()
-    
-    stats = {"filtered": 0, "failed": 0}
-    
-    print(f"\nProcessing up to {target} articles...")
-    print("="*60)
+    section_stats = {}
     
     try:
-        for idx, entry in enumerate(feed.entries):
-            title = entry.title.strip()
-            print(f"\n[{idx+1}] {title[:60]}...")
-            google_url = entry.get("link", "")
-            if not google_url:
-                print("  ✗ No link in entry")
-                stats["failed"] += 1
-                continue
+        for section_config in SECTIONS:
+            section_name = section_config["name"]
+            target_count = section_config["count"]
             
-            original_url = resolve_google_url_with_browser(driver, google_url)
-            
-            if not original_url:
-                stats["failed"] += 1
-                continue
-            
-            original_url = normalize_url(original_url)
-            
-            if original_url in seen_urls:
-                print("  ✗ Duplicate")
-                continue
-            seen_urls.add(original_url)
-            
-            content = extract_content(driver, original_url)
-            
-            if content and len(content) >= 100:
-                print(f"  ✓ {len(content)} chars")
-                success_count += 1
-                
-                fetched_at = datetime.now(tz.gettz("Asia/Seoul"))
-                
-                results.append({
-                    "title": title,
-                    "url": original_url,
-                    "source": extract_source(original_url),
-                    "published_at": entry.get("published", ""),
-                    "fetched_at": fetched_at.isoformat(),
-                    "content": content,
-                    "content_length": len(content),
-                })
-                
-                if success_count >= target:
-                    print(f"\n✓ Target {target} reached!")
-                    break
-            else:
-                print("  ✗ Content extraction failed")
-            
-            time.sleep(1)
+            results, stats = crawl_section(driver, section_name, target_count, seen_urls)
+            all_results.extend(results)
+            section_stats[section_name] = {
+                "target": target_count,
+                "success": len(results),
+                "filtered": stats["filtered"],
+                "failed": stats["failed"]
+            }
     
     finally:
         driver.quit()
-        print("\nBrowser closed.")
+        print("\n🔒 Browser closed.")
     
     # 종료 시간 계산
     end_time = time.time()
@@ -254,7 +314,7 @@ def main(top=50):
     fetched_at = datetime.now(tz.gettz("Asia/Seoul"))
     date_folder = fetched_at.strftime("%Y%m%d")
     os.makedirs(f"articles/{date_folder}", exist_ok=True)
-    out_path = f"articles/{date_folder}/business_top50.json"
+    out_path = f"articles/{date_folder}/multi_section_top100.json"
     
     # 메타데이터 포함한 최종 결과
     final_output = {
@@ -263,13 +323,11 @@ def main(top=50):
             "end_time": end_datetime.isoformat(),
             "elapsed_seconds": round(elapsed_seconds, 2),
             "elapsed_minutes": round(elapsed_minutes, 2),
-            "target_count": target,
-            "success_count": success_count,
-            "failed_count": stats["failed"],
-            "filtered_count": stats["filtered"],
-            "total_articles": len(results)
+            "total_target": sum(s['count'] for s in SECTIONS),
+            "total_collected": len(all_results),
+            "section_stats": section_stats
         },
-        "articles": results
+        "articles": all_results
     }
     
     # 로컬 저장
@@ -277,14 +335,17 @@ def main(top=50):
         json.dump(final_output, f, ensure_ascii=False, indent=2)
     
     print("\n" + "="*60)
-    print("FINAL RESULT")
+    print("📊 FINAL RESULT")
     print("="*60)
     print(f"Started:  {start_datetime.strftime('%Y-%m-%d %H:%M:%S')}")
     print(f"Finished: {end_datetime.strftime('%Y-%m-%d %H:%M:%S')}")
     print(f"Elapsed:  {elapsed_minutes:.2f} minutes ({elapsed_seconds:.2f} seconds)")
-    print(f"Succeeded: {success_count}/{target}")
-    print(f"Filtered: {stats['filtered']}, Failed: {stats['failed']}")
-    print(f"Saved locally: {out_path}")
+    print(f"\n📈 Section Breakdown:")
+    for section_name, stats in section_stats.items():
+        print(f"  {section_name:12} {stats['success']:3}/{stats['target']:3}  "
+              f"(filtered: {stats['filtered']}, failed: {stats['failed']})")
+    print(f"\n🎯 Total: {len(all_results)}/{sum(s['count'] for s in SECTIONS)} articles collected")
+    print(f"💾 Saved locally: {out_path}")
     
     # S3 업로드
     upload_to_s3(out_path, fetched_at)
@@ -294,7 +355,4 @@ def main(top=50):
     return final_output
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser()
-    parser.add_argument('--top', type=int, default=50)
-    args = parser.parse_args()
-    main(args.top)
+    main()
