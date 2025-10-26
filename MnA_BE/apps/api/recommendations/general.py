@@ -38,23 +38,37 @@ def recommendations_general(request: HttpRequest):
         total = qs.count()
         items = []
         for it in qs[offset:offset+limit]:
+            # ✅ 신규 news(JSON) 우선 사용, 없으면 legacy(titles/urls) 병합
+            news_payload = getattr(it, "news", None)
+            if not news_payload:
+                titles = getattr(it, "news_titles", []) or []
+                urls   = getattr(it, "news_urls", []) or []
+                merged = []
+                n = max(len(titles), len(urls))
+                for i in range(n):
+                    t = titles[i] if i < len(titles) else ""
+                    u = urls[i] if i < len(urls) else ""
+                    merged.append({"title": t or "", "url": u or "", "source": ""})
+                news_payload = merged
+
             items.append({
                 "ticker": it.ticker,
                 "name": it.name,
-                "market": it.market,  # ← 추가
-                "news": it.news_titles,
+                "market": getattr(it, "market", None),
+                "news": news_payload,
                 "reason": it.reason,
                 "rank": it.rank,
-                "expected_direction": it.expected_direction,  # ← 추가
-                "conviction": it.conviction,  # ← 추가
+                "expected_direction": getattr(it, "expected_direction", None),
+                "conviction": getattr(it, "conviction", None),
             })
+
         return ok({
             "items": items,
             "total": total,
             "limit": limit,
             "offset": offset,
             "asOf": batch.as_of_utc.isoformat(),
-            "source": batch.source,               # "mock" or "llm"
+            "source": batch.source,   # "mock" or "llm"
             "marketDate": market_date.strftime("%Y-%m-%d"),
             "personalized": False,
         })
