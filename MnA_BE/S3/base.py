@@ -46,7 +46,7 @@ class S3Client:
         try:
             obj = self._client.get_object(Bucket=bucket, Key=key)
             return obj["Body"].read()
-        except Exception:
+        except Exception as e:
             debug_print(traceback.format_exc())
             raise Exception(f"S3 ERROR: Couldn't get object '{key}' from bucket '{bucket}'.")
 
@@ -108,6 +108,10 @@ class S3Client:
         }
 
     # --- json ---
+    def get_json(self, bucket, key):
+        data = self.get(bucket, f"{key}.json").decode("utf-8")
+        return json.loads(data)
+
     def get_latest_json(self, bucket, prefix):
         latest = self.get_latest_object(bucket, prefix)
 
