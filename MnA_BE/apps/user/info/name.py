@@ -27,8 +27,10 @@ def name_view(request, user):
         if name is None:
             return JsonResponse({ "message": "NAME IS REQUIRED" }, status=400)
 
-        if not validate_name(name):
-            return JsonResponse({ "message": "INVALID NAME" }, status=400)
+        try:
+            validate_name(name)
+        except Exception as e:
+            return JsonResponse({"message": f"{e}"}, status=400)
 
         try:
             user.name = name
