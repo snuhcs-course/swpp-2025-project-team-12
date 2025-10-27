@@ -20,7 +20,8 @@ import java.net.HttpURLConnection
  * Base URL: http://10.0.2.2:8000/ (for Android emulator)
  */
 object RetrofitInstance {
-    private const val BASE_URL = "http://ec2-3-34-197-82.ap-northeast-2.compute.amazonaws.com:8000/"
+//    private const val BASE_URL = "http://ec2-3-34-197-82.ap-northeast-2.compute.amazonaws.com:8000/"
+    private const val BASE_URL = "http://10.0.2.2:8000/"
 
     // Toggle: true = today/history network calls return mock responses
     private const val MOCK_MODE = true
@@ -36,12 +37,19 @@ object RetrofitInstance {
             .cookieJar(JavaNetCookieJar(cookieManager))
             .addInterceptor { chain ->
                 val original = chain.request()
+
                 val cookies = cookieManager.cookieStore.cookies
-                    .filter { original.url.host.contains(it.domain) }
+                    .filter { original.url.host.endsWith(it.domain.trimStart('.')) }
                     .joinToString("; ") { "${it.name}=${it.value}" }
+
+                val csrfToken = cookieManager.cookieStore.cookies
+                    .firstOrNull { it.name == "csrftoken" }?.value
 
                 val requestWithCookie = original.newBuilder()
                     .header("Cookie", cookies)
+                    .apply {
+                        if (csrfToken != null) header("X-CSRFToken", csrfToken)
+                    }
                     .build()
 
                 chain.proceed(requestWithCookie)

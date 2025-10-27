@@ -42,6 +42,9 @@ interface ApiService {
     ): StockIndexHistoryResponse
 
     // ============ Authentication ============
+    @GET("user/csrf")
+    fun setCsrf(): Call<CsrfResponse>
+
     @POST("user/login")
     fun logIn(
         @Body request: LogInRequest

@@ -27,6 +27,10 @@ data class SetStyleRequest(
     val strategy: Strategy
 )
 
+data class CsrfResponse(
+    val message: String
+)
+
 data class LogInResponse(
     val message: String
 )
