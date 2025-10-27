@@ -148,17 +148,41 @@ def extract_content(driver, url: str, retry=False):
         print(f"    [Content] Error: {str(e)[:50]}...")
         return None
 
+# ccTLD 및 다중 레벨 도메인 처리를 위한 상수
+_CC_TLDS = {
+    # 대표적 ccTLD (필요 시 추가 가능)
+    "kr","uk","jp","au","nz","za","br","mx","id","sg","th","tw","in","cn","tr","sa","ae","ru","de","fr","it","es"
+}
+# ccTLD 앞에 붙는 2차 레벨(조직/지역 구분자)
+_MULTI_TLD_SECOND = {
+    "co","or","go","ne","re","pe","ac","hs","ms","es","kg","sc",
+    "gov","edu","net","org",  # 일부 국가에서 쓰는 변형
+    # 한국 지역(예: seoul.kr 등) — 필요 시 확장
+    "seoul","busan","daegu","incheon","gwangju","daejeon","ulsan","jeju",
+    "gyeonggi","gangwon","chungbuk","chungnam","jeonbuk","jeonnam","gyeongbuk","gyeongnam",
+}
+
 def extract_source(url: str) -> str:
-    """URL에서 언론사 이름 추출"""
+    """
+    호스트명에서 2차 도메인(SLD)을 반환.
+    예) news.naver.com -> naver
+        www.hankyung.com -> hankyung
+        www.mk.co.kr -> mk
+    """
     try:
-        parsed = urlparse(url)
-        domain = parsed.netloc
-        if domain.startswith('www.'):
-            domain = domain[4:]
-        parts = domain.split('.')
-        if len(parts) >= 2:
-            return parts[0]
-        return domain
+        host = (urlparse(url).hostname or "").lower()
+        if host.startswith("www."):
+            host = host[4:]
+        labels = [p for p in host.split(".") if p]
+        if len(labels) < 2:
+            return host  # localhost 등
+
+        # ccTLD + 조직/지역 세컨드 레벨(e.g., *.co.kr, *.ac.jp 등) 처리
+        if len(labels) >= 3 and labels[-1] in _CC_TLDS and labels[-2] in _MULTI_TLD_SECOND:
+            return labels[-3]
+
+        # 일반적 케이스 (*.com, *.net, *.io, *.kr 등)
+        return labels[-2]
     except:
         return "Unknown"
 
