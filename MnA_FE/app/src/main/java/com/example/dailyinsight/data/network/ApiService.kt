@@ -42,6 +42,9 @@ interface ApiService {
     ): StockIndexHistoryResponse
 
     // ============ Authentication ============
+    @GET("user/csrf")
+    fun setCsrf(): Call<CsrfResponse>
+
     @POST("user/login")
     fun logIn(
         @Body request: LogInRequest
@@ -51,4 +54,9 @@ interface ApiService {
     fun signUp(
         @Body request: SignUpRequest
     ): Call<SignUpResponse>
+
+    @POST("user/style/")
+    fun setStyle(
+        @Body request: SetStyleRequest
+    ): Call<SetStyleResponse>
 }
