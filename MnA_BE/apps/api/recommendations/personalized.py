@@ -10,9 +10,8 @@ import datetime as _dt
 from apps.api.models import RecommendationBatch, RecommendationItem
 from Mocks.mock_data import mock_recommendations
 
-
-# @require_auth # temporary disabled fot easy testing
 @require_GET
+@require_auth
 def recommendations_personalized(request: HttpRequest, user: User):
     try:
         llm_output = FinanceS3Client().get_json(
