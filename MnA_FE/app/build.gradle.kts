@@ -66,6 +66,7 @@ dependencies {
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
+    androidTestImplementation("androidx.test.espresso:espresso-intents:3.7.0")
 
     // Material Design 3
     implementation("com.google.android.material:material:1.13.0")
