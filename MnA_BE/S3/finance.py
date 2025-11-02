@@ -49,7 +49,8 @@ class FinanceS3Client(S3Client):
             raise Exception(f"S3 ERROR: Couldn't load DataFrame from s3://{bucket}/{key}")
 
     def get_latest_parquet_df(self, bucket, prefix):
-        latest = self.get_latest_object(prefix)
+        # 수정: bucket 인자 추가
+        latest = self.get_latest_object(bucket, prefix)
 
         if not latest: return None, None
 

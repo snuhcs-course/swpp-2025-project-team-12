@@ -93,7 +93,10 @@ class ApiRecommendationsGeneralTests(TestCase):
         """DB 배치가 있으면 DB에서 가져오는지 확인"""
         self._make_batch_with_items(n=5, risk="공격투자형")
         
-        response = self.client.get(self.url, {"risk": "공격투자형"})
+        response = self.client.get(self.url, {
+            "risk": "공격투자형",
+            "date": self.market_date.strftime("%Y-%m-%d")
+        })
         data = response.json()
         
         self.assertEqual(response.status_code, 200)
@@ -107,6 +110,7 @@ class ApiRecommendationsGeneralTests(TestCase):
         
         response = self.client.get(self.url, {
             "risk": "공격투자형",
+            "date": self.market_date.strftime("%Y-%m-%d"),
             "limit": 2,
             "offset": 1
         })
