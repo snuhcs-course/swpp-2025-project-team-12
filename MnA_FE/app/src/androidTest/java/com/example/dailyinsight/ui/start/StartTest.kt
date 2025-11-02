@@ -32,7 +32,6 @@ class StartTest {
         Intents.release()
     }
 
-    // passed!
     @Test
     fun clickPassThroughButton_moveToMainActivity() {
         // GIVEN - launch app
@@ -45,7 +44,6 @@ class StartTest {
         Intents.intended(hasComponent(MainActivity::class.java.name))
     }
 
-    // passed!
     @Test
     fun clickSignInButton_moveToSignInActivity() {
         // GIVEN - launch app

@@ -39,6 +39,11 @@ android {
     buildFeatures {
         viewBinding = true
     }
+    testOptions {
+        unitTests {
+            isIncludeAndroidResources = true
+        }
+    }
 }
 
 dependencies {
@@ -62,11 +67,15 @@ dependencies {
     implementation("com.squareup.okhttp3:logging-interceptor:4.11.0")
     implementation("com.squareup.okhttp3:okhttp-urlconnection:4.9.1")
 
+    implementation("androidx.tracing:tracing:1.3.0")
     // test
     testImplementation(libs.junit)
+    testImplementation("org.robolectric:robolectric:4.16")
+    testImplementation ("androidx.test:core:1.5.0")
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
     androidTestImplementation("androidx.test.espresso:espresso-intents:3.7.0")
+    androidTestImplementation("androidx.test.uiautomator:uiautomator:2.3.0")
 
     // Material Design 3
     implementation("com.google.android.material:material:1.13.0")
