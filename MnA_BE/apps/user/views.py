@@ -66,7 +66,7 @@ class UserView(viewsets.ModelViewSet):
     @action(detail=False, methods=['post'])
     @default_error_handler
     @require_auth
-    def logout(request, user):
+    def logout(self, request, user):
         """
         POST: logout user
         """
@@ -76,7 +76,7 @@ class UserView(viewsets.ModelViewSet):
 
     @action(detail=False, methods=['post'])
     @default_error_handler
-    def signup(request):
+    def signup(self, request):
         """
         POST: create account. require 'id'(username) and 'password'
         - PK는 AutoField, 'id'는 User.name으로 저장
@@ -128,7 +128,7 @@ class UserView(viewsets.ModelViewSet):
     @action(detail=False, methods=['delete'])
     @default_error_handler
     @require_auth
-    def withdraw(request, user):
+    def withdraw(self, request, user):
         """
         DELETE: delete user account
         """
