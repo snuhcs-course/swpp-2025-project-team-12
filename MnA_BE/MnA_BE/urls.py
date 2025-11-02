@@ -16,7 +16,9 @@ Including another URLconf
 """
 
 from django.contrib import admin
-from django.urls import path, include
+from django.urls import path, re_path, include
+from .docs_urls import schema_view_v1
+
 
 urlpatterns = [
     path("user/", include('apps.user.urls')),
@@ -24,4 +26,5 @@ urlpatterns = [
     path("admin/", admin.site.urls),
     path("api/", include("apps.api.urls")),
     path("articles/", include("apps.articles.urls")),
+    re_path(r'^redoc/$', schema_view_v1.with_ui('redoc', cache_timeout=0))
 ]
