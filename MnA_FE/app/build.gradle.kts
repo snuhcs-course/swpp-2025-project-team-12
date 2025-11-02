@@ -67,6 +67,23 @@ dependencies {
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
 
+    // Unit testing dependencies
+    testImplementation("org.mockito:mockito-core:5.5.0")
+    testImplementation("org.mockito.kotlin:mockito-kotlin:5.1.0")
+    testImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.8.1")
+    testImplementation("androidx.arch.core:core-testing:2.2.0")
+
+    // Fragment testing
+    debugImplementation("androidx.fragment:fragment-testing:1.6.1")
+    androidTestImplementation("androidx.fragment:fragment-testing:1.6.1")
+
+    // Navigation testing
+    androidTestImplementation("androidx.navigation:navigation-testing:2.7.7")
+
+    // Mockito for Android testing
+    androidTestImplementation("org.mockito:mockito-android:5.5.0")
+    androidTestImplementation("org.mockito:mockito-core:5.5.0")
+
     // Material Design 3
     implementation("com.google.android.material:material:1.13.0")
 
