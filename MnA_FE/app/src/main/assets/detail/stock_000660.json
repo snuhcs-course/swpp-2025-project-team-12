@@ -1,9 +1,9 @@
 {
   "ticker": "000660",
   "name": "SK하이닉스",
-  "price": 123000,
-  "change": 800,
-  "change_rate": 0.65,
+  "price": 628112,
+  "change": -2404,
+  "change_rate": -0.38,
   "chart": [
     {
       "t": 1727740800000,
