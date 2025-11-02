@@ -14,19 +14,19 @@ interface ApiService {
     suspend fun health(): ApiResponse<HealthResponse>
 
     // ============ Recommendations ============
-    @GET("api/recommendations/today")
+    @GET("/api/recommendations/today/")
     suspend fun getTodayRecommendations(): ApiResponse<List<RecommendationDto>>
 
-    @GET("api/recommendations/history")
+    @GET("api/recommendations/history/")
     suspend fun getHistoryRecommendations(): ApiResponse<Map<String, List<RecommendationDto>>>
 
-    @GET("api/recommendations/personalized")
+    @GET("api/recommendations/personalized/")
     suspend fun getPersonalizedRecommendations(
         @Query("userId") userId: String
     ): ApiResponse<List<RecommendationDto>>
 
     // ============ Stock Details ============
-    @GET("api/stocks/{ticker}")
+    @GET("api/stocks/{ticker}/")
     suspend fun getStockDetail(
         @Path("ticker") ticker: String
     ): ApiResponse<StockDetailDto>
