@@ -22,26 +22,27 @@ class StartActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_start)
 
-        RetrofitInstance.api.setCsrf()
-            .enqueue(object : retrofit2.Callback<CsrfResponse> {
-                override fun onResponse(
-                    call: Call<CsrfResponse>,
-                    response: retrofit2.Response<CsrfResponse>
-                ) {
-                    if (response.isSuccessful) {
-                        Toast.makeText(this@StartActivity, response.body()?.message, Toast.LENGTH_SHORT).show()
-                    } else {
-                        val result = response.errorBody()?.string()
-                        val message = Gson().fromJson(result, CsrfResponse::class.java).message
-                        Toast.makeText(this@StartActivity, message, Toast.LENGTH_SHORT).show()
-                    }
-                }
-
-                override fun onFailure(call: Call<CsrfResponse>, t: Throwable) {
-                    Toast.makeText(this@StartActivity, "failed to set csrf token", Toast.LENGTH_SHORT)
-                        .show()
-                }
-            })
+        // checking csrf token
+//        RetrofitInstance.api.setCsrf()
+//            .enqueue(object : retrofit2.Callback<CsrfResponse> {
+//                override fun onResponse(
+//                    call: Call<CsrfResponse>,
+//                    response: retrofit2.Response<CsrfResponse>
+//                ) {
+//                    if (response.isSuccessful) {
+//                        Toast.makeText(this@StartActivity, response.body()?.message, Toast.LENGTH_SHORT).show()
+//                    } else {
+//                        val result = response.errorBody()?.string()
+//                        val message = Gson().fromJson(result, CsrfResponse::class.java).message
+//                        Toast.makeText(this@StartActivity, message, Toast.LENGTH_SHORT).show()
+//                    }
+//                }
+//
+//                override fun onFailure(call: Call<CsrfResponse>, t: Throwable) {
+//                    Toast.makeText(this@StartActivity, "failed to set csrf token", Toast.LENGTH_SHORT)
+//                        .show()
+//                }
+//            })
 
         val signInButton = findViewById<MaterialButton>(R.id.signInButton)
         signInButton.setOnClickListener {

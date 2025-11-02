@@ -77,7 +77,7 @@ class SetStyleActivity : AppCompatActivity() {
                 neutral.isChecked -> Style.NEUTRAL.name
                 else -> Style.NONE.name
             }
-            // TODO - send style to server
+
             val request = SetStyleRequest(
                 interests = InterestsList(interests),
                 strategy = Strategy(strategy)
