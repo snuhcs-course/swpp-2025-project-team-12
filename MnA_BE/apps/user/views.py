@@ -24,7 +24,6 @@ class UserView(viewsets.ModelViewSet):
 
     @action(detail=False, methods=['post'])
     @default_error_handler
-    @require_POST
     def login(self, request):
         """
         POST: login

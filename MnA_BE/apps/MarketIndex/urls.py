@@ -6,7 +6,7 @@ app_name = 'marketindex'
 urlpatterns = [
     # Get latest prices for all indices
     # GET /marketindex/stockindex/latest/
-    path('stockindex/latest/', StockIndexView.as_view({ 'get': 'stockindex_latest' })),
+    path('stockindex/latest/', StockIndexView.as_view({ 'get': 'stockindex_latest' }), name='latest'),
     
     # Get historical data for a specific index or both
     # GET /marketindex/stockindex/history/<str:index_type>/?days=30

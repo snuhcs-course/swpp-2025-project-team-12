@@ -17,7 +17,7 @@ Including another URLconf
 
 from django.contrib import admin
 from django.urls import path, re_path, include
-from .docs_urls import schema_view_v1
+from .API_docs_setting import schema_view_v1
 
 
 urlpatterns = [

@@ -1,9 +1,12 @@
 from django.http import JsonResponse
+from rest_framework.decorators import api_view
 from decorators import *
 from S3.base import S3Client
 import json
 import os
 
+
+@api_view(['GET', 'POST', 'DELETE'])
 @default_error_handler
 @require_auth
 def profile_view(request, user):
