@@ -16,3 +16,6 @@ stockindex/MnA_FE/.idea/
 .coverage.*
 htmlcov/
 *.cover
+
+.idea
+.vscode
