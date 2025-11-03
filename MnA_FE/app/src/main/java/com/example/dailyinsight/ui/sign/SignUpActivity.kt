@@ -10,11 +10,11 @@ import androidx.core.view.WindowInsetsCompat
 import androidx.lifecycle.lifecycleScope
 import com.example.dailyinsight.MainActivity
 import com.example.dailyinsight.R
-import com.example.dailyinsight.data.network.LogInRequest
-import com.example.dailyinsight.data.network.LogInResponse
+import com.example.dailyinsight.data.dto.LogInRequest
+import com.example.dailyinsight.data.dto.LogInResponse
+import com.example.dailyinsight.data.dto.SignUpRequest
+import com.example.dailyinsight.data.dto.SignUpResponse
 import com.example.dailyinsight.data.network.RetrofitInstance
-import com.example.dailyinsight.data.network.SignUpRequest
-import com.example.dailyinsight.data.network.SignUpResponse
 import com.google.android.material.appbar.MaterialToolbar
 import com.google.android.material.button.MaterialButton
 import com.google.android.material.textfield.TextInputEditText
@@ -39,11 +39,10 @@ class SignUpActivity : AppCompatActivity() {
 
         val signUpButton = findViewById<MaterialButton>(R.id.signUpButton)
         signUpButton.setOnClickListener {
-            // TODO - sign up implementation
-            // 1. sign up success -> set tokens
             val id = IDTextField.text.toString().trim()
             val password = PWTextField.text.toString().trim()
             val verifyPW = verifyPWField.text.toString().trim()
+            // check if all fields are provided and password matches
             if(id.isEmpty()) {
                 Toast.makeText(this, "please enter id", Toast.LENGTH_SHORT).show()
                 return@setOnClickListener
@@ -57,30 +56,41 @@ class SignUpActivity : AppCompatActivity() {
                 return@setOnClickListener
             }
 
-            val request = SignUpRequest(id = id, password = password)
-
-            RetrofitInstance.api.signUp(request)
-                .enqueue(object : retrofit2.Callback<SignUpResponse> {
-                    override fun onResponse(
-                        call: Call<SignUpResponse>,
-                        response: retrofit2.Response<SignUpResponse>
-                    ) {
-                        if (response.isSuccessful) {
-                            val intent = Intent(this@SignUpActivity, SetInterestActivity::class.java)
-                            startActivity(intent)
-                        } else {
-                            val result = response.errorBody()?.string()
-                            val message = Gson().fromJson(result, LogInResponse::class.java).message
-                            Toast.makeText(this@SignUpActivity, message, Toast.LENGTH_SHORT).show()
-                        }
-                    }
-
-                    override fun onFailure(call: Call<SignUpResponse>, t: Throwable) {
-                        Toast.makeText(this@SignUpActivity, "failed to sign up", Toast.LENGTH_SHORT)
-                            .show()
-                    }
-                })
+            // send signup request to the server
+            sendSignupRequest(id, password)
 
         }
+    }
+
+    fun sendSignupRequest(id: String, password: String) {
+        /**
+         * send signup request to the server with given id and password
+         * @id : id
+         * @password : password
+         **/
+        val request = SignUpRequest(id = id, password = password)
+
+        RetrofitInstance.api.signUp(request)
+            .enqueue(object : retrofit2.Callback<SignUpResponse> {
+                override fun onResponse(
+                    call: Call<SignUpResponse>,
+                    response: retrofit2.Response<SignUpResponse>
+                ) {
+                    if (response.isSuccessful) {
+                        val intent = Intent(this@SignUpActivity, SetInterestActivity::class.java)
+                        startActivity(intent)
+                    } else {
+                        val result = response.errorBody()?.string()
+                        val message = Gson().fromJson(result, LogInResponse::class.java).message
+                        Toast.makeText(this@SignUpActivity, message, Toast.LENGTH_SHORT).show()
+                    }
+                }
+
+                override fun onFailure(call: Call<SignUpResponse>, t: Throwable) {
+                    Toast.makeText(this@SignUpActivity, "failed to sign up", Toast.LENGTH_SHORT)
+                        .show()
+                }
+            })
+
     }
 }

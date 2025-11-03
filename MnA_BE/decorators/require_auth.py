@@ -13,7 +13,7 @@ def require_auth(function):
         refresh_flag = False
         refresh_token = None
 
-        request = args[0]
+        request = args[1]
         access_token = request.COOKIES.get("access_token")
 
         # unauthorized case (cannot find  access token)

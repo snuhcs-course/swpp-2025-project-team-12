@@ -3,10 +3,17 @@
 ### Description
 TODO
 
-### Helpful commands
+## Helpful commands
+
+### Server Managements
 * activate and deactivate virtual environment
-```
+``` 
+    (windows)
     .venv/scripts/activate
+```
+``` 
+    (linux)
+    source .venv/bin/activate
 ```
 ```
     deactivate
@@ -24,7 +31,7 @@ TODO
 
 * run server
 ```
-    python manage.py runserver
+    python manage.py runserver 0.0.0.0:8000
 ```
 
 * DB management
@@ -37,6 +44,18 @@ TODO
 ```
     python manage.py migrate
 ```
+
+### Testing
+* run tests
+```
+    coverage run --source='.' manage.py test
+```
+* check coverage
+```
+    coverage report
+```
+
+### Crawling
 
 * crawl articles
 ```

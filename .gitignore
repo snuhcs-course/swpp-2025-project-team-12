@@ -11,3 +11,8 @@ __pycache__/
 stockindex/MnA_FE/.idea/
 
 .vscode/
+# Coverage reports
+.coverage
+.coverage.*
+htmlcov/
+*.cover

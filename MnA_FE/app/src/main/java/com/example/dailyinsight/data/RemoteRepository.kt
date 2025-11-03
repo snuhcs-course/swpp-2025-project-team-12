@@ -1,7 +1,7 @@
 package com.example.dailyinsight.data
 import com.example.dailyinsight.data.dto.StockDetailDto
 import com.example.dailyinsight.data.dto.RecommendationDto
-import com.example.dailyinsight.data.remote.ApiService
+import com.example.dailyinsight.data.network.ApiService
 
 class RemoteRepository(
     private val api: ApiService
@@ -12,7 +12,6 @@ class RemoteRepository(
 
     override suspend fun getHistoryRecommendations(): Map<String, List<RecommendationDto>> =
         api.getHistoryRecommendations().data ?: emptyMap()
-
 
     override suspend fun getStockDetail(ticker: String): StockDetailDto {
         // API 호출을 통해 StockDetailDto를 가져오고,

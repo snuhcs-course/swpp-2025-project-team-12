@@ -175,6 +175,7 @@ class StockDetailFragment : Fragment(R.layout.fragment_stock_detail) {
     // ===== 차트 / 버튼 =====
 
     private fun setupChart() = with(binding.lineChart) {
+        setNoDataText("")
         legend.isEnabled = false
         description.isEnabled = false
         setTouchEnabled(false)
@@ -182,28 +183,38 @@ class StockDetailFragment : Fragment(R.layout.fragment_stock_detail) {
         setScaleEnabled(false)
         setPinchZoom(false)
         setDrawGridBackground(false)
-        setViewPortOffsets(24f, 12f, 16f, 28f)
+        setMinOffset(12f)
+        setExtraOffsets(8f, 6f, 12f, 16f)
+        // ※ 그래도 잘리면 아래 고정 오프셋을 사용(위 두 줄 대신):
+        // setViewPortOffsets(32f, 12f, 24f, 36f)
 
-        // 축은 항상 ON (라벨 포맷만 고정)
+        axisRight.isEnabled = false
+
+        // Y축(왼쪽)
         axisLeft.apply {
             isEnabled = true
             setDrawGridLines(false)
+            xOffset = 6f
+            textSize = 11f
             valueFormatter = object : ValueFormatter() {
                 private val df = java.text.DecimalFormat("#,##0")
                 override fun getAxisLabel(v: Float, a: AxisBase?): String = df.format(v.toLong())
             }
-            setLabelCount(4, false)
+            setLabelCount(4, true)
         }
-        axisRight.isEnabled = false
-
+        // X축(아래)
         xAxis.apply {
             isEnabled = true
             position = XAxis.XAxisPosition.BOTTOM
             setDrawGridLines(false)
             granularity = 1f
-            setLabelCount(3, false)
+            setLabelCount(3, true)
+            yOffset = 6f
+            setAvoidFirstLastClipping(true)
+            textSize = 11f
         }
     }
+
 
     /** 버튼(세그먼트) — 선택 상태 스타일 + 실제 기간 렌더 */
     private fun setupRangeButtons() = with(binding) {
@@ -269,9 +280,9 @@ class StockDetailFragment : Fragment(R.layout.fragment_stock_detail) {
             mode = if (fewPoints || almostFlat) LineDataSet.Mode.LINEAR
             else LineDataSet.Mode.CUBIC_BEZIER
             color = ContextCompat.getColor(requireContext(), R.color.price_up)
-            lineWidth = 2f
+            lineWidth = 3f
             setDrawCircles(fewPoints)
-            circleRadius = if (fewPoints) 2.5f else 0f
+            circleRadius = if (fewPoints) 3f else 0f
             setDrawValues(false)
 
             val drawFill = !fewPoints && !almostFlat
@@ -288,6 +299,7 @@ class StockDetailFragment : Fragment(R.layout.fragment_stock_detail) {
         data = LineData(set)
         invalidate()
     }
+
 
     /** 범위 필터 — 마지막 N개 단순 슬라이스(균등 간격 가정) */
     private fun filterByRange(

@@ -2,7 +2,7 @@ package com.example.dailyinsight.data
 
 import com.example.dailyinsight.data.dto.RecommendationDto
 import com.example.dailyinsight.data.dto.StockDetailDto
-import com.example.dailyinsight.data.remote.ApiService
+import com.example.dailyinsight.data.network.ApiService
 
 class DefaultRepository(
     private val api: ApiService
