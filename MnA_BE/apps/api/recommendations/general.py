@@ -15,14 +15,23 @@ from Mocks.mock_data import mock_recommendations
 class GeneralRecommendationsView(viewsets.ViewSet):
 
     @action(detail=False, methods=['get'])
-    def recommendations_general(self, request: HttpRequest):
+    def recommendations_general(self, request: HttpRequest, year = None, month=None, day=None):
+        bucket_name = os.environ.get('FINANCE_BUCKET_NAME')
+
+        # if no date provided, get the latest
+        if year is None and month is None and day is None:
+            source = FinanceS3Client().check_source(bucket=bucket_name, prefix="llm_output")
+            if not source["ok"]: return JsonResponse({"message": "No LLM output found"}, status=404)
+            year, month, day = source["latest"].split("-")
+
+        path = f"llm_output/{get_path_with_date('top_picks', year, month, day)}"
         try:
             llm_output = FinanceS3Client().get_json(
-                bucket=os.environ.get("FINANCE_BUCKET_NAME"),
-                key=f"llm_output/{get_path_with_date('top_picks')}"
+                bucket=bucket_name,
+                key=path
             )
         except Exception as e:
-            return JsonResponse({"message": "Recommendations Not Updated"}, status=404)
+            return JsonResponse({"message": "Unexpected Server Error"}, status=500)
 
         return JsonResponse({"llm_output": llm_output}, status=200)
 

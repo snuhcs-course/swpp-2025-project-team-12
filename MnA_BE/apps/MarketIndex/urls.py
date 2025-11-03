@@ -1,10 +1,12 @@
 from django.urls import path
-from .views import StockIndexView
+from .views import StockIndexView, MarketLLMview
 
 app_name = 'marketindex'
 
 urlpatterns = [
     # Get latest prices for all indices
+    path('llm_summary', MarketLLMview.as_view({ 'get': 'market_llm_output' }), name='llm_summary_latest'),
+    path('llm_summary/<str:year>/<str:month>/<str:day>', MarketLLMview.as_view({ 'get': 'market_llm_output' }), name='llm_summary'),
     # GET /marketindex/stockindex/latest/
     path('stockindex/latest/', StockIndexView.as_view({ 'get': 'stockindex_latest' }), name='latest'),
     

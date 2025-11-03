@@ -6,6 +6,35 @@ from .stockindex_manager import StockindexManager
 from S3.finance import FinanceS3Client
 from utils.for_api import get_path_with_date
 
+class MarketLLMview(viewsets.ViewSet):
+    """
+    Market LLM Views
+    ---
+    Provides endpoints to retrieve LLM-generated market analysis data.
+    """
+
+    @action(detail=False, methods=['get'])
+    def market_llm_output(self, request, year = None, month = None, day = None):
+        """Get the latest LLM output for market analysis from S3 JSON data."""
+        bucket_name=os.environ.get('FINANCE_BUCKET_NAME')
+
+        # if no date provided, get the latest
+        if year is None and month is None and day is None:
+            source = FinanceS3Client().check_source(bucket=bucket_name, prefix="llm_output")
+            if not source["ok"]: return JsonResponse({ "message": "No LLM output found" }, status=404)
+            year, month, day = source["latest"].split("-")
+
+        path = f"llm_output/{get_path_with_date('index_info', year, month, day)}"
+        try:
+            llm_output = FinanceS3Client().get_json(
+                bucket=bucket_name,
+                key=path
+            )
+        except Exception as e:
+            return JsonResponse({ "message": "Unexpected Server Error" }, status=500)
+
+        return JsonResponse({ "llm_output": llm_output }, status=200)
+
 class StockIndexView(viewsets.ViewSet):
     """
     Market Index Views
@@ -20,17 +49,11 @@ class StockIndexView(viewsets.ViewSet):
         manager = StockindexManager()
         latest_data = manager.get_latest()
 
-        llm_output = FinanceS3Client().get_json(
-            bucket=os.environ.get('FINANCE_BUCKET_NAME'),
-            key=f"llm_output/{get_path_with_date('index_info')}"
-        )
-
         # The manager's get_latest() already returns the data in a perfect format.
         # We just need to wrap it in our standard API response structure.
         return JsonResponse({
             'status': 'success',
-            'data': latest_data,
-            'llm_output': llm_output
+            'data': latest_data
         })
 
     @action(detail=False, methods=['get'])
