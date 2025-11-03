@@ -15,14 +15,23 @@ class PersonalizedRecommendationsView(viewsets.ViewSet):
 
     @action(detail=False, methods=['get'])
     @require_auth
-    def recommendations_personalized(self, request: HttpRequest, user: User):
+    def recommendations_personalized(self, request: HttpRequest, year=None, month=None, day=None, user: User=None):
+        bucket_name = os.environ.get('FINANCE_BUCKET_NAME')
+
+        # if no date provided, get the latest
+        if year is None and month is None and day is None:
+            source = FinanceS3Client().check_source(bucket=bucket_name, prefix="llm_output")
+            if not source["ok"]: return JsonResponse({"message": "No LLM output found"}, status=404)
+            year, month, day = source["latest"].split("-")
+
+        path = f"llm_output/{get_path_with_date('all_industry_picks', year, month, day)}"
         try:
             llm_output = FinanceS3Client().get_json(
-                bucket=os.environ.get("FINANCE_BUCKET_NAME"),
-                key=f"llm_output/{get_path_with_date('all_industry_picks')}"
+                bucket=bucket_name,
+                key=path
             )
         except Exception as e:
-            return JsonResponse({"message": "Recommendations Not Updated"}, status=404)
+            return JsonResponse({"message": "Unexpected Server Error"}, status=500)
 
         filtered_output = []
         style_of_user = user.style_set.first()

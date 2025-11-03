@@ -26,5 +26,10 @@ urlpatterns = [
     path("admin/", admin.site.urls),
     path("api/", include("apps.api.urls")),
     path("articles/", include("apps.articles.urls")),
-    re_path(r'^redoc/$', schema_view_v1.with_ui('redoc', cache_timeout=0))
 ]
+
+import os
+if os.environ.get("DEV") == "True":
+    urlpatterns.append(
+        re_path(r'^redoc/$', schema_view_v1.with_ui('redoc', cache_timeout=0))
+    )
