@@ -1,10 +1,15 @@
 from django.urls import path
-from .password import password_view
+from .password import PasswordView
 from .profile import profile_view
-from .name import name_view
+from .name import NameView
 
 urlpatterns = [
-    path('password', password_view, name='password'),
+    path('password', PasswordView.as_view({ 'put': 'password'}), name='password'),
+
     path('profile', profile_view, name='profile'),
-    path('name', name_view, name='name'),
+
+    path('name', NameView.as_view({
+        'get': 'name',
+        'post': 'name'
+    }), name='name'),
 ]

@@ -42,6 +42,9 @@ INSTALLED_APPS = [
     "django.contrib.messages",
     "django.contrib.staticfiles",
 
+    # optional
+    "drf_yasg",
+
     # custom apps
     "corsheaders",
     "apps.user",

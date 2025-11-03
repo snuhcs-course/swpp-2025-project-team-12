@@ -1,8 +1,12 @@
 from django.urls import path
-from .general import recommendations_general
-from .personalized import recommendations_personalized
+from .general import GeneralRecommendationsView
+from .personalized import PersonalizedRecommendationsView
 
 urlpatterns = [
-    path('general', recommendations_general, name="reco_general"),
-    path('personalized', recommendations_personalized, name="reco_personalized"),
+    path('general', GeneralRecommendationsView.as_view({
+        'get': 'recommendations_general'
+    }), name="reco_general"),
+    path('personalized', PersonalizedRecommendationsView.as_view({
+        'get': 'recommendations_personalized'
+    }), name="reco_personalized"),
 ]
