@@ -4,8 +4,8 @@ import com.example.dailyinsight.data.DefaultRepository
 import com.example.dailyinsight.data.MockRepository
 import com.example.dailyinsight.data.Repository
 import com.example.dailyinsight.data.RemoteRepository
-import com.example.dailyinsight.data.remote.ApiService
-import com.example.dailyinsight.data.remote.RetrofitClient
+import com.example.dailyinsight.data.network.ApiService
+import com.example.dailyinsight.data.network.RetrofitInstance
 import android.content.Context
 
 object ServiceLocator {
@@ -17,7 +17,7 @@ object ServiceLocator {
     }
 
     // 네트워크
-    val api: ApiService by lazy { RetrofitClient.api }
+    val api: ApiService by lazy { RetrofitInstance.api }
 
     // 토글: 지금은 MocK으로 고정 (BE 붙이면 false 로)
     private val useMock = true

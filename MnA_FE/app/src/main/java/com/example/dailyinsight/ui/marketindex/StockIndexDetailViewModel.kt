@@ -1,14 +1,17 @@
 package com.example.dailyinsight.ui.marketindex
 
 import android.app.Application
+import android.util.Log
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
-import com.example.dailyinsight.R
-import org.json.JSONObject
-import java.io.InputStream
+import androidx.lifecycle.viewModelScope
+import com.example.dailyinsight.data.dto.StockIndexData
+import com.example.dailyinsight.data.dto.StockIndexHistoryItem // New import
+import com.example.dailyinsight.data.repository.MarketIndexRepository
+import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
 import java.util.Locale
 
@@ -16,80 +19,77 @@ import java.util.Locale
 data class ChartDataPoint(val timestamp: Long, val closePrice: Float)
 
 class StockIndexDetailViewModel(application: Application, private val stockIndexType: String) : AndroidViewModel(application) {
-    // Private MutableLiveData that can be updated within the ViewModel
+
+    private val repository = MarketIndexRepository()
+
     private val _stockIndexData = MutableLiveData<StockIndexData>()
-    // Public LiveData that the Fragment can observe. This is read-only from the outside.
     val stockIndexData: LiveData<StockIndexData> = _stockIndexData
 
-    // LiveData for the historical chart data
     private val _historicalData = MutableLiveData<List<ChartDataPoint>>()
     val historicalData: LiveData<List<ChartDataPoint>> = _historicalData
 
-    // The init block is called when the ViewModel is created.
-    // It immediately starts loading the data.
+    private val _error = MutableLiveData<String>()
+    val error: LiveData<String> = _error
+
+    // --- ADD LIVE DATA FOR 1-YEAR HIGH/LOW ---
+    private val _yearHigh = MutableLiveData<Double>()
+    val yearHigh: LiveData<Double> = _yearHigh
+
+    private val _yearLow = MutableLiveData<Double>()
+    val yearLow: LiveData<Double> = _yearLow
+    // --- END ---
+
     init {
         loadData()
     }
 
     private fun loadData() {
-        // Load the main index data (close, change, etc.)
-        val marketJsonData = readJsonFromRaw(R.raw.market_data)
-        val marketDataMap = parseMarketData(marketJsonData)
-        _stockIndexData.value = marketDataMap[stockIndexType]
+        viewModelScope.launch {
+            try {
+                // Fetch latest data for the header (no changes here)
+                val latestDataMap = repository.getMarketData()
+                latestDataMap[stockIndexType]?.let {
+                    _stockIndexData.postValue(it)
+                }
 
-        // Load the historical data for the chart based on the index type
-        val historicalResId = when (stockIndexType) {
-            "KOSPI" -> R.raw.kospi_historical
-            "KOSDAQ" -> R.raw.kosdaq_historical // Assuming you have a kosdaq_historical.json
-            else -> R.raw.kospi_historical // Default case
-        }
-        val historicalJsonData = readJsonFromRaw(historicalResId)
-        val historicalPoints = parseHistoricalData(historicalJsonData)
-        _historicalData.value = historicalPoints
-    }
+                // Fetch 1 year (365 days) of historical data
+                val historicalDataList = repository.getHistoricalData(stockIndexType, 365) // This now returns a List
+                val chartPoints = parseHistoryListToChartPoints(historicalDataList) // Pass the list to the parser
+                _historicalData.postValue(chartPoints)
 
-    /**
-     * Reads a raw resource file and returns its content as a String.
-     */
-    private fun readJsonFromRaw(resourceId: Int): String {
-        val inputStream: InputStream = getApplication<Application>().resources.openRawResource(resourceId)
-        return inputStream.bufferedReader().use { it.readText() }
-    }
+                // --- ADD LOGIC TO CALCULATE 1-YEAR HIGH/LOW ---
+                if (historicalDataList.isNotEmpty()) {
+                    val yearHigh = historicalDataList.maxOfOrNull { it.close }
+                    val yearLow = historicalDataList.minOfOrNull { it.close }
+                    _yearHigh.postValue(yearHigh)
+                    _yearLow.postValue(yearLow)
+                }
+                // --- END ---
 
-    // This function can be reused from your MarketIndexViewModel
-    private fun parseMarketData(jsonData: String): Map<String, StockIndexData> {
-        val dataMap = mutableMapOf<String, StockIndexData>()
-        val rootObject = JSONObject(jsonData)
-        val dataObject = rootObject.getJSONObject("data")
-
-        dataObject.keys().forEach { key ->
-            val indexObject = dataObject.getJSONObject(key)
-            val stockIndex = StockIndexData(
-                name = key,
-                close = indexObject.getDouble("close"),
-                changeAmount = indexObject.getDouble("change_amount"),
-                changePercent = indexObject.getDouble("change_percent"),
-                description = indexObject.getString("description")
-            )
-            dataMap[key] = stockIndex
-        }
-        return dataMap
-    }
-
-    private fun parseHistoricalData(jsonData: String): List<ChartDataPoint> {
-        val points = mutableListOf<ChartDataPoint>()
-        val jsonObject = JSONObject(jsonData)
-        val dateParser = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
-
-        jsonObject.keys().forEach { dateString ->
-            val dayObject = jsonObject.getJSONObject(dateString)
-            val closePrice = dayObject.getDouble("close").toFloat()
-            val date = dateParser.parse(dateString)
-
-            date?.let {
-                points.add(ChartDataPoint(timestamp = it.time, closePrice = closePrice))
+            } catch (e: Exception) {
+                _error.postValue("Failed to fetch data: ${e.message}")
+                Log.e("StockIndexDetailVM", "API Call Failed", e)
             }
         }
+    }
+
+    // Renamed and updated to parse a List instead of a Map
+    private fun parseHistoryListToChartPoints(data: List<StockIndexHistoryItem>): List<ChartDataPoint> {
+        val points = mutableListOf<ChartDataPoint>()
+        val dateParser = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
+
+        data.forEach { item ->
+            val date = dateParser.parse(item.date)
+            date?.let {
+                points.add(
+                    ChartDataPoint(
+                        timestamp = it.time,
+                        closePrice = item.close.toFloat()
+                    )
+                )
+            }
+        }
+        // Sorting is still a good practice to ensure the chart line connects points chronologically.
         return points.sortedBy { it.timestamp }
     }
 }

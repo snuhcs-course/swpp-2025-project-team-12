@@ -7,6 +7,7 @@ import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.viewModelScope
 import com.example.dailyinsight.R
+import com.example.dailyinsight.data.dto.StockIndexData
 import com.example.dailyinsight.data.repository.MarketIndexRepository
 import kotlinx.coroutines.launch
 import org.json.JSONObject
