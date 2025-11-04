@@ -81,7 +81,7 @@ class SetInterestActivity : AppCompatActivity() {
             val interests = buttonGroup.children.filterIsInstance<MaterialButton>()
                 .filter { it.isChecked }
                 .map { it.text.toString() }
-                .toList() as ArrayList<String>
+                .toCollection(ArrayList())
 
 //            Toast.makeText(this, interests.joinToString(), Toast.LENGTH_SHORT).show()
 

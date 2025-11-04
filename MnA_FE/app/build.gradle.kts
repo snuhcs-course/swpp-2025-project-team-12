@@ -67,6 +67,9 @@ dependencies {
     implementation("com.squareup.okhttp3:logging-interceptor:4.11.0")
     implementation("com.squareup.okhttp3:okhttp-urlconnection:4.9.1")
 
+    // data store for cookies
+    implementation("androidx.datastore:datastore-preferences:1.1.7")
+
     implementation("androidx.tracing:tracing:1.3.0")
     // test
     testImplementation(libs.junit)

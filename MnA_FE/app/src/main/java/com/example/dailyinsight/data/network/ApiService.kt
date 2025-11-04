@@ -59,4 +59,7 @@ interface ApiService {
     fun setStyle(
         @Body request: SetStyleRequest
     ): Call<SetStyleResponse>
+
+    @GET("user/info/name")
+    fun getName(): Call<UserNameResponse>
 }

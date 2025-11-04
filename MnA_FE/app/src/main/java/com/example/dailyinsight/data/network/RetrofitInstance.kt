@@ -1,5 +1,6 @@
 package com.example.dailyinsight.data.network
 
+import android.content.Context
 import okhttp3.Interceptor
 import okhttp3.OkHttpClient
 import okhttp3.Response
@@ -29,46 +30,68 @@ object RetrofitInstance {
     private val logging = HttpLoggingInterceptor().apply {
         level = HttpLoggingInterceptor.Level.BODY
     }
-    val cookieManager = CookieManager()
 
-    private val client by lazy {
-        cookieManager.setCookiePolicy(CookiePolicy.ACCEPT_ALL)
-        OkHttpClient.Builder()
-            .cookieJar(JavaNetCookieJar(cookieManager))
-            .addInterceptor { chain ->
-                val original = chain.request()
+    private lateinit var client : OkHttpClient
+    lateinit var api : ApiService
 
-                val cookies = cookieManager.cookieStore.cookies
-                    .filter { original.url.host.endsWith(it.domain.trimStart('.')) }
-                    .joinToString("; ") { "${it.name}=${it.value}" }
-
-                val csrfToken = cookieManager.cookieStore.cookies
-                    .firstOrNull { it.name == "csrftoken" }?.value
-
-                val requestWithCookie = original.newBuilder()
-                    .header("Cookie", cookies)
-                    .apply {
-                        if (csrfToken != null) header("X-CSRFToken", csrfToken)
-                    }
-                    .build()
-
-                chain.proceed(requestWithCookie)
-            }
+    fun init(context: Context) {
+        client = OkHttpClient.Builder()
+            .cookieJar(MyCookieJar(context.applicationContext))
             .apply {
                 if (MOCK_MODE) addInterceptor(MockInterceptor())
                 addInterceptor(logging)
             }
             .build()
-    }
 
-    val api: ApiService by lazy {
-        Retrofit.Builder()
+        api = Retrofit.Builder()
             .baseUrl(BASE_URL)
             .client(client)
             .addConverterFactory(GsonConverterFactory.create())
             .build()
             .create(ApiService::class.java)
     }
+
+//    val cookieManager = CookieManager()
+
+//    private val client by lazy {
+////        cookieManager.setCookiePolicy(CookiePolicy.ACCEPT_ALL)
+//        OkHttpClient.Builder()
+////            .cookieJar(MyCookieJar())
+////            .cookieJar(JavaNetCookieJar(cookieManager))
+////            .addInterceptor { chain ->
+////                val original = chain.request()
+////
+////                val cookies = cookieManager.cookieStore.cookies
+////                    .filter { original.url.host.endsWith(it.domain.trimStart('.')) }
+////                    .joinToString("; ") { "${it.name}=${it.value}" }
+////
+////                val csrfToken = cookieManager.cookieStore.cookies
+////                    .firstOrNull { it.name == "csrftoken" }?.value
+////
+////                val requestWithCookie = original.newBuilder()
+////                    .header("Cookie", cookies)
+////                    .apply {
+////                        if (csrfToken != null) header("X-CSRFToken", csrfToken)
+////                    }
+////                    .build()
+////
+////                chain.proceed(requestWithCookie)
+////            }
+//            .apply {
+//                if (MOCK_MODE) addInterceptor(MockInterceptor())
+//                addInterceptor(logging)
+//            }
+//            .build()
+//    }
+//
+//    val api: ApiService by lazy {
+//        Retrofit.Builder()
+//            .baseUrl(BASE_URL)
+//            .client(client)
+//            .addConverterFactory(GsonConverterFactory.create())
+//            .build()
+//            .create(ApiService::class.java)
+//    }
 
 
     private val contentType = "application/json".toMediaType()
