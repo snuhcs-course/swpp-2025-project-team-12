@@ -1,8 +1,13 @@
 from django.urls import path
-from .root import style_view
-from .page import get_page
+from .root import StyleView
+from .page import StylePageView
 
 urlpatterns = [
-    path('', style_view, name='style'),
-    path('page/<int:page_index>', get_page, name='style_page'),
+    path('', StyleView.as_view({
+        'get': 'style',
+        'post': 'style'
+    }), name='style'),
+    path('page/<int:page_index>', StylePageView.as_view({
+        'get': 'get_page'
+    }), name='style_page'),
 ]
