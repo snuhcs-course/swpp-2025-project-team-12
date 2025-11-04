@@ -7,7 +7,7 @@ urlpatterns = [
         'get': 'style',
         'post': 'style'
     }), name='style'),
-    path('page/<int:page_index>', StylePageView({
+    path('page/<int:page_index>', StylePageView.as_view({
         'get': 'get_page'
     }), name='style_page'),
 ]
