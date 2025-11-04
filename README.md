@@ -1,102 +1,109 @@
-# Iteration 1 demo of Daily insight
+# **Iteration 2 Demo of Daily Insight**
 
-## 1. implemented features
+## 1. Implemented Features
 
-<img width="415" height="446" alt="architecture_iter1" src="https://github.com/user-attachments/assets/0957eca9-d3ff-492c-9751-c91cf1f211bd" />
+| Area | Description |
+|:--|:--|
+| **Backend (Django on AWS EC2)** | Daily article crawler, market index crawler, stock data crawler, JWT-based authentication, user interest management |
+| **Frontend (Android Studio - Kotlin)** | Splash → Sign in / Sign up → Home (Recommendation List) → Detail → History → Index → Profile UI implemented |
+| **Integration** | Backend REST API connected to Android client for login display |
 
-- Index crawler
-- Articles crawler
-- Stock information crawler (Brief information about corporates and their financial data)
+---
 
-## 2. how to set environment
+## 2. How to Set Environment
 
-### 2.1. prepare repository
-First, clone git repository
-```
-git clone [url]
-```
+### 2.1 Clone Repository
 
-And then, move to the project directory
-```
+```bash
+git clone https://github.com/swsnu/swpp-2025-project-team-12.git
 cd swpp-2025-project-team-12
+git checkout iteration-2-demo
 ```
 
-Then switch to the 'iteration-1-demo' branch
-```
-git checkout iteration-1-demo
-```
-
-### 2.2. prepare virtual environment
-
-Create a new environment with Anaconda3 and activate it
-You can set the environment name freely
+Project structure overview:
 
 ```
-conda create -n myenv
-conda activate myenv
+swpp-2025-project-team-12/
+ ├── MnA_BE/      # Backend (Django)
+ ├── MnA_FE/      # Frontend (Android Studio Project)
+ └── [other project docs]
 ```
 
-Move to the demo directory named MnA_BE
-```
+---
+
+### 2.2 Backend Setup (Django)
+
+1. Create a virtual environment and activate it:
+
+```bash
 cd MnA_BE
+conda create -n dailyinsight python=3.10
+conda activate dailyinsight
 ```
 
-Install the modules needed
-```
+2. Install dependencies:
+
+```bash
 pip install -r requirements.txt
 ```
 
-## 3. how to run demo
+3. Run the development server (locally or connect to AWS EC2):
 
-Make sure you have activated the virtual environment and switched to the branch <br>
-And you have to be: .../swpp-2025-project-team-12/MnA_BE <br>
-
-...so it will be like
-```
-(myenv) ~/swpp-2025-project-team-12/MnA_BE git:(iteration-1-demo)
+```bash
+python manage.py runserver 0.0.0.0:8000
 ```
 
-### 3.1. Index crawler
+> Make sure the server is running before launching the Android app.
 
-```
-python -c "from apps.MarketIndex.stockindex_manager import setup_initial_data; setup_initial_data()"
-```
+---
 
-You can check the results at: <br>
-.../swpp-2025-project-team-12/MnA_BE/apps/MarketIndex/stockindex/KOSPI.json <br>
-.../swpp-2025-project-team-12/MnA_BE/apps/MarketIndex/stockindex/KOSDAQ.json <br>
-```
-cat apps/MarketIndex/stockindex/KOSPI.json
-cat apps/MarketIndex/stockindex/KOSDAQ.json
-```
+### 2.3 Frontend Setup (Android Studio – Kotlin)
 
-### 3.2. Articles crawler
+1. Open Android Studio → **Open an existing project**  
+ Select: `MnA_FE/`
 
-```
-python apps/articles/crawler_main.py
-```
+2. Wait until Gradle build completes and dependencies are downloaded.
 
-You can check the results at:
-.../swpp-2025-project-team-12/MnA_BE/apps/articles/[date]/business_top50.json
-[date] is the date today (e.g. 20251005)
+3. Select a virtual device (Emulator) or real device and click ▶ **Run App**.
 
-### 3.3. Stock information crawler
+---
 
-```
-python apps/Finance/finance_crawler.py
+## 3. How to Run Demo
+
+### 3.1 Backend Start
+```bash
+conda activate dailyinsight
+cd MnA_BE
+python manage.py runserver
 ```
 
-You can check the result just at the terminal (will be printed out)
+Keep the server running in the terminal.
 
-## 4. demo video
+### 3.2 Frontend Launch
+- Open Android Studio  
+- Ensure the emulator or real device is connected  
+- Press **Run App** (▶)  
 
-You can check the demo video for each feature here
+The app will launch starting from the **Splash** screen → **Sign in / Sign up** → **Home (Recommendation List)**.  
 
-### 4.1. Index crawler
-[swpp25 team12 iteration 1 demo - 1. Index crawler](https://youtu.be/ipA-jFqFZws)
+---
 
-### 4.2. Articles crawler
-[swpp25 team12 iteration 1 demo - 2. Articles crawler](https://youtu.be/YQWbwLg6EsM)
+## 4. Demo Features Overview
 
-### 4.3. Stock information crawler
-[swpp25 team12 iteration 1 demo - 3. Stock information crawler](https://youtu.be/7EzlZLypGA0)
+| Feature | Description |
+|:--|:--|
+| **Splash Screen** | Checks token validity, redirects to Sign in if expired. |
+| **Sign in / Sign up** | User authentication linked with backend. |
+| **Home Screen** | Displays daily recommendations (general or personalized). |
+| **Detail View** | Shows financial data and LLM-generated reasoning. |
+| **History Tab** | Shows previous recommendations with timestamps. |
+| **Index Information** | Displays KOSPI/KOSDAQ with trend summary. |
+
+---
+
+## 5. Demo Video
+
+Demo video  
+https://youtube.com/shorts/MVdy5fdfMh8
+
+---
