@@ -1,11 +1,11 @@
-# **Iteration 2 Demo of Daily Insight**
+# **Iteration 3 Demo of Daily Insight**
 
 ## 1. Implemented Features
 
 | Area | Description |
 |:--|:--|
-| **Backend (Django on AWS EC2)** | Daily article crawler, market index crawler, stock data crawler, JWT-based authentication, user interest management |
-| **Frontend (Android Studio - Kotlin)** | Splash → Sign in / Sign up → Home (Recommendation List) → Detail → History → Index → Profile UI implemented |
+| **Backend (Django on AWS EC2)** | Daily article crawler, market index crawler, stock data crawler, JWT-based authentication, user interest management, Get LLM Output, Implement API Document  |
+| **Frontend (Android Studio - Kotlin)** | Splash → Sign in / Sign up → Home (Portfolio Management) → Detail → Issue → Index → Profile UI implemented |
 | **Integration** | Backend REST API connected to Android client for login display |
 
 ---
@@ -17,7 +17,7 @@
 ```bash
 git clone https://github.com/swsnu/swpp-2025-project-team-12.git
 cd swpp-2025-project-team-12
-git checkout iteration-2-demo
+git checkout iteration-3-demo
 ```
 
 Project structure overview:
@@ -84,7 +84,7 @@ Keep the server running in the terminal.
 - Ensure the emulator or real device is connected  
 - Press **Run App** (▶)  
 
-The app will launch starting from the **Splash** screen → **Sign in / Sign up** → **Home (Recommendation List)**.  
+The app will launch starting from the **Splash** screen → **Sign in / Sign up** → **Home (Portfolio Management)**.  
 
 ---
 
@@ -94,9 +94,9 @@ The app will launch starting from the **Splash** screen → **Sign in / Sign up*
 |:--|:--|
 | **Splash Screen** | Checks token validity, redirects to Sign in if expired. |
 | **Sign in / Sign up** | User authentication linked with backend. |
-| **Home Screen** | Displays daily recommendations (general or personalized). |
+| **Home Screen** | Personal portfolio info & Mangement (Unimplemented yet). |
 | **Detail View** | Shows financial data and LLM-generated reasoning. |
-| **History Tab** | Shows previous recommendations with timestamps. |
+| **Issue Tab** | Shows current and previous stocks worth watching with timestamps. |
 | **Index Information** | Displays KOSPI/KOSDAQ with trend summary. |
 
 ---
@@ -104,6 +104,6 @@ The app will launch starting from the **Splash** screen → **Sign in / Sign up*
 ## 5. Demo Video
 
 Demo video  
-https://youtube.com/shorts/MVdy5fdfMh8
+https://www.youtube.com/watch?v=CqoYewBb46o
 
 ---
