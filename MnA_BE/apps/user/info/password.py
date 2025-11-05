@@ -11,15 +11,11 @@ class PasswordView(viewsets.ViewSet):
     @action(detail=False, methods=['put'])
     @default_error_handler
     @require_auth
-    def password(self, request, user):
+    def put(self, request, user):
         """
-        PUT: change user's password
+        change user's password
         """
 
-        if request.method != "PUT":
-            return JsonResponse({"message": "NOT ALLOWED METHOD"}, status=405)
-
-        ### PUT ###
         body = json.loads(request.body.decode('utf-8'))
         password = body.get("password")
 

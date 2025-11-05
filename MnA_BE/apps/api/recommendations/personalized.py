@@ -2,34 +2,30 @@ from django.http import HttpRequest
 from rest_framework import viewsets
 from rest_framework.decorators import action
 from S3.finance import FinanceS3Client
-from apps.api.constants import *
 from utils.for_api import *
-from decorators import require_auth
+from decorators import require_auth, default_error_handler
 from apps.user.models import User
-from utils.pagination import get_pagination
-import datetime as _dt
-from apps.api.models import RecommendationBatch, RecommendationItem
-from Mocks.mock_data import mock_recommendations
+from apps.api.constants import *
+# from utils.pagination import get_pagination
+# import datetime as _dt
+# from apps.api.models import RecommendationBatch, RecommendationItem
+# from Mocks.mock_data import mock_recommendations
 
 class PersonalizedRecommendationsView(viewsets.ViewSet):
 
     @action(detail=False, methods=['get'])
+    @default_error_handler
     @require_auth
-    def recommendations_personalized(self, request: HttpRequest, year=None, month=None, day=None, user: User=None):
-        bucket_name = os.environ.get('FINANCE_BUCKET_NAME')
-
+    def get(self, request: HttpRequest, year=None, month=None, day=None, user: User=None):
         # if no date provided, get the latest
         if year is None and month is None and day is None:
-            source = FinanceS3Client().check_source(bucket=bucket_name, prefix="llm_output")
+            source = FinanceS3Client().check_source(bucket=FINANCE_BUCKET, prefix="llm_output")
             if not source["ok"]: return JsonResponse({"message": "No LLM output found"}, status=404)
             year, month, day = source["latest"].split("-")
 
         path = f"llm_output/{get_path_with_date('all_industry_picks', year, month, day)}"
         try:
-            llm_output = FinanceS3Client().get_json(
-                bucket=bucket_name,
-                key=path
-            )
+            llm_output = FinanceS3Client().get_json(bucket=FINANCE_BUCKET, key=path)
         except Exception as e:
             return JsonResponse({"message": "Unexpected Server Error"}, status=500)
 

@@ -5,6 +5,7 @@ from rest_framework import viewsets
 from rest_framework.decorators import action
 from S3.finance import FinanceS3Client
 from Mocks.mock_data import MOCK_INDICES, MOCK_ARTICLES
+from decorators import default_error_handler
 from utils.pagination import get_pagination
 from utils.for_api import *
 from apps.api.constants import *
@@ -12,7 +13,8 @@ from apps.api.constants import *
 class APIView(viewsets.ViewSet):
 
     @action(detail=False, methods=['get'])
-    def health(self, request: HttpRequest):
+    @default_error_handler
+    def get_health(self, request: HttpRequest):
         """
         GET /api/health
         각 소스별 최신 객체의 존재/시각 확인
@@ -48,7 +50,8 @@ class APIView(viewsets.ViewSet):
         })
 
     @action(detail=False, methods=['get'])
-    def indices(self, request: HttpRequest):
+    @default_error_handler
+    def get_indices(self, request: HttpRequest):
         """
         GET /api/indices
         지수: S3 있으면 읽고, 없으면 mock
@@ -74,7 +77,8 @@ class APIView(viewsets.ViewSet):
         return ok(MOCK_INDICES)
 
     @action(detail=False, methods=['get'])
-    def company_profiles(self, request: HttpRequest):
+    @default_error_handler
+    def get_company_profiles(self, request: HttpRequest):
         """
         GET /api/company-profiles?limit=<int>&offset=<int>&market=kospi|kosdaq&date=YYYY-MM-DD
         회사 프로필: parquet 최신 파일에서 페이지네이션 적용
@@ -137,7 +141,8 @@ class APIView(viewsets.ViewSet):
             return degraded(str(e), source="s3", total=0, limit=limit, offset=offset)
 
     @action(detail=False, methods=['get'])
-    def reports_detail(self, request: HttpRequest, symbol: str):
+    @default_error_handler
+    def get_reports_detail(self, request: HttpRequest, symbol: str):
         """
         GET /api/reports/{symbol}
         상세 리포트: 회사 프로필 + (선택) 가격/지표 + 기사 요약
