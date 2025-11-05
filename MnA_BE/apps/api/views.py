@@ -82,9 +82,10 @@ def company_profiles(request: HttpRequest):
     symbol = request.GET.get("symbol")  # 특정 심볼 조회용 (선택)
     
     try:
-        df, ts = FinanceS3Client().get_latest_json(
-            FINANCE_BUCKET,
-            S3_PREFIX_COMPANY
+        # 수정: get_latest_parquet_df 사용
+        df, ts = FinanceS3Client().get_latest_parquet_df(
+            bucket=FINANCE_BUCKET,
+            prefix="company-profile"  # 단수형, 슬래시 제거
         )
         if df is None or len(df) == 0:
             return degraded("no parquet found", source="s3", total=0, limit=limit, offset=offset)
@@ -140,9 +141,10 @@ def reports_detail(request: HttpRequest, symbol: str):
     상세 리포트: 회사 프로필 + (선택) 가격/지표 + 기사 요약
     """
     try:
-        profile_df, ts_prof = FinanceS3Client().get_latest_json(
-            FINANCE_BUCKET,
-            S3_PREFIX_COMPANY
+        # 수정: get_latest_parquet_df 사용
+        profile_df, ts_prof = FinanceS3Client().get_latest_parquet_df(
+            bucket=FINANCE_BUCKET,
+            prefix="company-profile"  # 단수형, 슬래시 제거
         )
         profile = None
         
