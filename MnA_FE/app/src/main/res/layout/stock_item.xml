@@ -13,15 +13,6 @@
         app:layout_constraintBottom_toBottomOf="parent"
         android:text="종목 이름"/>
 
-    <TextView
-        android:id="@+id/market"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        android:text="KOSPI"/>
-
     <com.google.android.material.divider.MaterialDivider
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"

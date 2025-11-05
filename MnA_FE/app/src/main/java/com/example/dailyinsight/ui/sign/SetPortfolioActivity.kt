@@ -38,6 +38,8 @@ class SetPortfolioActivity : AppCompatActivity() {
             insets
         }
 
+        viewModel.fetchStocks()
+
         // go back when back button clicked on top app bar
         val topAppBar = findViewById<MaterialToolbar>(R.id.topAppBar)
         topAppBar.setNavigationOnClickListener {
@@ -66,20 +68,10 @@ class SetPortfolioActivity : AppCompatActivity() {
             viewModel.searchStocks(text.toString())
         }
 
-        // 🔹 검색어 입력 이벤트 → ViewModel로 전달
-        searchBar.addTextChangedListener(object : TextWatcher {
-            override fun afterTextChanged(s: Editable?) {}
-            override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
-            override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {
-                viewModel.searchStocks(s.toString())
-            }
-        })
-
-        // 🔹 종목 리스트 관찰 (검색 결과 변경 시)
-        viewModel.stockItems.observe(this, Observer { stocks ->
+        viewModel.filteredStocks.observe(this) { stocks ->
             val selected = viewModel.selectedTickers.value ?: emptySet()
             adapter.submitList(stocks, selected)
-        })
+        }
 
         // 🔹 선택 상태 관찰 (체크박스 상태 변경 시)
         viewModel.selectedTickers.observe(this, Observer { selected ->
@@ -106,6 +98,7 @@ class SetPortfolioActivity : AppCompatActivity() {
         }
 
         toNextButton.setOnClickListener {
+            viewModel.submitSelectedStocks()
             val intent = Intent(this, MainActivity::class.java)
             finishAffinity()
             startActivity(intent)

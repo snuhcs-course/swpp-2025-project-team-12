@@ -18,14 +18,12 @@ class StockAdapter(
     var isEnabled: Boolean = true
     inner class StockViewHolder(view: View) : RecyclerView.ViewHolder(view) {
         private val checkBox: MaterialCheckBox = view.findViewById(R.id.stockItem)
-        private val marketText: TextView = view.findViewById(R.id.market)
 
         fun bind(stock: StockItem, isSelected: Boolean) {
             checkBox.setOnCheckedChangeListener(null)
             checkBox.text = stock.name
             checkBox.isChecked = isSelected
             checkBox.isEnabled = isEnabled
-            marketText.text = stock.market
 
             checkBox.setOnCheckedChangeListener { _, checked ->
                 onCheckedChange(stock, checked)

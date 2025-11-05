@@ -1,17 +1,24 @@
 package com.example.dailyinsight.ui.sign
 
+import android.util.Log
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
+import androidx.lifecycle.viewModelScope
 import com.example.dailyinsight.data.FakeStockRepository
 import com.example.dailyinsight.data.dto.StockItem
+import kotlinx.coroutines.launch
 
 class PortfolioViewModel(
     private val repository: FakeStockRepository
 ) : ViewModel() {
 
-    val stockItems: LiveData<List<StockItem>> = repository.stocks
+    private val _stockItems = MutableLiveData<List<StockItem>>()
+    val stockItems: LiveData<List<StockItem>> get() = _stockItems
+
+    private val _filteredStocks = MutableLiveData<List<StockItem>>(emptyList())
+    val filteredStocks: LiveData<List<StockItem>> get() = _filteredStocks
 
     // 🔹 선택된 종목 ticker 모음
     private val _selectedTickers = MutableLiveData<Set<Int>>(emptySet())
@@ -22,9 +29,44 @@ class PortfolioViewModel(
 
     private var previousSelection: Set<Int> = emptySet()
 
+    fun fetchStocks() {
+        viewModelScope.launch {
+            try {
+                val items = repository.fetchStocks()
+                _stockItems.value = items
+                _filteredStocks.value = items
+            } catch (e: Exception) {
+                Log.e("PortfolioViewModel", "fetchStocks failed")
+                e.printStackTrace()
+            }
+        }
+    }
+
+    fun submitSelectedStocks() {
+        viewModelScope.launch {
+            try {
+                val selected = _selectedTickers.value ?: emptySet()
+                if(repository.submitSelectedStocks(selected)) {
+                    Log.d("PortfolioViewModel", "submitted successfully")
+                }
+            } catch (e: Exception) {
+                Log.e("PortfolioViewModel", "submitStocks failed")
+                e.printStackTrace()
+            }
+        }
+    }
+
     // 🔹 검색어에 따라 리스트 필터링
     fun searchStocks(query: String) {
-        repository.searchStocks(query)
+        val baseList = _stockItems.value ?: emptyList()
+        _filteredStocks.value = if (query.isBlank()) {
+            baseList
+        } else {
+            val lower = query.lowercase()
+            baseList.filter {
+                it.name.lowercase().contains(lower)
+            }
+        }
     }
 
     // 🔹 체크박스 선택/해제 이벤트 처리
