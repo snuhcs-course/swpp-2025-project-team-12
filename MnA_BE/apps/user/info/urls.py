@@ -9,7 +9,7 @@ urlpatterns = [
     path('profile', profile_view, name='profile'),
 
     path('name', NameView.as_view({
-        'get': 'name',
-        'post': 'name'
+        'get': 'get',
+        'post': 'post'
     }), name='name'),
 ]
