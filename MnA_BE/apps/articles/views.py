@@ -2,6 +2,8 @@
 from django.http import JsonResponse, HttpResponseBadRequest
 from rest_framework import viewsets
 from rest_framework.decorators import action
+
+from decorators import default_error_handler
 from .services import list_articles, get_article_by_id
 
 
@@ -13,11 +15,13 @@ class ArticleView(viewsets.ViewSet):
     """
 
     @action(detail=False, methods=['get'])
+    @default_error_handler
     def get(self, request):
         data = list_articles(None)
         return JsonResponse({"data": data}, status=200)
 
     @action(detail=False, methods=['get'])
+    @default_error_handler
     def get_by_date(self, request, date):
         try:
             data = list_articles(date)
@@ -26,6 +30,7 @@ class ArticleView(viewsets.ViewSet):
         return JsonResponse({"date": date, "data": data}, status=200)
 
     @action(detail=False, methods=['get'])
+    @default_error_handler
     def get_detail(self, request, id):
         # (선택) ?date=YYYY-MM-DD 허용: 특정 날짜에서 찾고 싶을 때
         date = request.GET.get("date")

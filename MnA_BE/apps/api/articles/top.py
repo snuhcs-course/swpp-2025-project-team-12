@@ -2,6 +2,7 @@ from django.http import HttpRequest
 from rest_framework import viewsets
 from rest_framework.decorators import action
 from S3.finance import FinanceS3Client
+from decorators import default_error_handler
 from utils.pagination import get_pagination
 from apps.api.constants import *
 from utils.for_api import *
@@ -11,6 +12,7 @@ from Mocks.mock_data import MOCK_ARTICLES
 class TopArticleView(viewsets.ViewSet):
 
     @action(detail=False, methods=['get'])
+    @default_error_handler
     def get_top(self, request: HttpRequest):
         """
         GET /api/articles/top?limit=<int>&offset=<int>
