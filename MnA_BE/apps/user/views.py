@@ -132,9 +132,6 @@ class UserView(viewsets.ModelViewSet):
         DELETE: delete user account
         """
 
-        if request.method != "DELETE":
-            return JsonResponse({"message": "METHOD NOT ALLOWED"}, status=405)
-
         response = JsonResponse({"message": "WITHDRAWAL SUCCESS"}, status=200)
         delete_cookie(response)
 

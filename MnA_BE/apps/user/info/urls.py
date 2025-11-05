@@ -5,13 +5,13 @@ from .name import NameView
 
 urlpatterns = [
     path('password', PasswordView.as_view({
-        'put': 'password'
+        'put': 'put'
     }), name='password'),
 
     path('profile', ProfileView.as_view({
-        'get': 'profile',
-        'put': 'profile',
-        'post': 'profile'
+        'get': 'get',
+        'post': 'post',
+        'delete': 'delete'
     }), name='profile'),
 
     path('name', NameView.as_view({
