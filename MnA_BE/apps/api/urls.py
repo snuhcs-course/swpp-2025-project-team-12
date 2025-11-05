@@ -11,6 +11,9 @@ urlpatterns = [
     path("indices", APIView.as_view({
         'get': 'get_indices'
     }), name="indices"),
+    path("company-list", APIView.as_view({
+        'get': 'get_company_list'
+    })),
     path("company-profiles", APIView.as_view({
         'get': 'get_company_profiles'
     }), name="company_profiles"),
