@@ -3,7 +3,7 @@
     <string name="title_today">포트폴리오</string>
     <string name="title_history">이슈</string>
     <string name="title_market_index">주요 지수</string>
-    <string name="title_stock_detail">종목 상세</string> 
+    <string name="title_stock_detail">종목 상세</string>
     <string name="title_stock_index_detail">코스피</string>
     <string name="today">오늘</string>
     <string name="yesterday">어제</string>
