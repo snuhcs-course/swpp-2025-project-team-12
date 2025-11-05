@@ -49,6 +49,7 @@ INSTALLED_APPS = [
     "corsheaders",
     "apps.user",
     "apps.MarketIndex",
+    "apps.articles",
     "apps.api",
 ]
 
