@@ -6,9 +6,11 @@ from rest_framework.decorators import action
 from S3.finance import FinanceS3Client
 from Mocks.mock_data import MOCK_INDICES, MOCK_ARTICLES
 from decorators import default_error_handler
+from utils.debug_print import debug_print
 from utils.pagination import get_pagination
 from utils.for_api import *
 from apps.api.constants import *
+import numpy as np
 
 class APIView(viewsets.ViewSet):
 
@@ -78,18 +80,68 @@ class APIView(viewsets.ViewSet):
 
     @action(detail=False, methods=['get'])
     @default_error_handler
+    def get_company_list(self, request):
+        """
+        api/company-list?limit=<int>&offset=<int>&market=kospi|kosdaq
+        provide list of names of companies.
+        """
+        limit, offset = get_pagination(request, default_limit=10, max_limit=100)
+        market = request.GET.get("market", "kosdaq")
+
+        try:
+            source = FinanceS3Client().check_source(bucket=FINANCE_BUCKET, prefix="llm_output")
+            if not source["ok"]: return JsonResponse({"message": "Data Not Found"}, status=404)
+            year, month, day = source["latest"].split("-")
+            if month[0] == '0': month = month[1]
+        except Exception as e:
+            return JsonResponse({"message": "Unexpected Server Error"}, status=500)
+
+        try:
+            df, ts = FinanceS3Client().get_latest_parquet_df(
+                FINANCE_BUCKET,
+                f"{S3_PREFIX_PRICE}year={year}/month={month}/market={market}"
+            )
+
+            if df is None or len(df) == 0:
+                return degraded("no parquet found", source="s3", total=0, limit=limit, offset=offset)
+
+            # 페이지네이션
+            total = len(df)
+            page_df = df.iloc[offset:offset + limit]
+
+            items = [
+                {"ticker": idx, "name": str(row["name"])}
+                for idx, row in page_df.iterrows()
+            ]
+
+            return ok({
+                "items": items,
+                "total": total,
+                "limit": limit,
+                "offset": offset,
+                "source": "s3",
+                "asOf": ts or iso_now()
+            })
+
+        except Exception as e:
+            debug_print(e)
+            return degraded(str(e), source="s3", total=0, limit=limit, offset=offset)
+
+
+
+    @action(detail=False, methods=['get'])
+    @default_error_handler
     def get_company_profiles(self, request: HttpRequest):
         """
         GET /api/company-profiles?limit=<int>&offset=<int>&market=kospi|kosdaq&date=YYYY-MM-DD
         회사 프로필: parquet 최신 파일에서 페이지네이션 적용
         """
         limit, offset = get_pagination(request, default_limit=10, max_limit=100)
-        market = request.GET.get("market", "kosdaq")
         date = request.GET.get("date")
         symbol = request.GET.get("symbol")  # 특정 심볼 조회용 (선택)
 
         try:
-            df, ts = FinanceS3Client().get_latest_json(
+            df, ts = FinanceS3Client().get_latest_parquet_df(
                 FINANCE_BUCKET,
                 S3_PREFIX_COMPANY
             )
@@ -100,7 +152,10 @@ class APIView(viewsets.ViewSet):
             if symbol:
                 if symbol in df.index:
                     row = df.loc[symbol]
-                    items = [{"ticker": symbol, "explanation": str(row["explanation"])}]
+                    items = [{
+                        "ticker": symbol,
+                        "explanation": str(row["explanation"])
+                    }]
                     return ok({
                         "items": items,
                         "total": 1,
@@ -124,7 +179,7 @@ class APIView(viewsets.ViewSet):
             page_df = df.iloc[offset:offset + limit]
 
             items = [
-                {"ticker": idx, "explanation": str(row["explanation"])}
+                {"ticker": idx, "name": str(row["name"]),  "explanation": str(row["explanation"])}
                 for idx, row in page_df.iterrows()
             ]
 
@@ -138,6 +193,7 @@ class APIView(viewsets.ViewSet):
             })
 
         except Exception as e:
+            debug_print(e)
             return degraded(str(e), source="s3", total=0, limit=limit, offset=offset)
 
     @action(detail=False, methods=['get'])
