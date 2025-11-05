@@ -204,7 +204,7 @@ class APIView(viewsets.ViewSet):
         상세 리포트: 회사 프로필 + (선택) 가격/지표 + 기사 요약
         """
         try:
-            profile_df, ts_prof = FinanceS3Client().get_latest_json(
+            profile_df, ts_prof = FinanceS3Client().get_latest_parquet_df(
                 FINANCE_BUCKET,
                 S3_PREFIX_COMPANY
             )
