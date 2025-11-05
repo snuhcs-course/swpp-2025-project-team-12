@@ -6,16 +6,16 @@ from apps.api.constants import *
 from utils.for_api import *
 from decorators import require_auth
 from apps.user.models import User
-from utils.pagination import get_pagination
-import datetime as _dt
-from apps.api.models import RecommendationBatch, RecommendationItem
-from Mocks.mock_data import mock_recommendations
+# from utils.pagination import get_pagination
+# import datetime as _dt
+# from apps.api.models import RecommendationBatch, RecommendationItem
+# from Mocks.mock_data import mock_recommendations
 
 class PersonalizedRecommendationsView(viewsets.ViewSet):
 
     @action(detail=False, methods=['get'])
     @require_auth
-    def recommendations_personalized(self, request: HttpRequest, year=None, month=None, day=None, user: User=None):
+    def get(self, request: HttpRequest, year=None, month=None, day=None, user: User=None):
         bucket_name = os.environ.get('FINANCE_BUCKET_NAME')
 
         # if no date provided, get the latest

@@ -11,7 +11,7 @@ from Mocks.mock_data import MOCK_ARTICLES
 class TopArticleView(viewsets.ViewSet):
 
     @action(detail=False, methods=['get'])
-    def articles_top(self, request: HttpRequest):
+    def get_top(self, request: HttpRequest):
         """
         GET /api/articles/top?limit=<int>&offset=<int>
         상위 기사: 페이지네이션 적용

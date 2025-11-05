@@ -15,7 +15,7 @@ from Mocks.mock_data import mock_recommendations
 class GeneralRecommendationsView(viewsets.ViewSet):
 
     @action(detail=False, methods=['get'])
-    def recommendations_general(self, request: HttpRequest, year = None, month=None, day=None):
+    def get(self, request: HttpRequest, year = None, month=None, day=None):
         bucket_name = os.environ.get('FINANCE_BUCKET_NAME')
 
         # if no date provided, get the latest
