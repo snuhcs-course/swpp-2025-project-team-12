@@ -89,7 +89,7 @@ class APIView(viewsets.ViewSet):
         symbol = request.GET.get("symbol")  # 특정 심볼 조회용 (선택)
 
         try:
-            df, ts = FinanceS3Client().get_latest_json(
+            df, ts = FinanceS3Client().get_latest_parquet_df(
                 FINANCE_BUCKET,
                 S3_PREFIX_COMPANY
             )
@@ -148,7 +148,7 @@ class APIView(viewsets.ViewSet):
         상세 리포트: 회사 프로필 + (선택) 가격/지표 + 기사 요약
         """
         try:
-            profile_df, ts_prof = FinanceS3Client().get_latest_json(
+            profile_df, ts_prof = FinanceS3Client().get_latest_parquet_df(
                 FINANCE_BUCKET,
                 S3_PREFIX_COMPANY
             )
