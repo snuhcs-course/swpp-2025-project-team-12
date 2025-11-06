@@ -42,3 +42,7 @@ data class SignUpResponse(
 data class SetStyleResponse(
     val message: String
 )
+
+data class UserNameResponse(
+    val name: String
+)

@@ -31,6 +31,12 @@ interface ApiService {
     suspend fun getStockDetail(
         @Path("ticker") ticker: String
     ): ApiResponse<StockDetailDto>
+    
+    @GET("api/company-list")
+    suspend fun getCompanyList(
+        @Query("limit") limit: Int,
+        @Query("offset") offset: Int
+    ) : Response<CompanyListResponse>
 
     // ============ Market Index ============
     @GET("marketindex/stockindex/latest")
@@ -60,15 +66,13 @@ interface ApiService {
     fun setStyle(
         @Body request: SetStyleRequest
     ): Call<SetStyleResponse>
-
-    @GET("api/company-list")
-    suspend fun getCompanyList(
-        @Query("limit") limit: Int,
-        @Query("offset") offset: Int
-    ) : Response<CompanyListResponse>
-
+  
     @POST("user/info/portfolio")
     suspend fun setPortfolio(
         @Body portfolio: PortfolioRequest
     ) : Response<PortfolioResponse>
+  
+    @GET("user/info/name")
+    fun getName(): Call<UserNameResponse>
+
 }

@@ -125,6 +125,7 @@
     "close": 743.31,
     "date": "2024-11-06",
     "high": 761.01,
+    "index": "KOSDAQ",
     "low": 737.77,
     "open": 757.23,
     "volume": 1100
@@ -135,6 +136,7 @@
     "close": 733.52,
     "date": "2024-11-07",
     "high": 743.47,
+    "index": "KOSDAQ",
     "low": 727.1,
     "open": 743.47,
     "volume": 800
@@ -145,6 +147,7 @@
     "close": 743.38,
     "date": "2024-11-08",
     "high": 746.89,
+    "index": "KOSDAQ",
     "low": 739.66,
     "open": 739.91,
     "volume": 800
@@ -155,6 +158,7 @@
     "close": 728.84,
     "date": "2024-11-11",
     "high": 745.42,
+    "index": "KOSDAQ",
     "low": 727.04,
     "open": 744.86,
     "volume": 800
@@ -165,6 +169,7 @@
     "close": 710.52,
     "date": "2024-11-12",
     "high": 729.07,
+    "index": "KOSDAQ",
     "low": 707.96,
     "open": 728.72,
     "volume": 900
@@ -175,6 +180,7 @@
     "close": 689.65,
     "date": "2024-11-13",
     "high": 712.83,
+    "index": "KOSDAQ",
     "low": 689.64,
     "open": 708.52,
     "volume": 900
@@ -185,6 +191,7 @@
     "close": 681.56,
     "date": "2024-11-14",
     "high": 702.08,
+    "index": "KOSDAQ",
     "low": 681.3,
     "open": 694.16,
     "volume": 800
@@ -195,6 +202,7 @@
     "close": 685.42,
     "date": "2024-11-15",
     "high": 688.91,
+    "index": "KOSDAQ",
     "low": 668.38,
     "open": 675.64,
     "volume": 900
@@ -205,6 +213,7 @@
     "close": 689.55,
     "date": "2024-11-18",
     "high": 697.45,
+    "index": "KOSDAQ",
     "low": 681.0,
     "open": 683.53,
     "volume": 900
@@ -215,6 +224,7 @@
     "close": 686.12,
     "date": "2024-11-19",
     "high": 691.13,
+    "index": "KOSDAQ",
     "low": 682.5,
     "open": 690.45,
     "volume": 900
@@ -225,6 +235,7 @@
     "close": 682.91,
     "date": "2024-11-20",
     "high": 691.0,
+    "index": "KOSDAQ",
     "low": 682.03,
     "open": 689.03,
     "volume": 900
@@ -235,6 +246,7 @@
     "close": 680.67,
     "date": "2024-11-21",
     "high": 685.91,
+    "index": "KOSDAQ",
     "low": 672.83,
     "open": 683.1,
     "volume": 1000
@@ -245,6 +257,7 @@
     "close": 677.01,
     "date": "2024-11-22",
     "high": 689.99,
+    "index": "KOSDAQ",
     "low": 676.06,
     "open": 682.37,
     "volume": 800
@@ -255,6 +268,7 @@
     "close": 696.83,
     "date": "2024-11-25",
     "high": 698.51,
+    "index": "KOSDAQ",
     "low": 683.37,
     "open": 683.37,
     "volume": 800
@@ -265,6 +279,7 @@
     "close": 693.15,
     "date": "2024-11-26",
     "high": 699.7,
+    "index": "KOSDAQ",
     "low": 689.53,
     "open": 697.59,
     "volume": 800
@@ -275,6 +290,7 @@
     "close": 692.0,
     "date": "2024-11-27",
     "high": 696.15,
+    "index": "KOSDAQ",
     "low": 686.37,
     "open": 693.8,
     "volume": 900
@@ -285,6 +301,7 @@
     "close": 694.39,
     "date": "2024-11-28",
     "high": 697.91,
+    "index": "KOSDAQ",
     "low": 691.61,
     "open": 694.96,
     "volume": 900
@@ -295,6 +312,7 @@
     "close": 678.19,
     "date": "2024-11-29",
     "high": 694.24,
+    "index": "KOSDAQ",
     "low": 677.08,
     "open": 694.24,
     "volume": 900
@@ -305,6 +323,7 @@
     "close": 675.84,
     "date": "2024-12-02",
     "high": 687.7,
+    "index": "KOSDAQ",
     "low": 675.78,
     "open": 684.15,
     "volume": 700
@@ -315,6 +334,7 @@
     "close": 690.8,
     "date": "2024-12-03",
     "high": 692.81,
+    "index": "KOSDAQ",
     "low": 678.98,
     "open": 678.98,
     "volume": 800
@@ -325,6 +345,7 @@
     "close": 677.15,
     "date": "2024-12-04",
     "high": 687.94,
+    "index": "KOSDAQ",
     "low": 671.6,
     "open": 677.59,
     "volume": 900
@@ -335,6 +356,7 @@
     "close": 670.94,
     "date": "2024-12-05",
     "high": 680.02,
+    "index": "KOSDAQ",
     "low": 669.27,
     "open": 679.79,
     "volume": 700
@@ -345,6 +367,7 @@
     "close": 661.33,
     "date": "2024-12-06",
     "high": 671.34,
+    "index": "KOSDAQ",
     "low": 644.39,
     "open": 670.7,
     "volume": 900
@@ -355,6 +378,7 @@
     "close": 627.01,
     "date": "2024-12-09",
     "high": 649.35,
+    "index": "KOSDAQ",
     "low": 627.01,
     "open": 649.35,
     "volume": 900
@@ -365,6 +389,7 @@
     "close": 661.59,
     "date": "2024-12-10",
     "high": 661.6,
+    "index": "KOSDAQ",
     "low": 635.94,
     "open": 635.94,
     "volume": 900
@@ -375,6 +400,7 @@
     "close": 675.92,
     "date": "2024-12-11",
     "high": 677.55,
+    "index": "KOSDAQ",
     "low": 661.71,
     "open": 661.71,
     "volume": 1000
@@ -385,6 +411,7 @@
     "close": 683.35,
     "date": "2024-12-12",
     "high": 687.0,
+    "index": "KOSDAQ",
     "low": 674.31,
     "open": 680.97,
     "volume": 1000
@@ -395,6 +422,7 @@
     "close": 693.73,
     "date": "2024-12-13",
     "high": 695.76,
+    "index": "KOSDAQ",
     "low": 683.3,
     "open": 684.25,
     "volume": 900
@@ -405,6 +433,7 @@
     "close": 698.53,
     "date": "2024-12-16",
     "high": 701.67,
+    "index": "KOSDAQ",
     "low": 695.67,
     "open": 699.81,
     "volume": 1000
@@ -415,6 +444,7 @@
     "close": 694.47,
     "date": "2024-12-17",
     "high": 699.52,
+    "index": "KOSDAQ",
     "low": 691.58,
     "open": 699.52,
     "volume": 1000
@@ -425,6 +455,7 @@
     "close": 697.57,
     "date": "2024-12-18",
     "high": 699.18,
+    "index": "KOSDAQ",
     "low": 690.4,
     "open": 694.94,
     "volume": 900
@@ -435,6 +466,7 @@
     "close": 684.36,
     "date": "2024-12-19",
     "high": 688.29,
+    "index": "KOSDAQ",
     "low": 679.85,
     "open": 682.53,
     "volume": 800
@@ -445,6 +477,7 @@
     "close": 668.31,
     "date": "2024-12-20",
     "high": 685.1,
+    "index": "KOSDAQ",
     "low": 667.0,
     "open": 684.79,
     "volume": 900
@@ -455,6 +488,7 @@
     "close": 679.24,
     "date": "2024-12-23",
     "high": 683.16,
+    "index": "KOSDAQ",
     "low": 671.09,
     "open": 674.26,
     "volume": 700
@@ -465,6 +499,7 @@
     "close": 680.11,
     "date": "2024-12-24",
     "high": 685.87,
+    "index": "KOSDAQ",
     "low": 679.23,
     "open": 683.02,
     "volume": 600
@@ -475,6 +510,7 @@
     "close": 675.64,
     "date": "2024-12-26",
     "high": 684.36,
+    "index": "KOSDAQ",
     "low": 674.81,
     "open": 684.21,
     "volume": 800
@@ -485,6 +521,7 @@
     "close": 665.97,
     "date": "2024-12-27",
     "high": 677.5,
+    "index": "KOSDAQ",
     "low": 661.24,
     "open": 674.3,
     "volume": 800
@@ -495,6 +532,7 @@
     "close": 678.19,
     "date": "2024-12-30",
     "high": 679.68,
+    "index": "KOSDAQ",
     "low": 661.92,
     "open": 662.68,
     "volume": 600
@@ -505,6 +543,7 @@
     "close": 686.63,
     "date": "2025-01-02",
     "high": 687.25,
+    "index": "KOSDAQ",
     "low": 675.96,
     "open": 678.98,
     "volume": 700
@@ -515,6 +554,7 @@
     "close": 705.76,
     "date": "2025-01-03",
     "high": 706.46,
+    "index": "KOSDAQ",
     "low": 687.73,
     "open": 688.04,
     "volume": 900
@@ -525,6 +565,7 @@
     "close": 717.96,
     "date": "2025-01-06",
     "high": 718.86,
+    "index": "KOSDAQ",
     "low": 707.87,
     "open": 707.87,
     "volume": 1100
@@ -535,6 +576,7 @@
     "close": 718.29,
     "date": "2025-01-07",
     "high": 723.09,
+    "index": "KOSDAQ",
     "low": 717.07,
     "open": 719.68,
     "volume": 1200
@@ -545,6 +587,7 @@
     "close": 719.63,
     "date": "2025-01-08",
     "high": 720.21,
+    "index": "KOSDAQ",
     "low": 712.62,
     "open": 713.78,
     "volume": 1100
@@ -555,6 +598,7 @@
     "close": 723.52,
     "date": "2025-01-09",
     "high": 723.7,
+    "index": "KOSDAQ",
     "low": 712.35,
     "open": 718.89,
     "volume": 1000
@@ -565,6 +609,7 @@
     "close": 717.89,
     "date": "2025-01-10",
     "high": 723.47,
+    "index": "KOSDAQ",
     "low": 715.68,
     "open": 722.21,
     "volume": 900
@@ -575,6 +620,7 @@
     "close": 708.21,
     "date": "2025-01-13",
     "high": 718.96,
+    "index": "KOSDAQ",
     "low": 707.6,
     "open": 713.98,
     "volume": 800
@@ -585,6 +631,7 @@
     "close": 718.04,
     "date": "2025-01-14",
     "high": 718.6,
+    "index": "KOSDAQ",
     "low": 709.11,
     "open": 712.03,
     "volume": 900
@@ -595,6 +642,7 @@
     "close": 711.61,
     "date": "2025-01-15",
     "high": 722.34,
+    "index": "KOSDAQ",
     "low": 709.82,
     "open": 722.16,
     "volume": 1000
@@ -605,6 +653,7 @@
     "close": 724.24,
     "date": "2025-01-16",
     "high": 725.78,
+    "index": "KOSDAQ",
     "low": 720.35,
     "open": 720.35,
     "volume": 800
@@ -615,6 +664,7 @@
     "close": 724.69,
     "date": "2025-01-17",
     "high": 725.54,
+    "index": "KOSDAQ",
     "low": 722.28,
     "open": 723.05,
     "volume": 800
@@ -625,6 +675,7 @@
     "close": 727.66,
     "date": "2025-01-20",
     "high": 728.51,
+    "index": "KOSDAQ",
     "low": 722.77,
     "open": 727.59,
     "volume": 800
@@ -635,6 +686,7 @@
     "close": 726.07,
     "date": "2025-01-21",
     "high": 733.91,
+    "index": "KOSDAQ",
     "low": 720.73,
     "open": 728.57,
     "volume": 860900
@@ -645,6 +697,7 @@
     "close": 732.31,
     "date": "2025-01-22",
     "high": 733.89,
+    "index": "KOSDAQ",
     "low": 729.46,
     "open": 731.17,
     "volume": 900
@@ -655,6 +708,7 @@
     "close": 724.01,
     "date": "2025-01-23",
     "high": 731.72,
+    "index": "KOSDAQ",
     "low": 723.49,
     "open": 731.69,
     "volume": 900
@@ -665,6 +719,7 @@
     "close": 728.74,
     "date": "2025-01-24",
     "high": 731.7,
+    "index": "KOSDAQ",
     "low": 722.82,
     "open": 725.78,
     "volume": 800
@@ -675,6 +730,7 @@
     "close": 728.29,
     "date": "2025-01-31",
     "high": 728.41,
+    "index": "KOSDAQ",
     "low": 723.3,
     "open": 724.96,
     "volume": 700
@@ -685,6 +741,7 @@
     "close": 703.8,
     "date": "2025-02-03",
     "high": 718.26,
+    "index": "KOSDAQ",
     "low": 700.57,
     "open": 718.26,
     "volume": 800
@@ -695,6 +752,7 @@
     "close": 719.92,
     "date": "2025-02-04",
     "high": 726.28,
+    "index": "KOSDAQ",
     "low": 713.55,
     "open": 713.55,
     "volume": 1000
@@ -705,6 +763,7 @@
     "close": 730.98,
     "date": "2025-02-05",
     "high": 731.92,
+    "index": "KOSDAQ",
     "low": 724.6,
     "open": 724.6,
     "volume": 800
@@ -715,6 +774,7 @@
     "close": 740.32,
     "date": "2025-02-06",
     "high": 740.32,
+    "index": "KOSDAQ",
     "low": 734.91,
     "open": 735.94,
     "volume": 900
@@ -725,6 +785,7 @@
     "close": 742.9,
     "date": "2025-02-07",
     "high": 744.68,
+    "index": "KOSDAQ",
     "low": 737.61,
     "open": 739.88,
     "volume": 1000
@@ -735,6 +796,7 @@
     "close": 749.67,
     "date": "2025-02-10",
     "high": 750.46,
+    "index": "KOSDAQ",
     "low": 735.71,
     "open": 740.12,
     "volume": 1000
@@ -745,6 +807,7 @@
     "close": 749.59,
     "date": "2025-02-11",
     "high": 754.62,
+    "index": "KOSDAQ",
     "low": 749.36,
     "open": 751.25,
     "volume": 1000
@@ -755,6 +818,7 @@
     "close": 745.18,
     "date": "2025-02-12",
     "high": 748.65,
+    "index": "KOSDAQ",
     "low": 742.85,
     "open": 748.65,
     "volume": 900
@@ -765,6 +829,7 @@
     "close": 749.28,
     "date": "2025-02-13",
     "high": 751.83,
+    "index": "KOSDAQ",
     "low": 744.83,
     "open": 748.69,
     "volume": 800
@@ -775,6 +840,7 @@
     "close": 756.32,
     "date": "2025-02-14",
     "high": 758.72,
+    "index": "KOSDAQ",
     "low": 752.04,
     "open": 752.08,
     "volume": 900
@@ -785,6 +851,7 @@
     "close": 768.48,
     "date": "2025-02-17",
     "high": 768.48,
+    "index": "KOSDAQ",
     "low": 757.77,
     "open": 759.21,
     "volume": 900
@@ -795,6 +862,7 @@
     "close": 773.65,
     "date": "2025-02-18",
     "high": 773.77,
+    "index": "KOSDAQ",
     "low": 765.99,
     "open": 769.93,
     "volume": 1100
@@ -805,6 +873,7 @@
     "close": 778.27,
     "date": "2025-02-19",
     "high": 778.98,
+    "index": "KOSDAQ",
     "low": 772.63,
     "open": 774.12,
     "volume": 900
@@ -815,6 +884,7 @@
     "close": 768.27,
     "date": "2025-02-20",
     "high": 781.54,
+    "index": "KOSDAQ",
     "low": 766.83,
     "open": 777.78,
     "volume": 1000
@@ -825,6 +895,7 @@
     "close": 774.65,
     "date": "2025-02-21",
     "high": 774.78,
+    "index": "KOSDAQ",
     "low": 767.18,
     "open": 768.39,
     "volume": 900
@@ -835,6 +906,7 @@
     "close": 773.33,
     "date": "2025-02-24",
     "high": 773.51,
+    "index": "KOSDAQ",
     "low": 764.48,
     "open": 766.94,
     "volume": 900
@@ -845,6 +917,7 @@
     "close": 769.43,
     "date": "2025-02-25",
     "high": 773.91,
+    "index": "KOSDAQ",
     "low": 765.26,
     "open": 766.85,
     "volume": 1000
@@ -855,6 +928,7 @@
     "close": 771.41,
     "date": "2025-02-26",
     "high": 774.2,
+    "index": "KOSDAQ",
     "low": 766.69,
     "open": 769.0,
     "volume": 900
@@ -865,6 +939,7 @@
     "close": 770.85,
     "date": "2025-02-27",
     "high": 776.57,
+    "index": "KOSDAQ",
     "low": 769.6,
     "open": 774.13,
     "volume": 800
@@ -875,6 +950,7 @@
     "close": 743.96,
     "date": "2025-02-28",
     "high": 760.1,
+    "index": "KOSDAQ",
     "low": 743.95,
     "open": 760.1,
     "volume": 900
@@ -885,6 +961,7 @@
     "close": 737.9,
     "date": "2025-03-04",
     "high": 739.68,
+    "index": "KOSDAQ",
     "low": 730.96,
     "open": 739.68,
     "volume": 600
@@ -895,6 +972,7 @@
     "close": 746.95,
     "date": "2025-03-05",
     "high": 748.82,
+    "index": "KOSDAQ",
     "low": 740.69,
     "open": 743.35,
     "volume": 700
@@ -905,6 +983,7 @@
     "close": 734.92,
     "date": "2025-03-06",
     "high": 750.43,
+    "index": "KOSDAQ",
     "low": 733.49,
     "open": 750.43,
     "volume": 800
@@ -915,6 +994,7 @@
     "close": 727.7,
     "date": "2025-03-07",
     "high": 738.1,
+    "index": "KOSDAQ",
     "low": 725.97,
     "open": 729.43,
     "volume": 700
@@ -925,6 +1005,7 @@
     "close": 725.82,
     "date": "2025-03-10",
     "high": 732.62,
+    "index": "KOSDAQ",
     "low": 720.13,
     "open": 724.78,
     "volume": 600
@@ -935,6 +1016,7 @@
     "close": 721.5,
     "date": "2025-03-11",
     "high": 721.7,
+    "index": "KOSDAQ",
     "low": 706.96,
     "open": 710.2,
     "volume": 800
@@ -945,6 +1027,7 @@
     "close": 729.49,
     "date": "2025-03-12",
     "high": 734.14,
+    "index": "KOSDAQ",
     "low": 723.52,
     "open": 724.58,
     "volume": 700
@@ -955,6 +1038,7 @@
     "close": 722.8,
     "date": "2025-03-13",
     "high": 737.29,
+    "index": "KOSDAQ",
     "low": 722.28,
     "open": 735.75,
     "volume": 800
@@ -965,6 +1049,7 @@
     "close": 734.26,
     "date": "2025-03-14",
     "high": 736.84,
+    "index": "KOSDAQ",
     "low": 723.71,
     "open": 723.75,
     "volume": 700
@@ -975,6 +1060,7 @@
     "close": 743.51,
     "date": "2025-03-17",
     "high": 743.77,
+    "index": "KOSDAQ",
     "low": 735.32,
     "open": 740.14,
     "volume": 700
@@ -985,6 +1071,7 @@
     "close": 745.54,
     "date": "2025-03-18",
     "high": 748.07,
+    "index": "KOSDAQ",
     "low": 742.29,
     "open": 747.71,
     "volume": 700
@@ -995,6 +1082,7 @@
     "close": 738.35,
     "date": "2025-03-19",
     "high": 747.53,
+    "index": "KOSDAQ",
     "low": 737.52,
     "open": 743.21,
     "volume": 700
@@ -1005,6 +1093,7 @@
     "close": 725.15,
     "date": "2025-03-20",
     "high": 743.39,
+    "index": "KOSDAQ",
     "low": 725.1,
     "open": 743.06,
     "volume": 700
@@ -1015,6 +1104,7 @@
     "close": 719.41,
     "date": "2025-03-21",
     "high": 727.15,
+    "index": "KOSDAQ",
     "low": 713.82,
     "open": 724.94,
     "volume": 700
@@ -1025,6 +1115,7 @@
     "close": 720.22,
     "date": "2025-03-24",
     "high": 725.34,
+    "index": "KOSDAQ",
     "low": 718.67,
     "open": 721.39,
     "volume": 700
@@ -1035,6 +1126,7 @@
     "close": 711.26,
     "date": "2025-03-25",
     "high": 725.84,
+    "index": "KOSDAQ",
     "low": 709.67,
     "open": 725.34,
     "volume": 700
@@ -1045,6 +1137,7 @@
     "close": 716.48,
     "date": "2025-03-26",
     "high": 717.3,
+    "index": "KOSDAQ",
     "low": 705.38,
     "open": 714.36,
     "volume": 700
@@ -1055,6 +1148,7 @@
     "close": 707.49,
     "date": "2025-03-27",
     "high": 718.2,
+    "index": "KOSDAQ",
     "low": 706.86,
     "open": 710.98,
     "volume": 800
@@ -1065,6 +1159,7 @@
     "close": 693.76,
     "date": "2025-03-28",
     "high": 709.33,
+    "index": "KOSDAQ",
     "low": 691.76,
     "open": 708.97,
     "volume": 1000
@@ -1075,6 +1170,7 @@
     "close": 672.85,
     "date": "2025-03-31",
     "high": 686.17,
+    "index": "KOSDAQ",
     "low": 671.91,
     "open": 683.42,
     "volume": 900
@@ -1085,6 +1181,7 @@
     "close": 691.45,
     "date": "2025-04-01",
     "high": 695.73,
+    "index": "KOSDAQ",
     "low": 677.86,
     "open": 681.58,
     "volume": 800
@@ -1095,6 +1192,7 @@
     "close": 684.85,
     "date": "2025-04-02",
     "high": 696.48,
+    "index": "KOSDAQ",
     "low": 683.3,
     "open": 695.37,
     "volume": 800
@@ -1105,6 +1203,7 @@
     "close": 683.49,
     "date": "2025-04-03",
     "high": 685.16,
+    "index": "KOSDAQ",
     "low": 669.85,
     "open": 670.75,
     "volume": 700
@@ -1115,6 +1214,7 @@
     "close": 687.39,
     "date": "2025-04-04",
     "high": 697.72,
+    "index": "KOSDAQ",
     "low": 674.66,
     "open": 677.23,
     "volume": 1000
@@ -1125,6 +1225,7 @@
     "close": 651.3,
     "date": "2025-04-07",
     "high": 667.02,
+    "index": "KOSDAQ",
     "low": 651.29,
     "open": 667.02,
     "volume": 900
@@ -1135,6 +1236,7 @@
     "close": 658.45,
     "date": "2025-04-08",
     "high": 668.82,
+    "index": "KOSDAQ",
     "low": 656.07,
     "open": 666.01,
     "volume": 900
@@ -1145,6 +1247,7 @@
     "close": 643.39,
     "date": "2025-04-09",
     "high": 657.45,
+    "index": "KOSDAQ",
     "low": 637.55,
     "open": 653.84,
     "volume": 800
@@ -1155,6 +1258,7 @@
     "close": 681.79,
     "date": "2025-04-10",
     "high": 681.79,
+    "index": "KOSDAQ",
     "low": 669.99,
     "open": 670.12,
     "volume": 900
@@ -1165,6 +1269,7 @@
     "close": 695.59,
     "date": "2025-04-11",
     "high": 695.59,
+    "index": "KOSDAQ",
     "low": 672.74,
     "open": 673.09,
     "volume": 1000
@@ -1175,6 +1280,7 @@
     "close": 708.98,
     "date": "2025-04-14",
     "high": 709.05,
+    "index": "KOSDAQ",
     "low": 699.21,
     "open": 699.99,
     "volume": 1100
@@ -1185,6 +1291,7 @@
     "close": 711.92,
     "date": "2025-04-15",
     "high": 712.69,
+    "index": "KOSDAQ",
     "low": 704.61,
     "open": 709.51,
     "volume": 900
@@ -1195,6 +1302,7 @@
     "close": 699.11,
     "date": "2025-04-16",
     "high": 711.38,
+    "index": "KOSDAQ",
     "low": 698.58,
     "open": 710.38,
     "volume": 1000
@@ -1205,6 +1313,7 @@
     "close": 711.75,
     "date": "2025-04-17",
     "high": 711.91,
+    "index": "KOSDAQ",
     "low": 700.11,
     "open": 700.11,
     "volume": 1100
@@ -1215,6 +1324,7 @@
     "close": 717.77,
     "date": "2025-04-18",
     "high": 717.77,
+    "index": "KOSDAQ",
     "low": 708.2,
     "open": 713.52,
     "volume": 1200
@@ -1225,6 +1335,7 @@
     "close": 715.45,
     "date": "2025-04-21",
     "high": 722.18,
+    "index": "KOSDAQ",
     "low": 714.05,
     "open": 717.25,
     "volume": 1200
@@ -1235,6 +1346,7 @@
     "close": 716.12,
     "date": "2025-04-22",
     "high": 717.86,
+    "index": "KOSDAQ",
     "low": 711.03,
     "open": 711.42,
     "volume": 1300
@@ -1245,6 +1357,7 @@
     "close": 726.08,
     "date": "2025-04-23",
     "high": 726.1,
+    "index": "KOSDAQ",
     "low": 720.42,
     "open": 724.33,
     "volume": 1100
@@ -1255,6 +1368,7 @@
     "close": 726.08,
     "date": "2025-04-24",
     "high": 729.49,
+    "index": "KOSDAQ",
     "low": 723.33,
     "open": 726.95,
     "volume": 1200
@@ -1265,6 +1379,7 @@
     "close": 729.69,
     "date": "2025-04-25",
     "high": 732.8,
+    "index": "KOSDAQ",
     "low": 728.21,
     "open": 729.56,
     "volume": 1000
@@ -1275,6 +1390,7 @@
     "close": 719.41,
     "date": "2025-04-28",
     "high": 732.44,
+    "index": "KOSDAQ",
     "low": 718.14,
     "open": 730.58,
     "volume": 1000
@@ -1285,6 +1401,7 @@
     "close": 726.46,
     "date": "2025-04-29",
     "high": 727.8,
+    "index": "KOSDAQ",
     "low": 721.42,
     "open": 722.94,
     "volume": 900
@@ -1295,6 +1412,7 @@
     "close": 717.24,
     "date": "2025-04-30",
     "high": 727.27,
+    "index": "KOSDAQ",
     "low": 715.33,
     "open": 726.19,
     "volume": 900
@@ -1305,6 +1423,7 @@
     "close": 721.86,
     "date": "2025-05-02",
     "high": 723.77,
+    "index": "KOSDAQ",
     "low": 714.07,
     "open": 716.6,
     "volume": 700
@@ -1315,6 +1434,7 @@
     "close": 722.81,
     "date": "2025-05-07",
     "high": 722.81,
+    "index": "KOSDAQ",
     "low": 714.8,
     "open": 722.41,
     "volume": 700
@@ -1325,6 +1445,7 @@
     "close": 729.59,
     "date": "2025-05-08",
     "high": 730.72,
+    "index": "KOSDAQ",
     "low": 725.81,
     "open": 725.81,
     "volume": 700
@@ -1335,6 +1456,7 @@
     "close": 722.52,
     "date": "2025-05-09",
     "high": 731.01,
+    "index": "KOSDAQ",
     "low": 719.83,
     "open": 731.01,
     "volume": 900
@@ -1345,6 +1467,7 @@
     "close": 725.4,
     "date": "2025-05-12",
     "high": 727.56,
+    "index": "KOSDAQ",
     "low": 719.23,
     "open": 724.47,
     "volume": 1016100
@@ -1355,6 +1478,7 @@
     "close": 731.88,
     "date": "2025-05-13",
     "high": 735.85,
+    "index": "KOSDAQ",
     "low": 730.76,
     "open": 731.11,
     "volume": 1200
@@ -1365,6 +1489,7 @@
     "close": 739.05,
     "date": "2025-05-14",
     "high": 739.05,
+    "index": "KOSDAQ",
     "low": 726.51,
     "open": 732.2,
     "volume": 1000
@@ -1375,6 +1500,7 @@
     "close": 733.23,
     "date": "2025-05-15",
     "high": 738.28,
+    "index": "KOSDAQ",
     "low": 732.59,
     "open": 738.15,
     "volume": 1100
@@ -1385,6 +1511,7 @@
     "close": 725.07,
     "date": "2025-05-16",
     "high": 734.38,
+    "index": "KOSDAQ",
     "low": 722.99,
     "open": 734.38,
     "volume": 1100
@@ -1395,6 +1522,7 @@
     "close": 713.75,
     "date": "2025-05-19",
     "high": 721.31,
+    "index": "KOSDAQ",
     "low": 710.47,
     "open": 721.27,
     "volume": 1300
@@ -1405,6 +1533,7 @@
     "close": 715.55,
     "date": "2025-05-20",
     "high": 722.17,
+    "index": "KOSDAQ",
     "low": 715.12,
     "open": 719.36,
     "volume": 1000
@@ -1415,6 +1544,7 @@
     "close": 723.62,
     "date": "2025-05-21",
     "high": 726.68,
+    "index": "KOSDAQ",
     "low": 719.96,
     "open": 720.64,
     "volume": 800
@@ -1425,6 +1555,7 @@
     "close": 717.67,
     "date": "2025-05-22",
     "high": 720.96,
+    "index": "KOSDAQ",
     "low": 714.71,
     "open": 720.96,
     "volume": 1100
@@ -1435,6 +1566,7 @@
     "close": 715.98,
     "date": "2025-05-23",
     "high": 720.5,
+    "index": "KOSDAQ",
     "low": 713.22,
     "open": 720.5,
     "volume": 1000
@@ -1445,6 +1577,7 @@
     "close": 725.27,
     "date": "2025-05-26",
     "high": 726.93,
+    "index": "KOSDAQ",
     "low": 716.86,
     "open": 718.48,
     "volume": 800
@@ -1455,6 +1588,7 @@
     "close": 727.11,
     "date": "2025-05-27",
     "high": 727.16,
+    "index": "KOSDAQ",
     "low": 723.66,
     "open": 727.0,
     "volume": 800
@@ -1465,6 +1599,7 @@
     "close": 728.79,
     "date": "2025-05-28",
     "high": 733.48,
+    "index": "KOSDAQ",
     "low": 727.6,
     "open": 731.06,
     "volume": 1000
@@ -1475,6 +1610,7 @@
     "close": 736.29,
     "date": "2025-05-29",
     "high": 736.29,
+    "index": "KOSDAQ",
     "low": 731.64,
     "open": 733.22,
     "volume": 900
@@ -1485,6 +1621,7 @@
     "close": 734.35,
     "date": "2025-05-30",
     "high": 737.43,
+    "index": "KOSDAQ",
     "low": 732.55,
     "open": 735.26,
     "volume": 900
@@ -1495,6 +1632,7 @@
     "close": 740.29,
     "date": "2025-06-02",
     "high": 741.41,
+    "index": "KOSDAQ",
     "low": 733.97,
     "open": 735.14,
     "volume": 800
@@ -1505,6 +1643,7 @@
     "close": 750.21,
     "date": "2025-06-04",
     "high": 752.75,
+    "index": "KOSDAQ",
     "low": 747.35,
     "open": 749.13,
     "volume": 900
@@ -1515,6 +1654,7 @@
     "close": 756.23,
     "date": "2025-06-05",
     "high": 761.17,
+    "index": "KOSDAQ",
     "low": 750.17,
     "open": 751.59,
     "volume": 900
@@ -1525,6 +1665,7 @@
     "close": 764.21,
     "date": "2025-06-09",
     "high": 764.92,
+    "index": "KOSDAQ",
     "low": 757.29,
     "open": 759.27,
     "volume": 1100
@@ -1535,6 +1676,7 @@
     "close": 771.2,
     "date": "2025-06-10",
     "high": 771.2,
+    "index": "KOSDAQ",
     "low": 761.36,
     "open": 767.91,
     "volume": 1400
@@ -1545,6 +1687,7 @@
     "close": 786.29,
     "date": "2025-06-11",
     "high": 787.06,
+    "index": "KOSDAQ",
     "low": 774.84,
     "open": 775.43,
     "volume": 1600
@@ -1555,6 +1698,7 @@
     "close": 789.45,
     "date": "2025-06-12",
     "high": 793.2,
+    "index": "KOSDAQ",
     "low": 784.96,
     "open": 786.27,
     "volume": 1300
@@ -1565,6 +1709,7 @@
     "close": 768.86,
     "date": "2025-06-13",
     "high": 792.68,
+    "index": "KOSDAQ",
     "low": 761.42,
     "open": 792.68,
     "volume": 1100
@@ -1575,6 +1720,7 @@
     "close": 777.26,
     "date": "2025-06-16",
     "high": 777.68,
+    "index": "KOSDAQ",
     "low": 763.81,
     "open": 767.64,
     "volume": 1100
@@ -1585,6 +1731,7 @@
     "close": 775.65,
     "date": "2025-06-17",
     "high": 785.76,
+    "index": "KOSDAQ",
     "low": 766.56,
     "open": 780.08,
     "volume": 1100
@@ -1595,6 +1742,7 @@
     "close": 779.73,
     "date": "2025-06-18",
     "high": 781.35,
+    "index": "KOSDAQ",
     "low": 772.6,
     "open": 772.6,
     "volume": 1000
@@ -1605,6 +1753,7 @@
     "close": 782.51,
     "date": "2025-06-19",
     "high": 783.3,
+    "index": "KOSDAQ",
     "low": 776.21,
     "open": 783.29,
     "volume": 1103700
@@ -1615,6 +1764,7 @@
     "close": 791.53,
     "date": "2025-06-20",
     "high": 791.53,
+    "index": "KOSDAQ",
     "low": 780.65,
     "open": 783.63,
     "volume": 1100
@@ -1625,6 +1775,7 @@
     "close": 784.79,
     "date": "2025-06-23",
     "high": 784.79,
+    "index": "KOSDAQ",
     "low": 772.91,
     "open": 779.67,
     "volume": 1000
@@ -1635,6 +1786,7 @@
     "close": 800.93,
     "date": "2025-06-24",
     "high": 801.34,
+    "index": "KOSDAQ",
     "low": 794.87,
     "open": 796.06,
     "volume": 1100
@@ -1645,6 +1797,7 @@
     "close": 798.21,
     "date": "2025-06-25",
     "high": 803.93,
+    "index": "KOSDAQ",
     "low": 793.03,
     "open": 802.92,
     "volume": 1200
@@ -1655,6 +1808,7 @@
     "close": 787.95,
     "date": "2025-06-26",
     "high": 799.21,
+    "index": "KOSDAQ",
     "low": 779.72,
     "open": 799.21,
     "volume": 900
@@ -1665,6 +1819,7 @@
     "close": 781.56,
     "date": "2025-06-27",
     "high": 790.67,
+    "index": "KOSDAQ",
     "low": 778.6,
     "open": 789.93,
     "volume": 900
@@ -1675,6 +1830,7 @@
     "close": 781.5,
     "date": "2025-06-30",
     "high": 784.65,
+    "index": "KOSDAQ",
     "low": 778.58,
     "open": 783.53,
     "volume": 800
@@ -1685,6 +1841,7 @@
     "close": 783.67,
     "date": "2025-07-01",
     "high": 788.38,
+    "index": "KOSDAQ",
     "low": 783.29,
     "open": 783.65,
     "volume": 1000
@@ -1695,6 +1852,7 @@
     "close": 782.17,
     "date": "2025-07-02",
     "high": 787.11,
+    "index": "KOSDAQ",
     "low": 769.91,
     "open": 784.73,
     "volume": 900
@@ -1705,6 +1863,7 @@
     "close": 793.33,
     "date": "2025-07-03",
     "high": 793.61,
+    "index": "KOSDAQ",
     "low": 783.53,
     "open": 785.77,
     "volume": 1100
@@ -1715,6 +1874,7 @@
     "close": 775.8,
     "date": "2025-07-04",
     "high": 793.77,
+    "index": "KOSDAQ",
     "low": 775.58,
     "open": 792.65,
     "volume": 1100
@@ -1725,6 +1885,7 @@
     "close": 778.46,
     "date": "2025-07-07",
     "high": 779.98,
+    "index": "KOSDAQ",
     "low": 771.46,
     "open": 774.19,
     "volume": 1400
@@ -1735,6 +1896,7 @@
     "close": 784.24,
     "date": "2025-07-08",
     "high": 784.37,
+    "index": "KOSDAQ",
     "low": 775.57,
     "open": 779.28,
     "volume": 1200
@@ -1745,6 +1907,7 @@
     "close": 790.36,
     "date": "2025-07-09",
     "high": 790.36,
+    "index": "KOSDAQ",
     "low": 783.48,
     "open": 786.33,
     "volume": 900
@@ -1755,6 +1918,7 @@
     "close": 797.7,
     "date": "2025-07-10",
     "high": 798.73,
+    "index": "KOSDAQ",
     "low": 792.05,
     "open": 794.64,
     "volume": 905100
@@ -1765,6 +1929,7 @@
     "close": 800.47,
     "date": "2025-07-11",
     "high": 805.9,
+    "index": "KOSDAQ",
     "low": 798.83,
     "open": 799.96,
     "volume": 1000
@@ -1775,6 +1940,7 @@
     "close": 799.37,
     "date": "2025-07-14",
     "high": 803.1,
+    "index": "KOSDAQ",
     "low": 795.57,
     "open": 802.73,
     "volume": 900
@@ -1785,6 +1951,7 @@
     "close": 812.88,
     "date": "2025-07-15",
     "high": 812.91,
+    "index": "KOSDAQ",
     "low": 798.83,
     "open": 800.24,
     "volume": 800
@@ -1795,6 +1962,7 @@
     "close": 812.23,
     "date": "2025-07-16",
     "high": 813.19,
+    "index": "KOSDAQ",
     "low": 805.13,
     "open": 810.09,
     "volume": 900
@@ -1805,6 +1973,7 @@
     "close": 818.27,
     "date": "2025-07-17",
     "high": 818.27,
+    "index": "KOSDAQ",
     "low": 806.63,
     "open": 814.92,
     "volume": 1000
@@ -1815,6 +1984,7 @@
     "close": 820.67,
     "date": "2025-07-18",
     "high": 822.83,
+    "index": "KOSDAQ",
     "low": 815.45,
     "open": 821.58,
     "volume": 800
@@ -1825,6 +1995,7 @@
     "close": 821.69,
     "date": "2025-07-21",
     "high": 822.76,
+    "index": "KOSDAQ",
     "low": 817.34,
     "open": 819.84,
     "volume": 900
@@ -1835,6 +2006,7 @@
     "close": 812.97,
     "date": "2025-07-22",
     "high": 827.82,
+    "index": "KOSDAQ",
     "low": 808.81,
     "open": 822.33,
     "volume": 1000
@@ -1845,6 +2017,7 @@
     "close": 813.56,
     "date": "2025-07-23",
     "high": 815.88,
+    "index": "KOSDAQ",
     "low": 802.3,
     "open": 815.88,
     "volume": 900
@@ -1855,6 +2028,7 @@
     "close": 809.89,
     "date": "2025-07-24",
     "high": 819.95,
+    "index": "KOSDAQ",
     "low": 809.26,
     "open": 816.94,
     "volume": 900
@@ -1865,6 +2039,7 @@
     "close": 806.95,
     "date": "2025-07-25",
     "high": 810.67,
+    "index": "KOSDAQ",
     "low": 805.83,
     "open": 809.43,
     "volume": 700
@@ -1875,6 +2050,7 @@
     "close": 804.4,
     "date": "2025-07-28",
     "high": 811.49,
+    "index": "KOSDAQ",
     "low": 800.76,
     "open": 811.26,
     "volume": 700
@@ -1885,6 +2061,7 @@
     "close": 804.45,
     "date": "2025-07-29",
     "high": 807.09,
+    "index": "KOSDAQ",
     "low": 795.67,
     "open": 803.38,
     "volume": 600
@@ -1895,6 +2072,7 @@
     "close": 803.67,
     "date": "2025-07-30",
     "high": 809.27,
+    "index": "KOSDAQ",
     "low": 803.34,
     "open": 804.76,
     "volume": 800
@@ -1905,6 +2083,7 @@
     "close": 805.24,
     "date": "2025-07-31",
     "high": 809.03,
+    "index": "KOSDAQ",
     "low": 799.51,
     "open": 806.21,
     "volume": 800
@@ -1915,6 +2094,7 @@
     "close": 772.79,
     "date": "2025-08-01",
     "high": 796.24,
+    "index": "KOSDAQ",
     "low": 772.66,
     "open": 796.24,
     "volume": 800
@@ -1925,6 +2105,7 @@
     "close": 784.06,
     "date": "2025-08-04",
     "high": 786.35,
+    "index": "KOSDAQ",
     "low": 770.35,
     "open": 773.83,
     "volume": 700
@@ -1935,6 +2116,7 @@
     "close": 798.6,
     "date": "2025-08-05",
     "high": 801.63,
+    "index": "KOSDAQ",
     "low": 791.94,
     "open": 791.94,
     "volume": 700
@@ -1945,6 +2127,7 @@
     "close": 803.49,
     "date": "2025-08-06",
     "high": 803.55,
+    "index": "KOSDAQ",
     "low": 793.85,
     "open": 796.48,
     "volume": 700
@@ -1955,6 +2138,7 @@
     "close": 805.81,
     "date": "2025-08-07",
     "high": 806.47,
+    "index": "KOSDAQ",
     "low": 801.7,
     "open": 805.27,
     "volume": 800
@@ -1965,6 +2149,7 @@
     "close": 809.27,
     "date": "2025-08-08",
     "high": 812.48,
+    "index": "KOSDAQ",
     "low": 806.43,
     "open": 806.43,
     "volume": 800
@@ -1975,6 +2160,7 @@
     "close": 811.85,
     "date": "2025-08-11",
     "high": 813.52,
+    "index": "KOSDAQ",
     "low": 805.9,
     "open": 810.51,
     "volume": 900
@@ -1985,6 +2171,7 @@
     "close": 807.19,
     "date": "2025-08-12",
     "high": 820.27,
+    "index": "KOSDAQ",
     "low": 806.84,
     "open": 813.12,
     "volume": 1100
@@ -1995,6 +2182,7 @@
     "close": 814.1,
     "date": "2025-08-13",
     "high": 816.66,
+    "index": "KOSDAQ",
     "low": 806.26,
     "open": 816.54,
     "volume": 1000
@@ -2005,6 +2193,7 @@
     "close": 815.26,
     "date": "2025-08-14",
     "high": 817.22,
+    "index": "KOSDAQ",
     "low": 812.38,
     "open": 814.48,
     "volume": 900
@@ -2015,6 +2204,7 @@
     "close": 798.05,
     "date": "2025-08-18",
     "high": 812.49,
+    "index": "KOSDAQ",
     "low": 798.05,
     "open": 811.52,
     "volume": 800
@@ -2025,6 +2215,7 @@
     "close": 787.96,
     "date": "2025-08-19",
     "high": 800.07,
+    "index": "KOSDAQ",
     "low": 785.95,
     "open": 799.54,
     "volume": 900
@@ -2035,6 +2226,7 @@
     "close": 777.61,
     "date": "2025-08-20",
     "high": 778.63,
+    "index": "KOSDAQ",
     "low": 766.57,
     "open": 778.63,
     "volume": 900
@@ -2045,6 +2237,7 @@
     "close": 777.24,
     "date": "2025-08-21",
     "high": 784.73,
+    "index": "KOSDAQ",
     "low": 776.31,
     "open": 780.32,
     "volume": 900
@@ -2055,6 +2248,7 @@
     "close": 782.51,
     "date": "2025-08-22",
     "high": 785.55,
+    "index": "KOSDAQ",
     "low": 778.73,
     "open": 778.77,
     "volume": 800
@@ -2065,6 +2259,7 @@
     "close": 798.02,
     "date": "2025-08-25",
     "high": 798.57,
+    "index": "KOSDAQ",
     "low": 791.66,
     "open": 791.66,
     "volume": 800
@@ -2075,6 +2270,7 @@
     "close": 801.66,
     "date": "2025-08-26",
     "high": 802.84,
+    "index": "KOSDAQ",
     "low": 793.37,
     "open": 793.99,
     "volume": 800
@@ -2085,6 +2281,7 @@
     "close": 801.72,
     "date": "2025-08-27",
     "high": 803.19,
+    "index": "KOSDAQ",
     "low": 797.6,
     "open": 802.57,
     "volume": 700
@@ -2095,6 +2292,7 @@
     "close": 798.43,
     "date": "2025-08-28",
     "high": 801.37,
+    "index": "KOSDAQ",
     "low": 797.37,
     "open": 800.49,
     "volume": 800
@@ -2105,6 +2303,7 @@
     "close": 796.91,
     "date": "2025-08-29",
     "high": 805.94,
+    "index": "KOSDAQ",
     "low": 795.56,
     "open": 801.96,
     "volume": 900
@@ -2115,6 +2314,7 @@
     "close": 785.0,
     "date": "2025-09-01",
     "high": 796.23,
+    "index": "KOSDAQ",
     "low": 782.54,
     "open": 795.3,
     "volume": 1100
@@ -2125,6 +2325,7 @@
     "close": 794.0,
     "date": "2025-09-02",
     "high": 794.0,
+    "index": "KOSDAQ",
     "low": 785.3,
     "open": 789.35,
     "volume": 1000
@@ -2135,6 +2336,7 @@
     "close": 796.81,
     "date": "2025-09-03",
     "high": 796.92,
+    "index": "KOSDAQ",
     "low": 789.27,
     "open": 793.28,
     "volume": 1200
@@ -2145,6 +2347,7 @@
     "close": 805.42,
     "date": "2025-09-04",
     "high": 806.78,
+    "index": "KOSDAQ",
     "low": 799.53,
     "open": 799.53,
     "volume": 1300
@@ -2155,6 +2358,7 @@
     "close": 811.4,
     "date": "2025-09-05",
     "high": 811.71,
+    "index": "KOSDAQ",
     "low": 807.2,
     "open": 809.09,
     "volume": 1000
@@ -2165,6 +2369,7 @@
     "close": 818.6,
     "date": "2025-09-08",
     "high": 818.61,
+    "index": "KOSDAQ",
     "low": 813.43,
     "open": 815.9,
     "volume": 900
@@ -2175,6 +2380,7 @@
     "close": 824.82,
     "date": "2025-09-09",
     "high": 824.82,
+    "index": "KOSDAQ",
     "low": 817.4,
     "open": 820.75,
     "volume": 1300
@@ -2185,6 +2391,7 @@
     "close": 833.0,
     "date": "2025-09-10",
     "high": 833.21,
+    "index": "KOSDAQ",
     "low": 827.57,
     "open": 828.4,
     "volume": 900
@@ -2195,6 +2402,7 @@
     "close": 834.76,
     "date": "2025-09-11",
     "high": 836.55,
+    "index": "KOSDAQ",
     "low": 831.23,
     "open": 834.68,
     "volume": 1000
@@ -2205,6 +2413,7 @@
     "close": 847.08,
     "date": "2025-09-12",
     "high": 847.36,
+    "index": "KOSDAQ",
     "low": 839.56,
     "open": 839.73,
     "volume": 1000
@@ -2215,6 +2424,7 @@
     "close": 852.69,
     "date": "2025-09-15",
     "high": 852.69,
+    "index": "KOSDAQ",
     "low": 843.43,
     "open": 849.64,
     "volume": 900
@@ -2225,6 +2435,7 @@
     "close": 851.84,
     "date": "2025-09-16",
     "high": 855.5,
+    "index": "KOSDAQ",
     "low": 850.15,
     "open": 854.4,
     "volume": 1000
@@ -2235,6 +2446,7 @@
     "close": 845.53,
     "date": "2025-09-17",
     "high": 850.15,
+    "index": "KOSDAQ",
     "low": 844.16,
     "open": 850.15,
     "volume": 1000
@@ -2245,6 +2457,7 @@
     "close": 857.11,
     "date": "2025-09-18",
     "high": 857.12,
+    "index": "KOSDAQ",
     "low": 850.23,
     "open": 851.94,
     "volume": 1000
@@ -2255,6 +2468,7 @@
     "close": 863.11,
     "date": "2025-09-19",
     "high": 863.11,
+    "index": "KOSDAQ",
     "low": 854.0,
     "open": 858.08,
     "volume": 1000
@@ -2265,6 +2479,7 @@
     "close": 874.36,
     "date": "2025-09-22",
     "high": 875.27,
+    "index": "KOSDAQ",
     "low": 867.11,
     "open": 869.06,
     "volume": 1000
@@ -2275,6 +2490,7 @@
     "close": 872.21,
     "date": "2025-09-23",
     "high": 877.56,
+    "index": "KOSDAQ",
     "low": 866.65,
     "open": 877.18,
     "volume": 1000
@@ -2285,6 +2501,7 @@
     "close": 860.94,
     "date": "2025-09-24",
     "high": 871.82,
+    "index": "KOSDAQ",
     "low": 851.38,
     "open": 870.54,
     "volume": 1000
@@ -2295,6 +2512,7 @@
     "close": 852.48,
     "date": "2025-09-25",
     "high": 862.08,
+    "index": "KOSDAQ",
     "low": 850.13,
     "open": 858.45,
     "volume": 900
@@ -2305,6 +2523,7 @@
     "close": 835.19,
     "date": "2025-09-26",
     "high": 847.73,
+    "index": "KOSDAQ",
     "low": 829.47,
     "open": 847.67,
     "volume": 700
@@ -2315,6 +2534,7 @@
     "close": 846.71,
     "date": "2025-09-29",
     "high": 847.57,
+    "index": "KOSDAQ",
     "low": 837.89,
     "open": 840.62,
     "volume": 700
@@ -2325,6 +2545,7 @@
     "close": 841.99,
     "date": "2025-09-30",
     "high": 849.18,
+    "index": "KOSDAQ",
     "low": 841.65,
     "open": 847.52,
     "volume": 800
@@ -2335,6 +2556,7 @@
     "close": 845.34,
     "date": "2025-10-01",
     "high": 849.8,
+    "index": "KOSDAQ",
     "low": 844.0,
     "open": 846.32,
     "volume": 600
@@ -2345,6 +2567,7 @@
     "close": 854.25,
     "date": "2025-10-02",
     "high": 854.87,
+    "index": "KOSDAQ",
     "low": 848.75,
     "open": 853.4,
     "volume": 800
@@ -2355,6 +2578,7 @@
     "close": 859.49,
     "date": "2025-10-10",
     "high": 859.98,
+    "index": "KOSDAQ",
     "low": 849.64,
     "open": 858.86,
     "volume": 800
@@ -2365,6 +2589,7 @@
     "close": 860.49,
     "date": "2025-10-13",
     "high": 861.79,
+    "index": "KOSDAQ",
     "low": 840.28,
     "open": 845.76,
     "volume": 700
@@ -2375,6 +2600,7 @@
     "close": 847.96,
     "date": "2025-10-14",
     "high": 870.72,
+    "index": "KOSDAQ",
     "low": 839.27,
     "open": 865.37,
     "volume": 1000
@@ -2385,6 +2611,7 @@
     "close": 864.72,
     "date": "2025-10-15",
     "high": 864.77,
+    "index": "KOSDAQ",
     "low": 850.3,
     "open": 853.17,
     "volume": 900
@@ -2395,6 +2622,7 @@
     "close": 865.41,
     "date": "2025-10-16",
     "high": 868.36,
+    "index": "KOSDAQ",
     "low": 862.63,
     "open": 866.82,
     "volume": 900
@@ -2405,8 +2633,152 @@
     "close": 859.54,
     "date": "2025-10-17",
     "high": 871.06,
+    "index": "KOSDAQ",
     "low": 859.19,
     "open": 862.71,
     "volume": 900
+  },
+  "2025-10-20": {
+    "change_amount": 16.23,
+    "change_percent": 1.89,
+    "close": 875.77,
+    "date": "2025-10-20",
+    "high": 876.47,
+    "index": "KOSDAQ",
+    "low": 862.01,
+    "open": 864.98,
+    "volume": 800
+  },
+  "2025-10-21": {
+    "change_amount": -3.27,
+    "change_percent": -0.37,
+    "close": 872.5,
+    "date": "2025-10-21",
+    "high": 882.1,
+    "index": "KOSDAQ",
+    "low": 867.62,
+    "open": 881.53,
+    "volume": 1100
+  },
+  "2025-10-22": {
+    "change_amount": 6.65,
+    "change_percent": 0.76,
+    "close": 879.15,
+    "date": "2025-10-22",
+    "high": 879.31,
+    "index": "KOSDAQ",
+    "low": 866.21,
+    "open": 872.51,
+    "volume": 900
+  },
+  "2025-10-23": {
+    "change_amount": -7.12,
+    "change_percent": -0.81,
+    "close": 872.03,
+    "date": "2025-10-23",
+    "high": 880.33,
+    "index": "KOSDAQ",
+    "low": 868.74,
+    "open": 874.13,
+    "volume": 1100
+  },
+  "2025-10-24": {
+    "change_amount": 11.05,
+    "change_percent": 1.27,
+    "close": 883.08,
+    "date": "2025-10-24",
+    "high": 884.06,
+    "index": "KOSDAQ",
+    "low": 876.38,
+    "open": 880.61,
+    "volume": 1000
+  },
+  "2025-10-27": {
+    "change_amount": 19.62,
+    "change_percent": 2.22,
+    "close": 902.7,
+    "date": "2025-10-27",
+    "high": 902.72,
+    "index": "KOSDAQ",
+    "low": 888.87,
+    "open": 890.23,
+    "volume": 1000
+  },
+  "2025-10-28": {
+    "change_amount": 0.6,
+    "change_percent": 0.07,
+    "close": 903.3,
+    "date": "2025-10-28",
+    "high": 906.71,
+    "index": "KOSDAQ",
+    "low": 896.36,
+    "open": 902.82,
+    "volume": 800
+  },
+  "2025-10-29": {
+    "change_amount": -1.71,
+    "change_percent": -0.19,
+    "close": 901.59,
+    "date": "2025-10-29",
+    "high": 906.5,
+    "index": "KOSDAQ",
+    "low": 896.11,
+    "open": 906.5,
+    "volume": 1000
+  },
+  "2025-10-30": {
+    "change_amount": -10.73,
+    "change_percent": -1.19,
+    "close": 890.86,
+    "date": "2025-10-30",
+    "high": 904.34,
+    "index": "KOSDAQ",
+    "low": 883.68,
+    "open": 903.24,
+    "volume": 1200
+  },
+  "2025-10-31": {
+    "change_amount": 9.56,
+    "change_percent": 1.07,
+    "close": 900.42,
+    "date": "2025-10-31",
+    "high": 901.8,
+    "index": "KOSDAQ",
+    "low": 891.32,
+    "open": 894.54,
+    "volume": 900
+  },
+  "2025-11-03": {
+    "change_amount": 14.13,
+    "change_percent": 1.57,
+    "close": 914.55,
+    "date": "2025-11-03",
+    "high": 914.91,
+    "index": "KOSDAQ",
+    "low": 902.29,
+    "open": 906.19,
+    "volume": 1000
+  },
+  "2025-11-04": {
+    "change_amount": 12.02,
+    "change_percent": 1.31,
+    "close": 926.57,
+    "date": "2025-11-04",
+    "high": 932.15,
+    "index": "KOSDAQ",
+    "low": 912.78,
+    "open": 914.87,
+    "volume": 900
+  },
+  "2025-11-05": {
+    "change_amount": -24.68,
+    "change_percent": -2.66,
+    "close": 901.89,
+    "date": "2025-11-05",
+    "high": 0.0,
+    "index": "KOSDAQ",
+    "low": 0.0,
+    "open": 0.0,
+    "volume": 0
   }
 }

@@ -13,9 +13,8 @@ class HistoryRowsTest {
         price: Long = 70000,
         change: Long = -100,
         changeRate: Double = -0.14,
-        time: String = "09:30",
         headline: String? = "Test headline"
-    ) = RecommendationDto(ticker, name, price, change, changeRate, time, headline)
+    ) = RecommendationDto(ticker, name, price, change, changeRate, headline)
 
     // ===== Tests for List<RecommendationDto>.toRows() =====
 
@@ -269,7 +268,6 @@ class HistoryRowsTest {
             price = 70000,
             change = -500,
             changeRate = -0.71,
-            time = "14:30",
             headline = "Important news"
         )
         val dataMap = mapOf("오늘" to listOf(recommendation))
@@ -284,7 +282,6 @@ class HistoryRowsTest {
         assertEquals(70000L, item.data.price)
         assertEquals(-500L, item.data.change)
         assertEquals(-0.71, item.data.changeRate, 0.001)
-        assertEquals("14:30", item.data.time)
         assertEquals("Important news", item.data.headline)
     }
 

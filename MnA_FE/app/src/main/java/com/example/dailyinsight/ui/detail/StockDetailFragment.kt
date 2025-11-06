@@ -43,6 +43,9 @@ import com.github.mikephil.charting.formatter.ValueFormatter
 import com.github.mikephil.charting.components.XAxis
 import com.github.mikephil.charting.formatter.IFillFormatter
 import com.github.mikephil.charting.components.AxisBase
+import android.widget.LinearLayout
+import android.text.TextUtils
+
 
 class StockDetailFragment : Fragment(R.layout.fragment_stock_detail) {
 
@@ -166,7 +169,6 @@ class StockDetailFragment : Fragment(R.layout.fragment_stock_detail) {
 
         tvPrice.text = dfPrice.format(item.price)
         tvChange.text = "${sign}${dfChange.format(abs(item.change))} (${sign}${rateWithComma(item.changeRate)}%)"
-        tvTime.text = item.time
         tvHeadline.setOrDash(item.headline ?: getString(R.string.no_headline))
 
         applyChangeColors(item.change >= 0)
@@ -369,10 +371,67 @@ class StockDetailFragment : Fragment(R.layout.fragment_stock_detail) {
         val computedYtd = computeYTD(qMap)?.let { (label, sum) -> label to (sum?.let { formatB(it) }) }
 
         val (finalLabel, finalValue) = serverLabelAndValue ?: computedTtm ?: computedYtd ?: ("TTM" to null)
-        val ttmRow = MutableList(1 + years.size) { "–" }
-        ttmRow[0] = finalLabel
-        if (latestYear != null && !finalValue.isNullOrBlank()) ttmRow[1] = finalValue
-        tblNetIncome.addView(rowBody(ttmRow, emphasizeFirst = true))
+        tblNetIncome.addView(
+            rowTTM(
+                label = finalLabel,
+                value = finalValue,
+                yearCount = years.size   // 2024~2022 개수만큼 병합
+            )
+        )
+    }
+
+    // 세로 구분선(표의 outline 12% 알파와 동일 톤)
+    private fun vDivider(): View = View(requireContext()).apply {
+        val base  = MaterialColors.getColor(this, com.google.android.material.R.attr.colorOutline)
+        val alpha = (0.12f * 255).roundToInt()
+        setBackgroundColor(ColorUtils.setAlphaComponent(base, alpha))
+        layoutParams = LinearLayout.LayoutParams(dp(1), ViewGroup.LayoutParams.MATCH_PARENT)
+    }
+
+    private fun rowTTM(label: String, value: String?, yearCount: Int): TableRow {
+        val row = TableRow(requireContext())
+
+        val container = LinearLayout(requireContext()).apply {
+            orientation = LinearLayout.HORIZONTAL
+            setBackgroundColor(android.graphics.Color.TRANSPARENT) // 이중선 방지
+            layoutParams = TableRow.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT,
+                ViewGroup.LayoutParams.WRAP_CONTENT
+            ).apply { column = 0; span = 1 + yearCount }
+        }
+
+        val minH = resources.getDimensionPixelSize(R.dimen.table_row_min_height)
+
+        val tvLabel = TextView(requireContext()).apply {
+            text = label
+            paint.isFakeBoldText = true
+            gravity = Gravity.CENTER        // 가로/세로 중앙
+            minHeight = minH                // ✅ 최소 높이 지정
+            setTextAppearance(com.google.android.material.R.style.TextAppearance_Material3_BodyMedium)
+            setPadding(dp(8), dp(6), dp(8), dp(6))
+            setBackgroundResource(R.drawable.bg_cell_left)
+            layoutParams = LinearLayout.LayoutParams(
+                0, ViewGroup.LayoutParams.MATCH_PARENT, 1f   // ✅ MATCH_PARENT로 늘림
+            )
+        }
+
+        val tvValue = TextView(requireContext()).apply {
+            text = value?.ifBlank { "–" } ?: "–"
+            paint.isFakeBoldText = true
+            gravity = Gravity.CENTER
+            minHeight = minH                // ✅ 최소 높이 지정
+            setTextAppearance(com.google.android.material.R.style.TextAppearance_Material3_BodyMedium)
+            setPadding(dp(8), dp(6), dp(8), dp(6))
+            setBackgroundResource(R.drawable.bg_cell_right)
+            layoutParams = LinearLayout.LayoutParams(
+                0, ViewGroup.LayoutParams.MATCH_PARENT, 3f   // ✅ MATCH_PARENT로 늘림
+            )
+        }
+
+        container.addView(tvLabel)
+        container.addView(tvValue)
+        row.addView(container)
+        return row
     }
 
     private fun parseB(v: String?): Double? {
@@ -383,7 +442,7 @@ class StockDetailFragment : Fragment(R.layout.fragment_stock_detail) {
     }
 
     private fun formatB(d: Double?): String =
-        if (d == null) "–" else String.format("%.3f B", d).replace('.', ',')
+        if (d == null) "–" else String.format("%.3f B", d)
 
     private fun qIndex(q: String) = when (q.uppercase()) {
         "Q1" -> 1; "Q2" -> 2; "Q3" -> 3; "Q4" -> 4; else -> null
@@ -465,10 +524,21 @@ class StockDetailFragment : Fragment(R.layout.fragment_stock_detail) {
     private fun rowBody(texts: List<String>, emphasizeFirst: Boolean): TableRow =
         TableRow(requireContext()).apply {
             layoutParams = TableLayout.LayoutParams(
-                ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT
+                ViewGroup.LayoutParams.MATCH_PARENT,
+                ViewGroup.LayoutParams.WRAP_CONTENT
             )
+
             texts.forEachIndexed { i, t ->
-                addView(cell(t, bold = emphasizeFirst && i == 0, alignEnd = i > 0, emphasizeValue = i > 0))
+                val isPeriodColumn = (i == 0)  // ✅ PERIOD (Q1, Q2...) 위치
+                addView(
+                    cell(
+                        text = t,
+                        bold = emphasizeFirst && i == 0,      // Annual은 굵게 유지
+                        alignEnd = !isPeriodColumn,           // 나머지는 오른쪽 정렬
+                        emphasizeValue = !isPeriodColumn,
+                        center = isPeriodColumn               // ✅ 추가: 중앙 정렬 플래그
+                    )
+                )
             }
         }
 
@@ -476,12 +546,14 @@ class StockDetailFragment : Fragment(R.layout.fragment_stock_detail) {
         text: String?,
         header: Boolean = false,
         bold: Boolean = false,
-        alignEnd: Boolean = false,
+        alignEnd: Boolean = false,     // 값 셀에서 오른쪽 정렬 여부
         emphasizeValue: Boolean = false,
-        isLabel: Boolean = false,
+        center: Boolean = false,       // 사용 안 함(남겨두기만)
+        isLabel: Boolean = false,      // PERIOD / Q1~Q4 / Annual / TTM 라벨
         withFrame: Boolean = true
     ) = TextView(requireContext()).apply {
         this.text = text ?: "–"
+
         if (withFrame) setBackgroundResource(R.drawable.bg_table_cell)
         else setBackgroundColor(android.graphics.Color.TRANSPARENT)
 
@@ -495,18 +567,26 @@ class StockDetailFragment : Fragment(R.layout.fragment_stock_detail) {
             setTextAppearance(com.google.android.material.R.style.TextAppearance_Material3_BodyMedium)
         }
 
+        // ✅ 원래대로: 라벨은 왼쪽, 값은 alignEnd면 오른쪽
+        gravity = when {
+            center     -> Gravity.CENTER      // PERIOD, Annual, TTM 같은 라벨 열
+            alignEnd   -> Gravity.END         // 숫자 값들은 오른쪽 정렬
+            else       -> Gravity.START
+        }
+
+        if (bold) paint.isFakeBoldText = true
+
+        // 폭 가중치도 원래대로
         if (isLabel) {
-            setTextSize(TypedValue.COMPLEX_UNIT_SP, 12.5f)
+            setTextSize(TypedValue.COMPLEX_UNIT_SP, 13f)
             isSingleLine = true
-            maxLines = 1
-            ellipsize = null
+            ellipsize = TextUtils.TruncateAt.END   // ✅ 한 줄 + 말줄임 표시
             layoutParams = TableRow.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 2.4f)
             gravity = Gravity.START
         } else {
             layoutParams = TableRow.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f)
             gravity = if (alignEnd) Gravity.END else Gravity.START
         }
-        if (bold || emphasizeValue) paint.isFakeBoldText = true
     }
 
     // 디바이더 (colorOutline 12% 알파)

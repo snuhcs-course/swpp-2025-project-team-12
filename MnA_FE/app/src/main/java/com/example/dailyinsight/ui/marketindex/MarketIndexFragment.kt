@@ -77,6 +77,20 @@ class MarketIndexFragment : Fragment() {
                 .actionNavigationMarketIndexToStockIndexDetailFragment(stockIndexType = "KOSDAQ")
             findNavController().navigate(action)
         }
+
+        marketIndexViewModel.error.observe(viewLifecycleOwner) { msg ->
+            // TODO: Snackbar/Toast로 표시
+        }
+
+        marketIndexViewModel.marketData.observe(viewLifecycleOwner) { dataMap ->
+            if (dataMap.isNullOrEmpty()) {
+                // TODO: placeholder 노출(“데이터가 없습니다”) 또는 스켈레톤 유지
+                return@observe
+            }
+            // 정확한 키 사용
+            dataMap["KOSPI"]?.let { updateIndexUI(it, binding.kospiBlock.name, binding.kospiBlock.price, binding.kospiBlock.priceChange, binding.kospiBlock.description) }
+            dataMap["KOSDAQ"]?.let { updateIndexUI(it, binding.kosdaqBlock.name, binding.kosdaqBlock.price, binding.kosdaqBlock.priceChange, binding.kosdaqBlock.description) }
+        }
     }
 
     // Inflate the menu resource into the toolbar.
@@ -126,6 +140,8 @@ class MarketIndexFragment : Fragment() {
         val colorRes = if (data.changeAmount >= 0) R.color.positive_red else R.color.negative_blue
         changeView.setTextColor(ContextCompat.getColor(requireContext(), colorRes))
     }
+
+
 
 
     override fun onDestroyView() {

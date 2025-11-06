@@ -8,13 +8,12 @@ import json
 
 class NameView(viewsets.ViewSet):
 
-    @action(detail=False, methods=['get', 'post'])
+    @action(detail=True, methods=['get'])
     @default_error_handler
     @require_auth
-    def name(self, request, user):
+    def get(self, request, user):
         """
         GET: get user's name. (check user by cookie)
-        POST: change user's name.
         """
 
         if request.method == "GET":
@@ -22,30 +21,30 @@ class NameView(viewsets.ViewSet):
 
             return JsonResponse({"name": user.name}, status=200)
 
+    @action(detail=True, methods=['post'])
+    @default_error_handler
+    @require_auth
+    def post(self, request, user):
+        """
+        POST: change user's name.
+        """
+        body = json.loads(request.body.decode('utf-8'))
+        name = body.get("name")
 
-        elif request.method == "POST":
-            ### POST ###
+        if name is None:
+            return JsonResponse({"message": "NAME IS REQUIRED"}, status=400)
 
-            body = json.loads(request.body.decode('utf-8'))
-            name = body.get("name")
+        try:
+            validate_name(name)
+        except Exception as e:
+            return JsonResponse({"message": f"{e}"}, status=400)
 
-            if name is None:
-                return JsonResponse({"message": "NAME IS REQUIRED"}, status=400)
+        try:
+            user.name = name
+            user.save()
+        except IntegrityError:
+            return JsonResponse({"message": "NAME ALREADY EXISTS"}, status=409)
+        except Exception as e:
+            return JsonResponse({"message": "NAME SAVE FAILED"}, status=500)
 
-            try:
-                validate_name(name)
-            except Exception as e:
-                return JsonResponse({"message": f"{e}"}, status=400)
-
-            try:
-                user.name = name
-                user.save()
-            except IntegrityError:
-                return JsonResponse({"message": "NAME ALREADY EXISTS"}, status=409)
-            except Exception as e:
-                return JsonResponse({"message": "NAME SAVE FAILED"}, status=500)
-
-            return JsonResponse({"message": "NAME UPDATE SUCCESS"}, status=200)
-
-        else:
-            return JsonResponse({"message": "NOT ALLOWED METHOD"}, status=405)
+        return JsonResponse({"message": "NAME UPDATE SUCCESS"}, status=200)

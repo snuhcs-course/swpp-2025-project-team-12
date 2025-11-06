@@ -11,50 +11,52 @@ class ProfileView(viewsets.ViewSet):
     ViewSet for handling profile image operations.
     """
 
-    @action(detail=False, methods=['get', 'post', 'delete'])
+    @action(detail=False, methods=['get'])
     @default_error_handler
     @require_auth
-    def profile(self, request, user):
+    def get(self, request, user):
         """
-        GET: gee image file from S3 storage
-        POST: upload image to S3 storage
-        DELETE: remove profile image (frontend will show default profile)
+        get user's profile image. (base64 url)
         """
-        if request.method == "GET":
-            ### GET ###
 
-            try:
-                image_url = S3Client().get_image_url(os.environ.get("BUCKET_NAME"), str(user.id))
-            except Exception as e:
-                return JsonResponse({"message": "S3 GET FAILED, maybe NOT FOUND"}, status=500)
+        try:
+            image_url = S3Client().get_image_url(os.environ.get("BUCKET_NAME"), str(user.id))
+        except Exception as e:
+            return JsonResponse({"message": "S3 GET FAILED, maybe NOT FOUND"}, status=500)
 
-            return JsonResponse({"image_url": image_url}, status=200)
+        return JsonResponse({"image_url": image_url}, status=200)
 
 
-        elif request.method == "POST":
-            ### POST ###
+    @action(detail=False, methods=['post'])
+    @default_error_handler
+    @require_auth
+    def post(self, request, user):
+        """
+        post user's profile on storage. (base64 url)
+        """
 
-            body = json.loads(request.body.decode('utf-8'))
-            image_url = body.get("image_url")
+        body = json.loads(request.body.decode('utf-8'))
+        image_url = body.get("image_url")
 
-            if image_url is None:
-                return JsonResponse({"message": "IMAGE REQUIRED"}, status=400)
+        if image_url is None:
+            return JsonResponse({"message": "IMAGE REQUIRED"}, status=400)
 
-            try:
-                S3Client().put_image(os.environ.get("BUCKET_NAME"), str(user.id), image_url)
-            except Exception as e:
-                return JsonResponse({"message": "S3 PUT FAILED"}, status=500)
+        try:
+            S3Client().put_image(os.environ.get("BUCKET_NAME"), str(user.id), image_url)
+        except Exception as e:
+            return JsonResponse({"message": "S3 PUT FAILED"}, status=500)
 
-            return JsonResponse({"message": "PROFILE IMAGE UPLOAD SUCCESS"}, status=200)
-
-
-        elif request.method == "DELETE":
-            ### DELETE ###
-
-            S3Client().delete(os.environ.get("BUCKET_NAME"), str(user.id))
-
-            return JsonResponse({"message": "PROFILE DELETE SUCCESS"}, status=200)
+        return JsonResponse({"message": "PROFILE IMAGE UPLOAD SUCCESS"}, status=200)
 
 
-        else:
-            return JsonResponse({"message": "NOT ALLOWED METHOD"}, status=405)
+    @action(detail=False, methods=['delete'])
+    @default_error_handler
+    @require_auth
+    def delete(self, request, user):
+        """
+        delete user's profile on storage.
+        """
+
+        S3Client().delete(os.environ.get("BUCKET_NAME"), str(user.id))
+
+        return JsonResponse({"message": "PROFILE DELETE SUCCESS"}, status=200)

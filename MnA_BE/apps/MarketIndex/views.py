@@ -2,6 +2,8 @@ import os
 from django.http import JsonResponse
 from rest_framework import viewsets
 from rest_framework.decorators import action
+
+from decorators import default_error_handler
 from .stockindex_manager import StockindexManager
 from S3.finance import FinanceS3Client
 from utils.for_api import get_path_with_date
@@ -14,7 +16,8 @@ class MarketLLMview(viewsets.ViewSet):
     """
 
     @action(detail=False, methods=['get'])
-    def market_llm_output(self, request, year = None, month = None, day = None):
+    @default_error_handler
+    def get_llm_summary(self, request, year = None, month = None, day = None):
         """Get the latest LLM output for market analysis from S3 JSON data."""
         bucket_name=os.environ.get('FINANCE_BUCKET_NAME')
 
@@ -44,7 +47,8 @@ class StockIndexView(viewsets.ViewSet):
     """
 
     @action(detail=False, methods=['get'])
-    def stockindex_latest(self, request):
+    @default_error_handler
+    def get_latest(self, request):
         """Get the latest closing price for each index from the JSON data."""
         manager = StockindexManager()
         latest_data = manager.get_latest()
@@ -57,7 +61,8 @@ class StockIndexView(viewsets.ViewSet):
         })
 
     @action(detail=False, methods=['get'])
-    def stockindex_history(self, request, index_type):
+    @default_error_handler
+    def get_history(self, request, index_type):
         """
         Get historical data for a specific index or both from the JSON data.
         Example:
@@ -128,7 +133,8 @@ class StockIndexView(viewsets.ViewSet):
             })
 
     @action(detail=False, methods=['get'])
-    def stockindex_summary(self, request):
+    @default_error_handler
+    def get_summary(self, request):
         """Get summary statistics for all indices from the JSON data."""
         manager = StockindexManager()
         summary_data = manager.get_summary()

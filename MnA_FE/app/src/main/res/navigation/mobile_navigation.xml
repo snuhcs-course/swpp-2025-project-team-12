@@ -3,16 +3,13 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/mobile_navigation"
-    app:startDestination="@id/navigation_today"> <!-- 나중에 로그인 화면을 시작 화면으로 바꾸기 -->
+    app:startDestination="@id/navigation_today">
 
     <fragment
         android:id="@+id/navigation_today"
         android:name="com.example.dailyinsight.ui.today.TodayFragment"
-        android:label="@string/title_today"
+        android:label="@string/title_briefing"
         tools:layout="@layout/fragment_today">
-        <action
-            android:id="@+id/action_today_to_stock_detail"
-            app:destination="@id/stock_detail_fragment" />
     </fragment>
 
     <fragment
