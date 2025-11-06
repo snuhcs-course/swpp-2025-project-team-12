@@ -26,13 +26,13 @@
 
             <include
                 android:id="@+id/kospiBlock"
-                layout="@layout/item_financial_summary"
+                layout="@layout/view_financial_summary"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"/>
 
             <include
                 android:id="@+id/kosdaqBlock"
-                layout="@layout/item_financial_summary"
+                layout="@layout/view_financial_summary"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="16dp" />
