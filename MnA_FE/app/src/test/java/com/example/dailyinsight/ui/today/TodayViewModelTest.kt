@@ -47,7 +47,6 @@ class TodayViewModelTest {
         price = price,
         change = -100,
         changeRate = -0.14,
-        time = "09:30",
         headline = "Test headline"
     )
 
@@ -194,7 +193,6 @@ class TodayViewModelTest {
             price = 70000,
             change = -500,
             changeRate = -0.71,
-            time = "14:30",
             headline = "Important news"
         )
         whenever(repository.getTodayRecommendations()).thenReturn(listOf(recommendation))
@@ -212,7 +210,6 @@ class TodayViewModelTest {
         assertEquals(70000L, data.price)
         assertEquals(-500L, data.change)
         assertEquals(-0.71, data.changeRate, 0.001)
-        assertEquals("14:30", data.time)
         assertEquals("Important news", data.headline)
     }
 

@@ -10,8 +10,6 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 
-// 히스토리 화면에 쓰는 Row 모델(이미 프로젝트에 유사 파일 있으면 그걸 재사용하세요)
-
 class HistoryViewModel(
     private val repo: Repository = ServiceLocator.repository
 ) : ViewModel() {
