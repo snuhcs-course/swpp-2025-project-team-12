@@ -2,6 +2,7 @@ package com.example.dailyinsight.data.network
 
 import com.example.dailyinsight.data.dto.*
 import retrofit2.Call
+import retrofit2.Response
 import retrofit2.http.*
 /**
  * Unified API Service for all endpoints
@@ -30,6 +31,12 @@ interface ApiService {
     suspend fun getStockDetail(
         @Path("ticker") ticker: String
     ): ApiResponse<StockDetailDto>
+    
+    @GET("api/company-list")
+    suspend fun getCompanyList(
+        @Query("limit") limit: Int,
+        @Query("offset") offset: Int
+    ) : Response<CompanyListResponse>
 
     // ============ Market Index ============
     @GET("marketindex/stockindex/latest")
@@ -59,7 +66,13 @@ interface ApiService {
     fun setStyle(
         @Body request: SetStyleRequest
     ): Call<SetStyleResponse>
-
+  
+    @POST("user/info/portfolio")
+    suspend fun setPortfolio(
+        @Body portfolio: PortfolioRequest
+    ) : Response<PortfolioResponse>
+  
     @GET("user/info/name")
     fun getName(): Call<UserNameResponse>
+
 }
