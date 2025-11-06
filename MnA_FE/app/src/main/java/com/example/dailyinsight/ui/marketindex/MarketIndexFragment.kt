@@ -64,6 +64,15 @@ class MarketIndexFragment : Fragment() {
             }
         }
 
+        // Observe LLM summary data
+        marketIndexViewModel.llmSummary.observe(viewLifecycleOwner) { summaryData ->
+            // Update KOSPI description with LLM summary
+            binding.kospiBlock.description.text = summaryData.kospi.summary
+
+            // Update KOSDAQ description with LLM summary
+            binding.kosdaqBlock.description.text = summaryData.kosdaq.summary
+        }
+
         // Set up click listeners
         binding.kospiBlock.root.setOnClickListener {
             // Navigation logic for KOSPI
@@ -124,8 +133,6 @@ class MarketIndexFragment : Fragment() {
         nameView.text = data.name
         valueView.text = String.format(Locale.getDefault(), "%.2f", data.close)
         // change this to data.description later
-        descriptionView.text = "LLM generated description"
-
         val sign = if (data.changeAmount >= 0) "+" else ""
         val changeText = String.format(
             Locale.getDefault(),

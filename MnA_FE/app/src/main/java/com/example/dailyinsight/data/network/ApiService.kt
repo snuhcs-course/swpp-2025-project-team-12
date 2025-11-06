@@ -48,6 +48,9 @@ interface ApiService {
         @Query("days") days: Int
     ): StockIndexHistoryResponse
 
+    @GET("marketindex/llm_summary")
+    suspend fun getLLMSummary(): LLMSummaryResponse
+
     // ============ Authentication ============
     @GET("user/csrf")
     fun setCsrf(): Call<CsrfResponse>
