@@ -4,6 +4,7 @@ import android.content.Intent
 import android.os.Bundle
 import android.text.TextWatcher
 import android.text.Editable
+import android.widget.Toast
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
@@ -16,6 +17,8 @@ import androidx.recyclerview.widget.RecyclerView
 import com.example.dailyinsight.MainActivity
 import com.example.dailyinsight.R
 import com.example.dailyinsight.data.FakeStockRepository
+import com.example.dailyinsight.data.RemoteStockRepository
+import com.example.dailyinsight.data.network.RetrofitInstance
 import com.google.android.material.appbar.MaterialToolbar
 import com.google.android.material.button.MaterialButton
 import com.google.android.material.checkbox.MaterialCheckBox
@@ -23,7 +26,7 @@ import com.google.android.material.textfield.TextInputEditText
 
 class SetPortfolioActivity : AppCompatActivity() {
     private lateinit var adapter: StockAdapter
-    private val repository = FakeStockRepository()
+    private val repository = RemoteStockRepository(RetrofitInstance.api)
     private val viewModel: PortfolioViewModel by viewModels {
         PortfolioViewModelFactory(repository)
     }
@@ -37,8 +40,6 @@ class SetPortfolioActivity : AppCompatActivity() {
             v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom)
             insets
         }
-
-        viewModel.fetchStocks()
 
         // go back when back button clicked on top app bar
         val topAppBar = findViewById<MaterialToolbar>(R.id.topAppBar)
@@ -92,16 +93,37 @@ class SetPortfolioActivity : AppCompatActivity() {
             toNextButton.isEnabled = selected.isNotEmpty() || (viewModel.selectNone.value == true)
         }
 
+//        var submitResult = false
+//        viewModel.submitResult.observe(this) { result ->
+//            submitResult = result
+//        }
+
         selectNone.addOnCheckedStateChangedListener { _, state ->
             val isChecked = (state == MaterialCheckBox.STATE_CHECKED)
             viewModel.toggleSelectNone(isChecked)
         }
 
         toNextButton.setOnClickListener {
-            viewModel.submitSelectedStocks()
-            val intent = Intent(this, MainActivity::class.java)
-            finishAffinity()
-            startActivity(intent)
+            viewModel.submitSelectedStocks { submitResult ->
+                if(submitResult) {
+                    val intent = Intent(this, MainActivity::class.java)
+                    finishAffinity()
+                    startActivity(intent)
+                } else {
+                    Toast.makeText(this, "please try again", Toast.LENGTH_SHORT).show()
+                }
+            }
+//            viewModel.submitSelectedStocks ()
+//            if(submitResult) {
+//                val intent = Intent(this, MainActivity::class.java)
+//                finishAffinity()
+//                startActivity(intent)
+//            }
+//            else {
+//                Toast.makeText(this, "please try again", Toast.LENGTH_SHORT).show()
+//            }
         }
+
+        viewModel.fetchStocks()
     }
 }

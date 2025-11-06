@@ -12,7 +12,7 @@ import com.example.dailyinsight.data.dto.StockItem
 
 class StockAdapter(
     private var stockList: List<StockItem> = emptyList(),
-    private var selectedTickers: Set<Int> = emptySet(),
+    private var selectedTickers: Set<String> = emptySet(),
     private val onCheckedChange: (StockItem, Boolean) -> Unit
 ) : RecyclerView.Adapter<StockAdapter.StockViewHolder>() {
     var isEnabled: Boolean = true
@@ -45,7 +45,7 @@ class StockAdapter(
 
     override fun getItemCount(): Int = stockList.size
 
-    fun submitList(newList: List<StockItem>, selected: Set<Int>) {
+    fun submitList(newList: List<StockItem>, selected: Set<String>) {
         stockList = newList
         selectedTickers = selected
         notifyDataSetChanged()

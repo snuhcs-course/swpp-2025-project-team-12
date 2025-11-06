@@ -2,6 +2,7 @@ package com.example.dailyinsight.data.network
 
 import com.example.dailyinsight.data.dto.*
 import retrofit2.Call
+import retrofit2.Response
 import retrofit2.http.*
 /**
  * Unified API Service for all endpoints
@@ -59,4 +60,15 @@ interface ApiService {
     fun setStyle(
         @Body request: SetStyleRequest
     ): Call<SetStyleResponse>
+
+    @GET("api/company-list")
+    suspend fun getCompanyList(
+        @Query("limit") limit: Int,
+        @Query("offset") offset: Int
+    ) : Response<CompanyListResponse>
+
+    @POST("user/info/portfolio")
+    suspend fun setPortfolio(
+        @Body portfolio: PortfolioRequest
+    ) : Response<PortfolioResponse>
 }

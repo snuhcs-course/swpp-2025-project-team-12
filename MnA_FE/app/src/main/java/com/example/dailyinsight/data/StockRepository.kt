@@ -4,5 +4,5 @@ import com.example.dailyinsight.data.dto.StockItem
 
 interface StockRepository {
     suspend fun fetchStocks(): List<StockItem>
-    suspend fun submitSelectedStocks(selected: Set<Int>): Boolean
+    suspend fun submitSelectedStocks(selected: Set<String>): Boolean
 }
