@@ -76,7 +76,7 @@ class SetPortfolioActivity : AppCompatActivity() {
 
         // 🔹 선택 상태 관찰 (체크박스 상태 변경 시)
         viewModel.selectedTickers.observe(this, Observer { selected ->
-            val stocks = viewModel.stockItems.value ?: emptyList()
+            val stocks = viewModel.filteredStocks.value ?: emptyList()
             recyclerView.post {
                 adapter.submitList(stocks, selected)
             }
