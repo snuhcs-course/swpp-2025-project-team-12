@@ -10,7 +10,7 @@ from utils.debug_print import debug_print
 from utils.pagination import get_pagination
 from utils.for_api import *
 from apps.api.constants import *
-import numpy as np
+import pandas as pd
 
 class APIView(viewsets.ViewSet):
 
@@ -200,34 +200,229 @@ class APIView(viewsets.ViewSet):
     @default_error_handler
     def get_reports_detail(self, request: HttpRequest, symbol: str):
         """
-        GET /api/reports/{symbol}
-        상세 리포트: 회사 프로필 + (선택) 가격/지표 + 기사 요약
+        GET /api/reports/{symbol}?days=365
+        상세 리포트: 회사 프로필 + (스냅샷) 가격/지표 + 기사 요약 + 차트
+        - company-profile parquet: explanation
+        - price-financial-info parquet: name, close, change, change_rate, PER/PBR/market_cap 등
+        - price-financial-info-instant: 차트용 히스토리 데이터
+        - KOSPI + KOSDAQ 모두 조회
         """
         try:
-            profile_df, ts_prof = FinanceS3Client().get_latest_parquet_df(
-                FINANCE_BUCKET,
-                S3_PREFIX_COMPANY
-            )
-            profile = None
+            s3 = FinanceS3Client()
+            
+            # 차트 일수 파라미터 (기본 365일)
+            chart_days = int(request.GET.get('days', 365))
 
+            # 1) 회사 프로필
+            profile_df, ts_prof = s3.get_latest_parquet_df(FINANCE_BUCKET, S3_PREFIX_COMPANY)
+            explanation = None
             if profile_df is not None and symbol in profile_df.index:
-                row = profile_df.loc[symbol]
-                profile = {
-                    "symbol": symbol,
-                    "explanation": str(row["explanation"])
-                }
+                prow = profile_df.loc[symbol]
+                explanation = str(prow.get("explanation", None)) if "explanation" in prow else None
 
-            # 추가 데이터는 아직 형식 미정 → 폴백
+            # 2) 가격 스냅샷 - KOSPI + KOSDAQ 둘 다 읽기
+            price_df = None
+            ts_price = None
+            
+            # 최신 날짜 찾기
+            source = s3.check_source(bucket=FINANCE_BUCKET, prefix="llm_output")
+            if source["ok"]:
+                year, month, day = source["latest"].split("-")
+                if month[0] == '0': 
+                    month = month[1]
+                
+                df_list = []
+                for market in ['kospi', 'kosdaq']:
+                    try:
+                        df_temp, ts_temp = s3.get_latest_parquet_df(
+                            FINANCE_BUCKET,
+                            f"{S3_PREFIX_PRICE}year={year}/month={month}/market={market}"
+                        )
+                        if df_temp is not None and len(df_temp) > 0:
+                            df_list.append(df_temp)
+                            if ts_price is None:
+                                ts_price = ts_temp
+                    except:
+                        continue
+                
+                if df_list:
+                    price_df = pd.concat(df_list)
+
+            # 3) 차트 데이터 - price-financial-info-instant에서 로드
+            chart_data = None
+            try:
+                instant_df, _ = s3.get_latest_parquet_df(
+                    FINANCE_BUCKET,
+                    'price-financial-info-instant/'
+                )
+                
+                if instant_df is not None and 'ticker' in instant_df.columns and 'date' in instant_df.columns:
+                    # 해당 종목 필터링 및 정렬
+                    symbol_history = instant_df[instant_df['ticker'] == symbol].sort_values('date')
+                    
+                    # 최근 N일만
+                    symbol_history = symbol_history.tail(chart_days)
+                    
+                    if len(symbol_history) > 0:
+                        # 차트 형식으로 변환
+                        chart_data = []
+                        for idx, row in symbol_history.iterrows():
+                            try:
+                                timestamp = int(pd.to_datetime(row['date']).timestamp() * 1000)
+                                price_val = float(row['close'])
+                                chart_data.append({
+                                    "t": timestamp,
+                                    "v": price_val
+                                })
+                            except:
+                                continue
+            except Exception as e:
+                debug_print(f"Chart data error: {e}")
+                chart_data = None
+
+            # 데이터 추출
+            name = None
+            market_type = None
+            industry = None
+            price = change = change_rate = None
+            market_cap = None
+            shares_outstanding = None
+            
+            eps = None
+            bps = None
+            div = None
+            dps = None
+            roe = None
+            
+            valuation = {"pe_annual": None, "pe_ttm": None, "forward_pe": None,
+                        "ps_ttm": None, "pb": None, "pcf_ttm": None, "pfcf_ttm": None}
+            
+            dividend = {"payout_ratio": None, "yield": None, "latest_exdate": None}
+
+            if price_df is not None and symbol in price_df.index:
+                row = price_df.loc[symbol]
+
+                # 기본 정보
+                if "name" in row and row["name"] is not None:
+                    name = str(row["name"])
+                
+                if "market" in row and row["market"] is not None:
+                    market_type = str(row["market"])
+                
+                if "industry" in row and row["industry"] is not None:
+                    industry = str(row["industry"])
+                
+                if "close" in row and row["close"] is not None:
+                    try: 
+                        price = float(row["close"])
+                    except: 
+                        pass
+                if "change" in row and row["change"] is not None:
+                    try: 
+                        change = float(row["change"])
+                    except: 
+                        pass
+                if "change_rate" in row and row["change_rate"] is not None:
+                    try: 
+                        change_rate = float(row["change_rate"])
+                    except: 
+                        pass
+
+                # 시총
+                if "market_cap" in row and row["market_cap"] is not None:
+                    try:
+                        market_cap = str(int(row["market_cap"]))
+                    except:
+                        market_cap = str(row["market_cap"])
+
+                # EPS
+                if "EPS" in row and row["EPS"] is not None:
+                    try:
+                        eps = float(row["EPS"])
+                    except:
+                        pass
+                
+                # BPS
+                if "BPS" in row and row["BPS"] is not None:
+                    try:
+                        bps = float(row["BPS"])
+                    except:
+                        pass
+                
+                # DIV
+                if "DIV" in row and row["DIV"] is not None:
+                    try:
+                        div = float(row["DIV"])
+                        dividend["yield"] = f"{div:.2f}%"
+                    except:
+                        pass
+                
+                # DPS
+                if "DPS" in row and row["DPS"] is not None:
+                    try:
+                        dps = float(row["DPS"])
+                    except:
+                        pass
+                
+                # ROE
+                if "ROE" in row and row["ROE"] is not None:
+                    try:
+                        roe = float(row["ROE"]) * 100
+                    except:
+                        pass
+                
+                # 발행주식수 계산
+                if market_cap and price and price > 0:
+                    try:
+                        shares_outstanding = str(int(float(market_cap) / price))
+                    except:
+                        pass
+
+                # 밸류에이션
+                if "PER" in row and row["PER"] is not None:
+                    try:
+                        per_val = str(float(row["PER"]))
+                        valuation["pe_annual"] = per_val
+                        valuation["pe_ttm"] = per_val
+                    except:
+                        pass
+                if "PBR" in row and row["PBR"] is not None:
+                    try:
+                        valuation["pb"] = str(float(row["PBR"]))
+                    except:
+                        pass
+
+            # 4) 응답
             resp = {
-                "profile": profile,
-                "price": None,
+                "ticker": symbol,
+                "name": name,
+                "market": market_type,
+                "industry": industry,
+                "price": price,
+                "change": change,
+                "change_rate": change_rate,
+                "market_cap": market_cap,
+                "shares_outstanding": shares_outstanding,
+                "valuation": valuation,
+                "dividend": dividend,
+                "financials": {
+                    "eps": eps,
+                    "bps": bps,
+                    "dps": dps,
+                    "roe": roe,
+                    "div": div
+                },
+                "chart": chart_data,  # ← 차트 데이터 추가!
+                "profile": {"symbol": symbol, "explanation": explanation} if explanation else None,
                 "indicesSnippet": MOCK_INDICES if INDICES_SOURCE != "s3" else None,
                 "articles": MOCK_ARTICLES.get("items", [])[:5] if ARTICLES_SOURCE != "s3" else [],
-                "asOf": ts_prof or iso_now(),
-                "source": "s3" if profile else "empty"
+                "asOf": ts_price or ts_prof or iso_now(),
+                "source": "s3" if (price is not None or name or explanation) else "empty",
             }
 
             return ok(resp)
 
         except Exception as e:
+            debug_print(e)
             return degraded(str(e), source="s3")
+        
