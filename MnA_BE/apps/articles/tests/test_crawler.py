@@ -3,7 +3,9 @@ from django.test import SimpleTestCase
 from unittest.mock import patch, MagicMock, Mock, mock_open, call, PropertyMock
 import json
 import os
+import platform
 from datetime import datetime
+from urllib.parse import urlparse, urlsplit
 from apps.articles.crawler_main import (
     normalize_url,
     extract_source,
@@ -71,6 +73,35 @@ class CrawlerPureFunctionsTest(SimpleTestCase):
     def test_is_googleish_invalid_url(self):
         result = _is_googleish("::")
         self.assertIsInstance(result, bool)
+    
+    def test_is_googleish_exception_handling(self):
+        """_is_googleish 예외 처리 (line 43-44)"""
+        # None을 전달하여 AttributeError 발생 유도
+        with patch('apps.articles.crawler_main.urlsplit') as mock_urlsplit:
+            mock_urlsplit.side_effect = Exception("Parse error")
+            result = _is_googleish("http://example.com")
+            # 예외 발생 시 True 반환 (안전한 기본값)
+            self.assertTrue(result)
+    
+    def test_normalize_url_exception_handling(self):
+        """normalize_url 예외 처리 (line 53-54)"""
+        # urlparse가 실패하도록 mock
+        with patch('apps.articles.crawler_main.urlparse') as mock_urlparse:
+            mock_urlparse.side_effect = Exception("Parse error")
+            test_url = "http://example.com"
+            result = normalize_url(test_url)
+            # 예외 발생 시 원본 반환
+            self.assertEqual(result, test_url)
+    
+    def test_extract_source_exception_handling(self):
+        """extract_source 예외 처리 (line 186-187)"""
+        # urlparse가 실패하도록 mock
+        with patch('apps.articles.crawler_main.urlparse') as mock_urlparse:
+            mock_urlparse.side_effect = Exception("Parse error")
+            result = extract_source("http://example.com")
+            # 예외 발생 시 "Unknown" 반환
+            self.assertEqual(result, "Unknown")
+
     
     def test_normalize_url_utm_and_fragment(self):
         url = "https://example.com/page?utm_source=google&q=1#section"
@@ -309,6 +340,25 @@ class CrawlerSectionTest(SimpleTestCase):
 # ==================== 5) setup_driver 분기 ====================
 class CrawlerSetupDriverTest(SimpleTestCase):
     """setup_driver 옵션 구성 분기"""
+    
+    @patch('apps.articles.crawler_main.ChromeDriverManager')
+    @patch('apps.articles.crawler_main.Service')
+    @patch('apps.articles.crawler_main.webdriver.Chrome')
+    @patch('platform.system')
+    @patch.dict(os.environ, {}, clear=True)
+    def test_setup_driver_linux_path(self, mock_platform, mock_chrome, mock_service, mock_cdm):
+        """Linux 환경에서 직접 경로 사용 (line 88)"""
+        from apps.articles.crawler_main import setup_driver
+        
+        mock_platform.return_value = "Linux"
+        fake_driver = FakeDriver()
+        mock_chrome.return_value = fake_driver
+        
+        driver = setup_driver()
+        
+        # Linux에서는 /usr/bin/chromedriver 직접 사용
+        mock_service.assert_called_with('/usr/bin/chromedriver')
+        self.assertTrue(mock_chrome.called)
     
     @patch('apps.articles.crawler_main.ChromeDriverManager')
     @patch('apps.articles.crawler_main.Service')
@@ -555,6 +605,117 @@ class CrawlerMainIntegrationTest(SimpleTestCase):
         self.assertEqual(section_stats["TEST2"]["target"], 1)
         self.assertEqual(section_stats["TEST2"]["success"], 1)
 
+
+# ==================== 9) 타임아웃 및 WebDriver 예외 테스트 ====================
+class CrawlerTimeoutTest(SimpleTestCase):
+    """타임아웃 및 네트워크 오류 처리 테스트"""
+    
+    @patch('time.sleep')
+    def test_resolve_timeout_exception(self, mock_sleep):
+        """TimeoutException 발생 시 재시도"""
+        from apps.articles.crawler_main import resolve_google_url_with_browser
+        from selenium.common.exceptions import TimeoutException
+        
+        driver = Mock()
+        driver.get.side_effect = [
+            TimeoutException("Page load timeout"),
+            None
+        ]
+        driver.current_url = "https://example.com/article"
+        
+        result = resolve_google_url_with_browser(driver, "https://news.google.com/123", max_retries=2)
+        self.assertEqual(result, "https://example.com/article")
+        self.assertEqual(driver.get.call_count, 2)
+    
+    @patch('time.sleep')
+    def test_extract_content_exception_handling(self, mock_sleep):
+        """extract_content 예외 처리"""
+        from apps.articles.crawler_main import extract_content
+        
+        driver = Mock()
+        driver.get.side_effect = Exception("Network error")
+        
+        result = extract_content(driver, "https://example.com/article")
+        self.assertIsNone(result)
+    
+    @patch('time.sleep')
+    def test_extract_content_no_paragraphs(self, mock_sleep):
+        """<p> 태그가 없는 HTML"""
+        from apps.articles.crawler_main import extract_content
+        
+        driver = FakeDriver(page_source="<html><body><div>No paragraphs</div></body></html>")
+        result = extract_content(driver, "https://example.com/article")
+        self.assertIsNone(result)
+    
+    @patch('time.sleep')
+    def test_extract_content_script_removal(self, mock_sleep):
+        """script/style 태그 제거 확인"""
+        from apps.articles.crawler_main import extract_content
+        
+        long_text = " ".join(["word"] * 50)
+        html = f"""<html>
+        <head><style>.test {{ color: red; }}</style></head>
+        <body>
+            <script>alert('test');</script>
+            <nav>Navigation</nav>
+            <p>{long_text}</p>
+        </body>
+        </html>"""
+        
+        driver = FakeDriver(page_source=html)
+        result = extract_content(driver, "https://example.com/article")
+        
+        if result:
+            self.assertNotIn("alert", result)
+            self.assertNotIn("Navigation", result)
+
+
+# ==================== 10) crawl_section 추가 엣지 케이스 ====================
+class CrawlerSectionEdgeCasesTest(SimpleTestCase):
+    """crawl_section 추가 엣지 케이스"""
+    
+    @patch('time.sleep')
+    @patch('apps.articles.crawler_main.extract_content')
+    @patch('apps.articles.crawler_main.resolve_google_url_with_browser')
+    @patch('apps.articles.crawler_main.feedparser.parse')
+    def test_crawl_section_first_fail_retry_success(self, mock_parse, mock_resolve, mock_extract, mock_sleep):
+        """콘텐츠 추출 첫 실패, 재시도 성공"""
+        from apps.articles.crawler_main import crawl_section
+        
+        entry = Mock()
+        entry.link = "https://news.google.com/articles/123"
+        entry.title = "Test Article"
+        entry.get = Mock(return_value="2025-01-01")
+        
+        mock_parse.return_value = DummyFeed([entry])
+        mock_resolve.return_value = "https://example.com/article"
+        
+        # 첫 번째 실패, 두 번째 성공
+        long_content = "Test content. " * 20
+        mock_extract.side_effect = [None, long_content]
+        
+        driver = FakeDriver()
+        results, stats = crawl_section(driver, "TEST", 1, set())
+        
+        self.assertEqual(len(results), 1)
+        self.assertEqual(mock_extract.call_count, 2)
+    
+    @patch('time.sleep')
+    @patch('apps.articles.crawler_main.feedparser.parse')
+    def test_crawl_section_empty_link(self, mock_parse, mock_sleep):
+        """빈 link 필드 - entry.get('link') 반환값 없음 (line 216-218)"""
+        from apps.articles.crawler_main import crawl_section
+        
+        entry = Mock()
+        entry.get = Mock(side_effect=lambda k, default=None: "" if k == "link" else "2025-01-01")
+        entry.title = "Test"
+        
+        mock_parse.return_value = DummyFeed([entry])
+        results, stats = crawl_section(FakeDriver(), "TEST", 10, set())
+        
+        # 빈 링크는 실패로 처리
+        self.assertGreater(stats["failed"], 0)
+        self.assertEqual(len(results), 0)
 
 # ==================== 기존 테스트 유지 ====================
 class CrawlerOutputTest(SimpleTestCase):
