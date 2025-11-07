@@ -106,9 +106,9 @@ class SetPortfolioActivity : AppCompatActivity() {
         toNextButton.setOnClickListener {
             viewModel.submitSelectedStocks { submitResult ->
                 if(submitResult) {
-                    val intent = Intent(this, MainActivity::class.java)
-                    finishAffinity()
-                    startActivity(intent)
+//                    val intent = Intent(this, MainActivity::class.java)
+//                    finishAffinity()
+//                    startActivity(intent)
                 } else {
                     Toast.makeText(this, "please try again", Toast.LENGTH_SHORT).show()
                 }

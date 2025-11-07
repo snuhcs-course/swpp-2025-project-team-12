@@ -77,7 +77,8 @@ class SignUpActivity : AppCompatActivity() {
                     response: retrofit2.Response<SignUpResponse>
                 ) {
                     if (response.isSuccessful) {
-                        val intent = Intent(this@SignUpActivity, SetPortfolioActivity::class.java)
+                        val intent = Intent(this@SignUpActivity, MainActivity::class.java)
+                        finishAffinity()
                         startActivity(intent)
                     } else {
                         val result = response.errorBody()?.string()
