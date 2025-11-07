@@ -103,7 +103,12 @@ class APIView(viewsets.ViewSet):
                         "source": "s3"
                     })
             except Exception as e:
-                return degraded(str(e), source="s3")
+                return degraded(
+                    str(e), 
+                    source="s3",
+                    kospi=MOCK_INDICES.get("kospi", {"value": 2500, "changePct": 0}),
+                    kosdaq=MOCK_INDICES.get("kosdaq", {"value": 750, "changePct": 0})
+                )
 
         # Mock fallback
         return ok(MOCK_INDICES)
@@ -359,6 +364,13 @@ class APIView(viewsets.ViewSet):
                 "name": name,
                 "market": market_type,
                 "industry": industry,
+                
+                # price 필드 (dict 형태)
+                "price": {
+                    "current": price,
+                    "change": change,
+                    "change_rate": change_rate
+                } if price is not None else None,
                 
                 # 최신 데이터 (현재 시점)
                 "current": {
