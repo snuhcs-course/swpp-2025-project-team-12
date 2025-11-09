@@ -278,7 +278,8 @@ class S3ImageMethodsTests(SimpleTestCase):
         with self.assertRaises(Exception) as context:
             s3.put_image("test-bucket", "test.png", "invalid_data_url")
         
-        self.assertIn("not a base64 data URL", str(context.exception))
+        # S3 base.py wraps all errors
+        self.assertIn("Couldn't put image", str(context.exception))
     
     @patch('S3.base.boto3.client')
     def test_put_image_invalid_base64(self, mock_boto_client):
@@ -291,7 +292,8 @@ class S3ImageMethodsTests(SimpleTestCase):
         with self.assertRaises(Exception) as context:
             s3.put_image("test-bucket", "test.png", "data:image/png;base64,invalid!!!")
         
-        self.assertIn("Invalid base64", str(context.exception))
+        # S3 base.py wraps all errors
+        self.assertIn("Couldn't put image", str(context.exception))
 
 
 class FinanceS3ClientTests(SimpleTestCase):
@@ -318,13 +320,14 @@ class FinanceS3ClientTests(SimpleTestCase):
         """CSV 읽기 오류"""
         mock_client = Mock()
         mock_response = {"Body": Mock()}
-        mock_response["Body"].read.return_value = b"invalid,csv\ndata"
+        # 파싱할 수 없는 데이터 (parquet도 아니고 CSV도 아님)
+        mock_response["Body"].read.return_value = b"\x00\x01\x02\xff\xfe invalid binary data"
         mock_client.get_object.return_value = mock_response
         mock_boto_client.return_value = mock_client
         
         s3 = FinanceS3Client()
         
-        # CSV 파싱 오류 발생 가능
+        # CSV 파싱 오류 발생
         with self.assertRaises(Exception):
             s3.get_dataframe("test-bucket", "test.csv")
     

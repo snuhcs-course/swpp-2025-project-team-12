@@ -105,13 +105,16 @@ class RequireAuthTests(TestCase):
         from decorators.require_auth import require_auth
         
         @require_auth
-        def test_view(request, user=None):
+        def test_view(self, request, **kwargs):
             return JsonResponse({"status": "ok"})
         
         request = self.factory.get('/')
         request.COOKIES = {}
         
-        response = test_view(request)
+        # ViewSet pattern: pass None as self
+
+        
+        response = test_view(None, request)
         
         self.assertEqual(response.status_code, 401)
         import json
@@ -130,14 +133,17 @@ class RequireAuthTests(TestCase):
         mock_user_model.objects.get.return_value = mock_user
         
         @require_auth
-        def test_view(request, user=None):
-            return JsonResponse({"user_id": user.id})
+        def test_view(self, request, **kwargs):
+            return JsonResponse({"user_id": kwargs.get("user").id})
         
         access_token = make_access_token(123)
         request = self.factory.get('/')
         request.COOKIES = {'access_token': access_token}
         
-        response = test_view(request)
+        # ViewSet pattern: pass None as self
+
+        
+        response = test_view(None, request)
         
         self.assertEqual(response.status_code, 200)
         import json
@@ -150,7 +156,7 @@ class RequireAuthTests(TestCase):
         from decorators.require_auth import require_auth
         
         @require_auth
-        def test_view(request, user=None):
+        def test_view(self, request, **kwargs):
             return JsonResponse({"status": "ok"})
         
         # 만료된 토큰 생성
@@ -163,7 +169,10 @@ class RequireAuthTests(TestCase):
         request = self.factory.get('/')
         request.COOKIES = {'access_token': expired_token}
         
-        response = test_view(request)
+        # ViewSet pattern: pass None as self
+
+        
+        response = test_view(None, request)
         
         self.assertEqual(response.status_code, 500)
         import json
@@ -184,8 +193,8 @@ class RequireAuthTests(TestCase):
         mock_user_model.objects.get.return_value = mock_user
         
         @require_auth
-        def test_view(request, user=None):
-            return JsonResponse({"user_id": user.id})
+        def test_view(self, request, **kwargs):
+            return JsonResponse({"user_id": kwargs.get("user").id})
         
         # 만료된 access_token
         expired_access = jwt.encode(
@@ -200,7 +209,10 @@ class RequireAuthTests(TestCase):
             'refresh_token': refresh_token
         }
         
-        response = test_view(request)
+        # ViewSet pattern: pass None as self
+
+        
+        response = test_view(None, request)
         
         self.assertEqual(response.status_code, 200)
         # 새로운 토큰이 쿠키에 설정되었는지 확인
@@ -213,7 +225,7 @@ class RequireAuthTests(TestCase):
         from decorators.require_auth import require_auth
         
         @require_auth
-        def test_view(request, user=None):
+        def test_view(self, request, **kwargs):
             return JsonResponse({"status": "ok"})
         
         # 만료된 토큰들
@@ -234,7 +246,10 @@ class RequireAuthTests(TestCase):
             'refresh_token': expired_refresh
         }
         
-        response = test_view(request)
+        # ViewSet pattern: pass None as self
+
+        
+        response = test_view(None, request)
         
         self.assertEqual(response.status_code, 401)
         import json
@@ -251,14 +266,17 @@ class RequireAuthTests(TestCase):
         mock_user_model.objects.get.side_effect = Exception("User not found")
         
         @require_auth
-        def test_view(request, user=None):
+        def test_view(self, request, **kwargs):
             return JsonResponse({"status": "ok"})
         
         access_token = make_access_token(999)
         request = self.factory.get('/')
         request.COOKIES = {'access_token': access_token}
         
-        response = test_view(request)
+        # ViewSet pattern: pass None as self
+
+        
+        response = test_view(None, request)
         
         self.assertEqual(response.status_code, 500)
         import json
@@ -278,7 +296,7 @@ class RequireAuthTests(TestCase):
         mock_user_model.objects.get.return_value = mock_user
         
         @require_auth
-        def test_view(request, user=None):
+        def test_view(self, request, **kwargs):
             return JsonResponse({"status": "ok"})
         
         # 만료된 access_token
@@ -297,7 +315,10 @@ class RequireAuthTests(TestCase):
             'refresh_token': cookie_refresh
         }
         
-        response = test_view(request)
+        # ViewSet pattern: pass None as self
+
+        
+        response = test_view(None, request)
         
         self.assertEqual(response.status_code, 401)
         import json
@@ -322,7 +343,7 @@ class RequireAuthTests(TestCase):
         mock_user_model.objects.get.return_value = mock_user
         
         @require_auth
-        def test_view(request, user=None):
+        def test_view(self, request, **kwargs):
             return JsonResponse({"status": "ok"})
         
         expired_access = jwt.encode(
@@ -338,7 +359,10 @@ class RequireAuthTests(TestCase):
             'refresh_token': cookie_refresh
         }
         
-        response = test_view(request)
+        # ViewSet pattern: pass None as self
+
+        
+        response = test_view(None, request)
         
         self.assertEqual(response.status_code, 500)
         import json
@@ -363,7 +387,7 @@ class RequireAuthTests(TestCase):
         mock_rotate.side_effect = Exception("Rotation failed")
         
         @require_auth
-        def test_view(request, user=None):
+        def test_view(self, request, **kwargs):
             return JsonResponse({"status": "ok"})
         
         expired_access = jwt.encode(
@@ -378,7 +402,10 @@ class RequireAuthTests(TestCase):
             'refresh_token': refresh_token
         }
         
-        response = test_view(request)
+        # ViewSet pattern: pass None as self
+
+        
+        response = test_view(None, request)
         
         self.assertEqual(response.status_code, 500)
         import json
@@ -399,16 +426,19 @@ class RequireAuthTests(TestCase):
         received_user = None
         
         @require_auth
-        def test_view(request, user=None):
+        def test_view(self, request, **kwargs):
             nonlocal received_user
-            received_user = user
+            received_user = kwargs.get('user')
             return JsonResponse({"status": "ok"})
         
         access_token = make_access_token(456)
         request = self.factory.get('/')
         request.COOKIES = {'access_token': access_token}
         
-        response = test_view(request)
+        # ViewSet pattern: pass None as self
+
+        
+        response = test_view(None, request)
         
         self.assertIsNotNone(received_user)
         self.assertEqual(received_user.id, 456)
