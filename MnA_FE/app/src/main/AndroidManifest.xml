@@ -15,9 +15,20 @@
         android:theme="@style/Theme.DailyInsight"
         android:usesCleartextTraffic="true">
         <activity
+            android:name=".ui.userinfo.FavoriteListActivity"
+            android:exported="false" />
+        <activity
+            android:name=".ui.userinfo.WithdrawActivity"
+            android:exported="false" />
+        <activity
+            android:name=".ui.userinfo.ChangePasswordActivity"
+            android:exported="false" />
+        <activity
+            android:name=".ui.userinfo.ChangeNameActivity"
+            android:exported="false" />
+        <activity
             android:name=".ui.start.SplashActivity"
             android:exported="true">
-
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 
@@ -41,8 +52,7 @@
             android:exported="false" />
         <activity
             android:name=".ui.start.StartActivity"
-            android:exported="true">
-        </activity>
+            android:exported="true" />
         <activity
             android:name=".MainActivity"
             android:exported="false" />
