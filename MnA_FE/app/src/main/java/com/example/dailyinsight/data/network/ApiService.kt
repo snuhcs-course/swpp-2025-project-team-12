@@ -19,7 +19,7 @@ interface ApiService {
     suspend fun getTodayRecommendations(): ApiResponse<List<RecommendationDto>>
 
     @GET("api/recommendations/history/")
-    suspend fun getHistoryRecommendations(): ApiResponse<Map<String, List<RecommendationDto>>>
+    suspend fun getStockRecommendations(): ApiResponse<Map<String, List<RecommendationDto>>>
 
     @GET("api/recommendations/personalized/")
     suspend fun getPersonalizedRecommendations(

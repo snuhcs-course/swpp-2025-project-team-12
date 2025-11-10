@@ -1,4 +1,4 @@
-package com.example.dailyinsight.ui.today
+package com.example.dailyinsight.ui.profile
 
 import com.example.dailyinsight.data.Repository
 import com.example.dailyinsight.data.dto.RecommendationDto
