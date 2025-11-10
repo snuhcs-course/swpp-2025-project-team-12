@@ -90,9 +90,9 @@ class SetStyleActivity : AppCompatActivity() {
                         response: retrofit2.Response<SetStyleResponse>
                     ) {
                         if (response.isSuccessful) {
-                            val intent = Intent(this@SetStyleActivity, MainActivity::class.java)
-                            finishAffinity()
-                            startActivity(intent)
+//                            val intent = Intent(this@SetStyleActivity, MainActivity::class.java)
+//                            finishAffinity()
+//                            startActivity(intent)
                         } else {
                             val result = response.errorBody()?.string()
                             val message = Gson().fromJson(result, SetStyleResponse::class.java).message
