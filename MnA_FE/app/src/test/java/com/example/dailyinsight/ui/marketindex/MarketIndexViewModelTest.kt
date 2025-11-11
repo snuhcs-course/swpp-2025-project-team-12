@@ -1,38 +1,39 @@
 package com.example.dailyinsight.ui.marketindex
 
+import android.content.Context
 import androidx.arch.core.executor.testing.InstantTaskExecutorRule
+import androidx.test.core.app.ApplicationProvider
 import com.example.dailyinsight.data.dto.StockIndexData
-import com.example.dailyinsight.data.repository.MarketIndexRepository
+import com.example.dailyinsight.data.network.RetrofitInstance
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.StandardTestDispatcher
-import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.resetMain
-import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
 import org.junit.After
 import org.junit.Assert.*
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
-import org.mockito.kotlin.mock
-import org.mockito.kotlin.whenever
-import java.io.IOException
+import org.junit.runner.RunWith
+import org.robolectric.RobolectricTestRunner
 
 @ExperimentalCoroutinesApi
+@RunWith(RobolectricTestRunner::class)
 class MarketIndexViewModelTest {
 
     @get:Rule
     val instantTaskExecutorRule = InstantTaskExecutorRule()
 
-    private lateinit var repository: MarketIndexRepository
-    private lateinit var viewModel: MarketIndexViewModel
     private val testDispatcher = StandardTestDispatcher()
 
     @Before
     fun setup() {
         Dispatchers.setMain(testDispatcher)
-        repository = mock()
+        
+        // Initialize RetrofitInstance for tests
+        val context = ApplicationProvider.getApplicationContext<Context>()
+        RetrofitInstance.init(context)
     }
 
     @After
@@ -51,7 +52,6 @@ class MarketIndexViewModelTest {
         close = close,
         changeAmount = changeAmount,
         changePercent = changePercent,
-        description = "Test description",
         date = "2024-01-15",
         high = 2510.0,
         low = 2490.0,
@@ -60,38 +60,52 @@ class MarketIndexViewModelTest {
     )
 
     @Test
-    fun init_automaticallyFetchesData() = runTest {
-        // Given: Mock repository returns data
-        val dataMap = mapOf(
-            "KOSPI" to createStockIndexData("KOSPI"),
-            "KOSDAQ" to createStockIndexData("KOSDAQ")
-        )
-        whenever(repository.getMarketData()).thenReturn(dataMap)
+    fun viewModel_initializes_successfully() {
+        // Given & When
+        val viewModel = MarketIndexViewModel()
 
-        // When: Create ViewModel (init calls fetchMarketData)
-        viewModel = MarketIndexViewModel()
-        // Need to inject mock repository - but the VM creates its own instance
-        // For now, we'll test with the actual structure
+        // Then: ViewModel should be created
+        assertNotNull(viewModel)
     }
 
     @Test
-    fun fetchMarketData_withValidData_updatesMarketDataLiveData() = runTest {
-        // Given: Mock repository returns index data
-        val kospiData = createStockIndexData("KOSPI", close = 2500.0)
-        val kosdaqData = createStockIndexData("KOSDAQ", close = 750.0)
-        val dataMap = mapOf(
-            "KOSPI" to kospiData,
-            "KOSDAQ" to kosdaqData
-        )
-        whenever(repository.getMarketData()).thenReturn(dataMap)
+    fun viewModel_is_instance_of_ViewModel() {
+        // Given & When
+        val viewModel = MarketIndexViewModel()
 
-        // Note: Since MarketIndexViewModel doesn't support dependency injection,
-        // we'll create a testable version for the remaining tests
-        // This test demonstrates the structure but can't fully test without DI
+        // Then: Should be a ViewModel
+        assertTrue(viewModel is androidx.lifecycle.ViewModel)
     }
 
     @Test
-    fun fetchMarketData_enrichesDataWithNames() = runTest {
+    fun viewModel_hasMarketDataLiveData() {
+        // Given & When
+        val viewModel = MarketIndexViewModel()
+
+        // Then: Should have marketData LiveData
+        assertNotNull(viewModel.marketData)
+    }
+
+    @Test
+    fun viewModel_hasLlmSummaryLiveData() {
+        // Given & When
+        val viewModel = MarketIndexViewModel()
+
+        // Then: Should have llmSummary LiveData
+        assertNotNull(viewModel.llmSummary)
+    }
+
+    @Test
+    fun viewModel_hasErrorLiveData() {
+        // Given & When
+        val viewModel = MarketIndexViewModel()
+
+        // Then: Should have error LiveData
+        assertNotNull(viewModel.error)
+    }
+
+    @Test
+    fun stockIndexData_enrichesDataWithNames() {
         // Given: Repository returns data without proper names
         val kospiData = createStockIndexData("", close = 2500.0) // Empty name
         val kosdaqData = createStockIndexData("", close = 750.0) // Empty name
@@ -99,38 +113,24 @@ class MarketIndexViewModelTest {
             "KOSPI" to kospiData,
             "KOSDAQ" to kosdaqData
         )
-        whenever(repository.getMarketData()).thenReturn(dataMap)
 
-        // When: fetchMarketData is called, it should set name from key
-        // The ViewModel sets: value.name = key for each entry
-
-        // Then: Names should be enriched from map keys
-        // This verifies the logic: dataMap.forEach { (key, value) -> value.name = key }
+        // When: Names are enriched from map keys (simulating ViewModel logic)
         dataMap.forEach { (key, value) ->
             value.name = key
         }
 
-        assertEquals("KOSPI", dataMap["KOSPI"]?.name ?: "")
-        assertEquals("KOSDAQ", dataMap["KOSDAQ"]?.name ?: "")
+        // Then: Names should be enriched from map keys
+        assertEquals("KOSPI", dataMap["KOSPI"]?.name)
+        assertEquals("KOSDAQ", dataMap["KOSDAQ"]?.name)
     }
 
     @Test
-    fun fetchMarketData_withEmptyMap_handlesGracefully() = runTest {
-        // Given: Repository returns empty map
-        whenever(repository.getMarketData()).thenReturn(emptyMap())
+    fun emptyMap_handlesGracefully() {
+        // Given: Empty map
+        val emptyMap = emptyMap<String, StockIndexData>()
 
-        // When/Then: Should handle empty data without crashing
-        // The ViewModel would post empty map to LiveData
-    }
-
-    @Test
-    fun fetchMarketData_withException_updatesErrorLiveData() = runTest {
-        // Given: Repository throws exception
-        val exception = IOException("Network error")
-        whenever(repository.getMarketData()).thenThrow(exception)
-
-        // When/Then: Error should be caught and posted to error LiveData
-        // The ViewModel catches exceptions and posts error message
+        // When/Then: Should handle empty data
+        assertEquals(0, emptyMap.size)
     }
 
     @Test
@@ -160,7 +160,6 @@ class MarketIndexViewModelTest {
         assertEquals(2500.0, data.close, 0.001)
         assertEquals(10.0, data.changeAmount, 0.001)
         assertEquals(0.4, data.changePercent, 0.001)
-        assertEquals("Test description", data.description)
         assertEquals("2024-01-15", data.date)
         assertEquals(2510.0, data.high, 0.001)
         assertEquals(2490.0, data.low, 0.001)

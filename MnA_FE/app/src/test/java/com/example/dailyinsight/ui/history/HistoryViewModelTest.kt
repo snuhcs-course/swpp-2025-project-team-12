@@ -94,6 +94,7 @@ class HistoryViewModelTest {
     @Test
     fun refresh_withMultipleDates_sortsInDescendingOrder() = runTest {
         // Given: Mock repository returns multiple dates
+        // Note: ViewModel uses toSortedMap(compareByDescending) which sorts by string descending
         val dataMap = mapOf(
             "2024-01-10" to listOf(createRecommendation(name = "Stock 10")),
             "2024-01-15" to listOf(createRecommendation(name = "Stock 15")),
@@ -105,12 +106,13 @@ class HistoryViewModelTest {
         viewModel = HistoryViewModel(repository)
         advanceUntilIdle()
 
-        // Then: Dates should be sorted descending (newest first)
+        // Then: Dates should be sorted descending by string (newest first)
         val state = viewModel.state.value as LoadResult.Success
         val rows = state.data
         val headers = rows.filterIsInstance<HistoryRow.Header>()
 
         assertEquals(3, headers.size)
+        // String comparison: "2024-01-15" > "2024-01-10" > "2024-01-05"
         assertEquals("2024-01-15", headers[0].label)
         assertEquals("2024-01-10", headers[1].label)
         assertEquals("2024-01-05", headers[2].label)
@@ -135,6 +137,7 @@ class HistoryViewModelTest {
     fun refresh_withRepositoryError_updatesStateToError() = runTest {
         // Given: Mock repository throws exception
         val exception = IOException("Network error")
+        whenever(repository.getHistoryRecommendations()).thenReturn(emptyMap())
         whenever(repository.getHistoryRecommendations()).thenThrow(exception)
 
         // When: Create ViewModel
@@ -265,11 +268,12 @@ class HistoryViewModelTest {
         viewModel = HistoryViewModel(repository)
         advanceUntilIdle()
 
-        // Then: All 10 dates should be present in descending order
+        // Then: All 10 dates should be present in descending order (string comparison)
         val state = viewModel.state.value as LoadResult.Success
         val headers = state.data.filterIsInstance<HistoryRow.Header>()
 
         assertEquals(10, headers.size)
+        // String descending: "2024-01-10" > "2024-01-09" > ... > "2024-01-01"
         assertEquals("2024-01-10", headers[0].label)
         assertEquals("2024-01-09", headers[1].label)
         assertEquals("2024-01-01", headers[9].label)

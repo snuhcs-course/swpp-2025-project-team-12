@@ -53,7 +53,6 @@ class StockIndexDetailViewModelTest {
         close = close,
         changeAmount = 10.0,
         changePercent = 0.4,
-        description = "Test description",
         date = "2024-01-15",
         high = 2510.0,
         low = 2490.0,
