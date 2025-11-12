@@ -19,7 +19,7 @@ class MarketLLMview(viewsets.ViewSet):
     @default_error_handler
     def get_market_overview(self, request, year = None, month = None, day = None):
         """Get the latest LLM output for market analysis from S3 JSON data."""
-        bucket_name=os.environ.get('FINANCE_BUCKET_NAME')
+        bucket_name = os.environ.get('FINANCE_BUCKET_NAME')
 
         # if no date provided, get the latest
         if year is None and month is None and day is None:
@@ -37,10 +37,9 @@ class MarketLLMview(viewsets.ViewSet):
                 key=path
             )
         except Exception as e:
-            return JsonResponse({ "message": "Unexpected Server Error" }, status=500)
+            return JsonResponse({"message": "Unexpected Server Error"}, status=500)
 
-        return JsonResponse({ "llm_output": llm_output }, status=200)
-
+        return JsonResponse({"llm_output": llm_output}, status=200)
 class StockIndexView(viewsets.ViewSet):
     """
     Market Index Views

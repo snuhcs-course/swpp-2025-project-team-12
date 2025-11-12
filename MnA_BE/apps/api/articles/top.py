@@ -29,9 +29,10 @@ class TopArticleView(viewsets.ViewSet):
                 )
 
                 if data:
-                    articles = data.get("articles")
-                    total = len(articles)
-                    page_items = articles[offset:offset + limit]
+                    # 11월부터 데이터 구조 변경: items → articles
+                    items = data.get("articles", data.get("items", []))
+                    total = len(items)
+                    page_items = items[offset:offset + limit]
                     return ok({
                         "items": page_items,
                         "total": total,
