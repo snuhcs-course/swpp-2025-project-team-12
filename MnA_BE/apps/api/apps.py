@@ -20,9 +20,9 @@ class ApiConfig(AppConfig):
         instant 데이터를 메모리에 로드
         """
         # 개발 서버 reload 시 중복 실행 방지
-        import os
-        if os.environ.get('RUN_MAIN') == 'true' or os.environ.get('WERKZEUG_RUN_MAIN') == 'true':
-            return
+        # import os
+        # if os.environ.get('RUN_MAIN') == 'true' or os.environ.get('WERKZEUG_RUN_MAIN') == 'true':
+        #     return
             
         try:
             from S3.finance import FinanceS3Client
@@ -41,7 +41,7 @@ class ApiConfig(AppConfig):
             )
             
             if instant_df is not None:
-                ApiConfig.instant_df = instant_df
+                self.instant_df = instant_df
                 debug_print(f"✓ Instant data loaded: {instant_df.shape}")
                 debug_print(f"  - Unique tickers: {instant_df['ticker'].nunique()}")
                 debug_print(f"  - Date range: {instant_df['date'].min()} ~ {instant_df['date'].max()}")
@@ -53,14 +53,14 @@ class ApiConfig(AppConfig):
             )
             
             if profile_df is not None:
-                ApiConfig.profile_df = profile_df
+                self.profile_df = profile_df
                 debug_print(f"✓ Profile data loaded: {profile_df.shape}")
             
-            ApiConfig.last_loaded = datetime.now()
-            debug_print(f"✓ Data loaded at: {ApiConfig.last_loaded}")
+            self.last_loaded = datetime.now()
+            debug_print(f"✓ Data loaded at: {self.last_loaded}")
             debug_print("=" * 50)
             
         except Exception as e:
             debug_print(f"✗ Error loading data: {e}")
-            ApiConfig.instant_df = None
-            ApiConfig.profile_df = None
+            self.instant_df = None
+            self.profile_df = None

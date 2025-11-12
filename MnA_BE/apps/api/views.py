@@ -1,4 +1,5 @@
 # apps/api/views.py
+import json
 
 from django.http import HttpRequest
 from rest_framework import viewsets
@@ -90,16 +91,26 @@ class APIView(viewsets.ViewSet):
         """
         if INDICES_SOURCE == "s3":
             try:
-                data, ts = FinanceS3Client().get_latest_json(
-                    FINANCE_BUCKET,
-                    S3_PREFIX_INDICES
+                source = FinanceS3Client().check_source(
+                    bucket=FINANCE_BUCKET,
+                    prefix=S3_PREFIX_INDICES
+                )
+                if not source["ok"]: return JsonResponse({"message": "No LLM output found"}, status=404)
+                year, month, day = source["latest"].split("-")
+
+                kospi_data = FinanceS3Client().get_json(
+                    bucket=FINANCE_BUCKET,
+                    key=f"{S3_PREFIX_INDICES}year={year}/month={month}/day={day}/KOSPI"
+                )
+                kosdaq_data = FinanceS3Client().get_json(
+                    bucket=FINANCE_BUCKET,
+                    key=f"{S3_PREFIX_INDICES}year={year}/month={month}/day={day}/KOSDAQ"
                 )
 
-                if data:
+                if kospi_data and kosdaq_data:
                     return ok({
-                        "kospi": data.get("kospi", {"value": 0, "changePct": 0}),
-                        "kosdaq": data.get("kosdaq", {"value": 0, "changePct": 0}),
-                        "asOf": ts,
+                        "kospi": kospi_data,
+                        "kosdaq": kosdaq_data,
                         "source": "s3"
                     })
             except Exception as e:
@@ -232,6 +243,32 @@ class APIView(viewsets.ViewSet):
         except Exception as e:
             debug_print(e)
             return degraded(str(e), source="memory", total=0, limit=limit, offset=offset)
+
+    @action(detail=False, methods=['get'])
+    @default_error_handler
+    def get_company_overview(self, request, ticker:str):
+        """
+        GET /api/overview/{ticker}
+
+        """
+        source = FinanceS3Client().check_source(
+            bucket=FINANCE_BUCKET,
+            prefix="llm_output/market-index-overview"
+        )
+        if not source["ok"]: return JsonResponse({"message": "No LLM output found"}, status=404)
+        year, month, day = source["latest"].split("-")
+
+        try:
+            llm_output = FinanceS3Client().get_json(
+                bucket=FINANCE_BUCKET,
+                key=f"llm_output/company-overview/year={year}/month={month}/{year}-{month}-{day}"
+            )
+            company_overview = json.loads(llm_output.get(ticker, {}))
+        except Exception as e:
+            return JsonResponse({ "message": "Unexpected Server Error" }, status=500)
+
+        return JsonResponse(company_overview, status=200)
+
 
     @action(detail=False, methods=['get'])
     @default_error_handler
