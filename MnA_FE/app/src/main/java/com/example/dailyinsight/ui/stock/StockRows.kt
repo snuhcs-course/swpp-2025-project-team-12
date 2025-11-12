@@ -1,33 +1,33 @@
-package com.example.dailyinsight.ui.history
+package com.example.dailyinsight.ui.stock
 import com.example.dailyinsight.data.dto.RecommendationDto
 
 // UI에 쓰는 행 모델
-sealed class HistoryRow {
-    data class Header(val label: String) : HistoryRow()
-    data class Item(val data: RecommendationDto) : HistoryRow()
+sealed class StockRow {
+    data class Header(val label: String) : StockRow()
+    data class Item(val data: RecommendationDto) : StockRow()
 }
 
 // 간단 변환: 한 섹션 헤더 + 아이템들
-fun List<RecommendationDto>.toRows(title: String = "오늘"): List<HistoryRow> =
+fun List<RecommendationDto>.toRows(title: String = "오늘"): List<StockRow> =
     buildList {
-        if (isNotEmpty()) add(HistoryRow.Header(title))
-        for (r in this@toRows) add(HistoryRow.Item(r))
+        if (isNotEmpty()) add(StockRow.Header(title))
+        for (r in this@toRows) add(StockRow.Item(r))
     }
 
 /** 서버에서 온 Map("오늘","어제","yyyy-MM-dd" -> List) 를 RecyclerView용 일렬 리스트로 변환 */
-fun Map<String, List<RecommendationDto>>.toRows(): List<HistoryRow> {
-    val rows = mutableListOf<HistoryRow>()
+fun Map<String, List<RecommendationDto>>.toRows(): List<StockRow> {
+    val rows = mutableListOf<StockRow>()
 
     // “오늘”, “어제”는 우선 보이게, 그 외는 날짜 역순
     val today = this["오늘"]
     val yesterday = this["어제"]
     if (!today.isNullOrEmpty()) {
-        rows += HistoryRow.Header("오늘")
-        rows += today.map { HistoryRow.Item(it) }
+        rows += StockRow.Header("오늘")
+        rows += today.map { StockRow.Item(it) }
     }
     if (!yesterday.isNullOrEmpty()) {
-        rows += HistoryRow.Header("어제")
-        rows += yesterday.map { HistoryRow.Item(it) }
+        rows += StockRow.Header("어제")
+        rows += yesterday.map { StockRow.Item(it) }
     }
 
     // 나머지 키(yyyy-MM-dd로 가정)는 역순 정렬
@@ -37,8 +37,8 @@ fun Map<String, List<RecommendationDto>>.toRows(): List<HistoryRow> {
         .forEach { key ->
             val items = this[key].orEmpty()
             if (items.isNotEmpty()) {
-                rows += HistoryRow.Header(key)
-                rows += items.map { HistoryRow.Item(it) }
+                rows += StockRow.Header(key)
+                rows += items.map { StockRow.Item(it) }
             }
         }
     return rows

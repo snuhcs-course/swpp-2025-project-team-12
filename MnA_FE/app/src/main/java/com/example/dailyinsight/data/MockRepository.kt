@@ -18,7 +18,7 @@ class MockRepository(private val context: Context) : Repository {
     override suspend fun getTodayRecommendations(): List<RecommendationDto> =
         readWrapped<List<RecommendationDto>>("api_today.json")
 
-    override suspend fun getHistoryRecommendations(): Map<String, List<RecommendationDto>> =
+    override suspend fun getStockRecommendations(): Map<String, List<RecommendationDto>> =
         readWrapped<Map<String, List<RecommendationDto>>>("api_history.json")
 
     override suspend fun getStockDetail(ticker: String): StockDetailDto =

@@ -1,4 +1,4 @@
-package com.example.dailyinsight.ui.history
+package com.example.dailyinsight.ui.stock
 
 import android.view.LayoutInflater
 import android.view.View
@@ -12,12 +12,12 @@ import com.example.dailyinsight.data.dto.RecommendationDto
 import com.example.dailyinsight.ui.common.setChange
 import java.text.DecimalFormat
 
-class HistoryAdapter(
+class StockAdapter(
     private val onClick: (RecommendationDto) -> Unit = {}
-) : ListAdapter<HistoryRow, RecyclerView.ViewHolder>(
-    object : DiffUtil.ItemCallback<HistoryRow>() {
-        override fun areItemsTheSame(o: HistoryRow, n: HistoryRow): Boolean = o == n
-        override fun areContentsTheSame(o: HistoryRow, n: HistoryRow): Boolean = o == n
+) : ListAdapter<StockRow, RecyclerView.ViewHolder>(
+    object : DiffUtil.ItemCallback<StockRow>() {
+        override fun areItemsTheSame(o: StockRow, n: StockRow): Boolean = o == n
+        override fun areContentsTheSame(o: StockRow, n: StockRow): Boolean = o == n
     }
 ) {
     companion object {
@@ -26,31 +26,31 @@ class HistoryAdapter(
     }
 
     override fun getItemViewType(position: Int): Int = when (getItem(position)) {
-        is HistoryRow.Header -> TYPE_HEADER
-        is HistoryRow.Item -> TYPE_ITEM
+        is StockRow.Header -> TYPE_HEADER
+        is StockRow.Item -> TYPE_ITEM
     }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): RecyclerView.ViewHolder =
         if (viewType == TYPE_HEADER) {
             val v = LayoutInflater.from(parent.context)
-                .inflate(R.layout.item_history_header, parent, false)
+                .inflate(R.layout.item_stock_header, parent, false)
             HeaderVH(v)
         } else {
             val v = LayoutInflater.from(parent.context)
-                .inflate(R.layout.item_history_row, parent, false)
+                .inflate(R.layout.item_stock_row, parent, false)
             ItemVH(v, onClick)
         }
 
     override fun onBindViewHolder(holder: RecyclerView.ViewHolder, position: Int) {
         when (val row = getItem(position)) {
-            is HistoryRow.Header -> (holder as HeaderVH).bind(row)
-            is HistoryRow.Item -> (holder as ItemVH).bind(row.data)
+            is StockRow.Header -> (holder as HeaderVH).bind(row)
+            is StockRow.Item -> (holder as ItemVH).bind(row.data)
         }
     }
 
     class HeaderVH(view: View) : RecyclerView.ViewHolder(view) {
         private val tvDate = view.findViewById<TextView>(R.id.tvDate)
-        fun bind(h: HistoryRow.Header) {
+        fun bind(h: StockRow.Header) {
             tvDate.text = h.label
         }
     }

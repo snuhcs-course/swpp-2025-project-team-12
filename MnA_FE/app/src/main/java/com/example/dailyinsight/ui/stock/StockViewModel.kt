@@ -1,4 +1,4 @@
-package com.example.dailyinsight.ui.history
+package com.example.dailyinsight.ui.stock
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -10,18 +10,18 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 
-class HistoryViewModel(
+class StockViewModel(
     private val repo: Repository = ServiceLocator.repository
 ) : ViewModel() {
 
     private val _state =
-        MutableStateFlow<LoadResult<List<HistoryRow>>>(LoadResult.Empty)
-    val state: StateFlow<LoadResult<List<HistoryRow>>> = _state
+        MutableStateFlow<LoadResult<List<StockRow>>>(LoadResult.Empty)
+    val state: StateFlow<LoadResult<List<StockRow>>> = _state
 
     fun refresh() {
         viewModelScope.launch {
             _state.value = LoadResult.Loading
-            _state.value = runCatching { repo.getHistoryRecommendations() }
+            _state.value = runCatching { repo.getStockRecommendations() }
                 .map { mapToRows(it) }
                 .fold(
                     onSuccess = { LoadResult.Success(it) },
@@ -30,12 +30,12 @@ class HistoryViewModel(
         }
     }
 
-    private fun mapToRows(map: Map<String, List<RecommendationDto>>): List<HistoryRow> {
-        val rows = mutableListOf<HistoryRow>()
+    private fun mapToRows(map: Map<String, List<RecommendationDto>>): List<StockRow> {
+        val rows = mutableListOf<StockRow>()
         // 날짜 최신순(원하는 정렬 로직 적용)
         map.toSortedMap(compareByDescending { it }).forEach { (date, list) ->
-            rows += HistoryRow.Header(date)
-            rows += list.map { HistoryRow.Item(it) }
+            rows += StockRow.Header(date)
+            rows += list.map { StockRow.Item(it) }
         }
         return rows
     }

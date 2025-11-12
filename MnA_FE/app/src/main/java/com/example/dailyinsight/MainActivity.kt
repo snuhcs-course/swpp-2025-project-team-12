@@ -39,9 +39,9 @@ class MainActivity : AppCompatActivity() {
         // This prevents the back arrow (Up button) from showing on these screens.
         val appBarConfiguration = AppBarConfiguration(
             setOf(
-                R.id.navigation_today,
-                R.id.navigation_history,
-                R.id.navigation_market_index
+                R.id.navigation_stock,
+                R.id.navigation_market_index,
+                R.id.navigation_profile
             )
         )
 
