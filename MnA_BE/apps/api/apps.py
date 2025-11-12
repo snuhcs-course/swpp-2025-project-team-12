@@ -17,7 +17,7 @@ class ApiConfig(AppConfig):
         import os
 
         run_main = os.environ.get('RUN_MAIN')
-        if run_main != 'true' and run_main is not None:
+        if run_main != 'True' and run_main is not None:
             debug_print("Skipping data load in main process (reloader)")
             return
             
