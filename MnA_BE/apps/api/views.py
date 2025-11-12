@@ -1,6 +1,7 @@
 # apps/api/views.py
 
 from django.http import HttpRequest
+from django.core.cache import cache
 from rest_framework import viewsets
 from rest_framework.decorators import action
 from S3.finance import FinanceS3Client
@@ -10,7 +11,6 @@ from utils.debug_print import debug_print
 from utils.pagination import get_pagination
 from utils.for_api import *
 from apps.api.constants import *
-from apps.api.apps import ApiConfig  # 추가!
 import pandas as pd
 
 
@@ -66,11 +66,15 @@ class APIView(viewsets.ViewSet):
         # DB 체크는 간단히 (실제로는 DB 쿼리 시도)
         db_status = {"ok": True}
         
-        # 메모리 캐시 상태 추가
+        # 캐시 상태 확인
+        instant_df = cache.get('instant_df')
+        profile_df = cache.get('profile_df')
+        last_loaded = cache.get('data_last_loaded')
+        
         cache_status = {
-            "instant_loaded": ApiConfig.instant_df is not None,
-            "profile_loaded": ApiConfig.profile_df is not None,
-            "last_loaded": str(ApiConfig.last_loaded) if ApiConfig.last_loaded else None
+            "instant_loaded": instant_df is not None,
+            "profile_loaded": profile_df is not None,
+            "last_loaded": str(last_loaded) if last_loaded else None
         }
 
         return ok({
@@ -86,51 +90,121 @@ class APIView(viewsets.ViewSet):
     def get_indices(self, request: HttpRequest):
         """
         GET /api/indices
-        지수: S3 있으면 읽고, 없으면 mock
+        지수: S3에서 최신 KOSPI/KOSDAQ 지수 읽기
         """
         if INDICES_SOURCE == "s3":
             try:
-                data, ts = FinanceS3Client().get_latest_json(
-                    FINANCE_BUCKET,
-                    S3_PREFIX_INDICES
+                from datetime import datetime
+                import json
+                import boto3
+                import os
+                
+                # S3 클라이언트 생성
+                s3_client = boto3.client(
+                    's3',
+                    aws_access_key_id=os.getenv('FINANCE_AWS_ACCESS_KEY_ID'),
+                    aws_secret_access_key=os.getenv('FINANCE_AWS_SECRET_ACCESS_KEY'),
+                    region_name=os.getenv('FINANCE_AWS_REGION')
                 )
-
-                if data:
-                    return ok({
-                        "kospi": data.get("kospi", {"value": 0, "changePct": 0}),
-                        "kosdaq": data.get("kosdaq", {"value": 0, "changePct": 0}),
-                        "asOf": ts,
-                        "source": "s3"
-                    })
+                
+                # 최신 날짜의 지수 파일 찾기
+                response = s3_client.list_objects_v2(
+                    Bucket=FINANCE_BUCKET,
+                    Prefix=S3_PREFIX_INDICES
+                )
+                
+                if 'Contents' not in response:
+                    return degraded(
+                        "No indices data in S3",
+                        source="s3",
+                        kospi=MOCK_INDICES.get("kospi", {"value": 2500, "changePct": 0}),
+                        kosdaq=MOCK_INDICES.get("kosdaq", {"value": 750, "changePct": 0})
+                    )
+                
+                # 최신 파일 찾기
+                files = sorted(response['Contents'], key=lambda x: x['LastModified'], reverse=True)
+                
+                # KOSPI와 KOSDAQ 최신 파일 찾기
+                kospi_file = None
+                kosdaq_file = None
+                
+                for f in files:
+                    if 'KOSPI.json' in f['Key'] and kospi_file is None:
+                        kospi_file = f
+                    if 'KOSDAQ.json' in f['Key'] and kosdaq_file is None:
+                        kosdaq_file = f
+                    if kospi_file and kosdaq_file:
+                        break
+                
+                # 데이터 읽기
+                kospi_data = {}
+                kosdaq_data = {}
+                as_of = None
+                
+                if kospi_file:
+                    obj = s3_client.get_object(Bucket=FINANCE_BUCKET, Key=kospi_file['Key'])
+                    data = json.loads(obj['Body'].read())
+                    kospi_data = {
+                        "value": round(data.get('close', 0), 2),
+                        "changePct": round(data.get('change_percent', 0), 2)
+                    }
+                    as_of = data.get('fetched_at') or str(kospi_file['LastModified'])
+                
+                if kosdaq_file:
+                    obj = s3_client.get_object(Bucket=FINANCE_BUCKET, Key=kosdaq_file['Key'])
+                    data = json.loads(obj['Body'].read())
+                    kosdaq_data = {
+                        "value": round(data.get('close', 0), 2),
+                        "changePct": round(data.get('change_percent', 0), 2)
+                    }
+                    if not as_of:
+                        as_of = data.get('fetched_at') or str(kosdaq_file['LastModified'])
+                
+                return ok({
+                    "kospi": kospi_data,
+                    "kosdaq": kosdaq_data,
+                    "asOf": as_of,
+                    "source": "s3"
+                })
+                
             except Exception as e:
-                return degraded(str(e), source="s3")
+                debug_print(f"Error fetching indices from S3: {e}")
+                return degraded(
+                    str(e), 
+                    source="s3",
+                    kospi=MOCK_INDICES.get("kospi", {"value": 2500, "changePct": 0}),
+                    kosdaq=MOCK_INDICES.get("kosdaq", {"value": 750, "changePct": 0})
+                )
 
         # Mock fallback
         return ok(MOCK_INDICES)
-
+    
     @action(detail=False, methods=['get'])
     @default_error_handler
     def get_company_list(self, request):
         """
         api/company-list?limit=<int>&offset=<int>&market=kospi|kosdaq
         provide list of names of companies.
-        메모리에서 읽기!
+        캐시에서 읽기!
         """
         limit, offset = get_pagination(request, default_limit=10, max_limit=100)
         market = request.GET.get("market", "kosdaq")
+        
+        # 대소문자 처리: 소문자 입력도 허용
+        if market:
+            market = market.upper()
 
         try:
-            # 메모리에서 instant 데이터 가져오기
-            if ApiConfig.instant_df is None:
-                return degraded("Data not loaded in memory", source="memory", total=0, limit=limit, offset=offset)
-            
-            df = ApiConfig.instant_df
+            # 캐시에서 instant 데이터 가져오기
+            df = cache.get('instant_df')
+            if df is None:
+                return degraded("Data not loaded in cache", source="cache", total=0, limit=limit, offset=offset)
             
             # 최신 날짜만 필터링
             latest_date = df['date'].max()
             df_latest = df[df['date'] == latest_date]
             
-            # 시장 필터링
+            # 시장 필터링 (market은 이미 대문자로 변환됨)
             if market and 'market' in df_latest.columns:
                 df_latest = df_latest[df_latest['market'] == market]
 
@@ -148,13 +222,13 @@ class APIView(viewsets.ViewSet):
                 "total": total,
                 "limit": limit,
                 "offset": offset,
-                "source": "memory",
+                "source": "cache",
                 "asOf": str(latest_date) if latest_date else iso_now()
             })
 
         except Exception as e:
             debug_print(e)
-            return degraded(str(e), source="memory", total=0, limit=limit, offset=offset)
+            return degraded(str(e), source="cache", total=0, limit=limit, offset=offset)
 
 
     @action(detail=False, methods=['get'])
@@ -162,17 +236,16 @@ class APIView(viewsets.ViewSet):
     def get_company_profiles(self, request: HttpRequest):
         """
         GET /api/company-profiles?limit=<int>&offset=<int>&symbol=<str>
-        회사 프로필: 메모리에서 읽기
+        회사 프로필: 캐시에서 읽기
         """
         limit, offset = get_pagination(request, default_limit=10, max_limit=100)
         symbol = request.GET.get("symbol")
 
         try:
-            # 메모리에서 profile 데이터 가져오기
-            if ApiConfig.profile_df is None:
-                return degraded("Profile data not loaded in memory", source="memory", total=0, limit=limit, offset=offset)
-            
-            df = ApiConfig.profile_df
+            # 캐시에서 profile 데이터 가져오기
+            df = cache.get('profile_df')
+            if df is None:
+                return degraded("Profile data not loaded in cache", source="cache", total=0, limit=limit, offset=offset)
 
             # 특정 심볼 검색
             if symbol:
@@ -187,7 +260,7 @@ class APIView(viewsets.ViewSet):
                         "total": 1,
                         "limit": limit,
                         "offset": 0,
-                        "source": "memory",
+                        "source": "cache",
                         "asOf": iso_now()
                     })
                 else:
@@ -196,7 +269,7 @@ class APIView(viewsets.ViewSet):
                         "total": 0,
                         "limit": limit,
                         "offset": offset,
-                        "source": "memory",
+                        "source": "cache",
                         "asOf": iso_now()
                     })
 
@@ -205,7 +278,7 @@ class APIView(viewsets.ViewSet):
             page_df = df.iloc[offset:offset + limit]
 
             # instant에서 name 가져오기
-            instant_df = ApiConfig.instant_df
+            instant_df = cache.get('instant_df')
             items = []
             for idx, row in page_df.iterrows():
                 name = None
@@ -225,13 +298,13 @@ class APIView(viewsets.ViewSet):
                 "total": total,
                 "limit": limit,
                 "offset": offset,
-                "source": "memory",
+                "source": "cache",
                 "asOf": iso_now()
             })
 
         except Exception as e:
             debug_print(e)
-            return degraded(str(e), source="memory", total=0, limit=limit, offset=offset)
+            return degraded(str(e), source="cache", total=0, limit=limit, offset=offset)
 
     @action(detail=False, methods=['get'])
     @default_error_handler
@@ -239,24 +312,25 @@ class APIView(viewsets.ViewSet):
         """
         GET /api/reports/{symbol}
         상세 리포트: 회사 프로필 + 2020년부터 전체 재무 히스토리 데이터
-        - 메모리에서 instant 데이터 읽기 (S3 접근 없음!)
+        - 캐시에서 instant 데이터 읽기
+        - 실시간 지수 정보 포함
         """
         try:
-            # 1) 메모리에서 회사 프로필 가져오기
+            # 1) 캐시에서 회사 프로필 가져오기
+            profile_df = cache.get('profile_df')
             explanation = None
-            if ApiConfig.profile_df is not None and symbol in ApiConfig.profile_df.index:
-                prow = ApiConfig.profile_df.loc[symbol]
+            if profile_df is not None and symbol in profile_df.index:
+                prow = profile_df.loc[symbol]
                 explanation = str(prow.get("explanation", None)) if "explanation" in prow else None
 
-            # 2) 메모리에서 instant 데이터 가져오기
+            # 2) 캐시에서 instant 데이터 가져오기
+            instant_df = cache.get('instant_df')
+            if instant_df is None:
+                return degraded("Instant data not loaded in cache", source="cache")
+            
             latest_data = None
             ts_price = None
             history_data = None
-            
-            if ApiConfig.instant_df is None:
-                return degraded("Instant data not loaded in memory", source="memory")
-            
-            instant_df = ApiConfig.instant_df
             
             if 'ticker' in instant_df.columns and 'date' in instant_df.columns:
                 # 해당 종목의 전체 히스토리 필터링 (2020년부터 전부)
@@ -353,12 +427,77 @@ class APIView(viewsets.ViewSet):
                 if div is not None:
                     dividend["yield"] = round(div, 2)
 
+            # 3) 실시간 지수 정보 가져오기 (S3에서)
+            indices_snippet = None
+            if INDICES_SOURCE == "s3":
+                try:
+                    import boto3
+                    import json
+                    import os
+                    
+                    s3_client = boto3.client(
+                        's3',
+                        aws_access_key_id=os.getenv('FINANCE_AWS_ACCESS_KEY_ID'),
+                        aws_secret_access_key=os.getenv('FINANCE_AWS_SECRET_ACCESS_KEY'),
+                        region_name=os.getenv('FINANCE_AWS_REGION')
+                    )
+                    
+                    # 최신 지수 파일 찾기
+                    response = s3_client.list_objects_v2(
+                        Bucket=FINANCE_BUCKET,
+                        Prefix=S3_PREFIX_INDICES
+                    )
+                    
+                    if 'Contents' in response:
+                        files = sorted(response['Contents'], key=lambda x: x['LastModified'], reverse=True)
+                        
+                        kospi_file = None
+                        kosdaq_file = None
+                        
+                        for f in files:
+                            if 'KOSPI.json' in f['Key'] and kospi_file is None:
+                                kospi_file = f
+                            if 'KOSDAQ.json' in f['Key'] and kosdaq_file is None:
+                                kosdaq_file = f
+                            if kospi_file and kosdaq_file:
+                                break
+                        
+                        indices_snippet = {}
+                        
+                        if kospi_file:
+                            obj = s3_client.get_object(Bucket=FINANCE_BUCKET, Key=kospi_file['Key'])
+                            data = json.loads(obj['Body'].read())
+                            indices_snippet['kospi'] = {
+                                "value": round(data.get('close', 0), 2),
+                                "changePct": round(data.get('change_percent', 0), 2)
+                            }
+                        
+                        if kosdaq_file:
+                            obj = s3_client.get_object(Bucket=FINANCE_BUCKET, Key=kosdaq_file['Key'])
+                            data = json.loads(obj['Body'].read())
+                            indices_snippet['kosdaq'] = {
+                                "value": round(data.get('close', 0), 2),
+                                "changePct": round(data.get('change_percent', 0), 2)
+                            }
+                except Exception as e:
+                    debug_print(f"Error fetching indices: {e}")
+                    indices_snippet = MOCK_INDICES if INDICES_SOURCE != "s3" else None
+            else:
+                indices_snippet = MOCK_INDICES
+
             # 응답
             resp = {
                 "ticker": symbol,
                 "name": name,
                 "market": market_type,
                 "industry": industry,
+                
+                # price 필드 (dict 형태)
+                "price": {
+                    "current": price,
+                    "change": change,
+                    "change_rate": change_rate
+                } if price is not None else None,
                 
                 # 최신 데이터 (현재 시점)
                 "current": {
@@ -391,15 +530,138 @@ class APIView(viewsets.ViewSet):
                 # 프로필
                 "profile": {"symbol": symbol, "explanation": explanation} if explanation else None,
                 
-                # 기타
-                "indicesSnippet": MOCK_INDICES if INDICES_SOURCE != "s3" else None,
-                "articles": MOCK_ARTICLES.get("items", [])[:5] if ARTICLES_SOURCE != "s3" else [],
+                # 실시간 지수 정보
+                "indicesSnippet": indices_snippet,
+                
+                # 뉴스는 제외
+                "articles": [],
+                
                 "asOf": ts_price or iso_now(),
-                "source": "memory",
+                "source": "cache",
             }
 
             return ok(resp)
 
         except Exception as e:
             debug_print(e)
-            return degraded(str(e), source="memory")
+            import traceback
+            debug_print(traceback.format_exc())
+            return degraded(str(e), source="cache")
+        
+    @action(detail=False, methods=['post'])
+    @default_error_handler
+    def reload_data(self, request: HttpRequest):
+        """
+        POST /api/reload-data
+        관리자가 수동으로 instant/profile 데이터를 리로드
+        서버 재시작 없이 최신 데이터로 업데이트
+        """
+        try:
+            from S3.finance import FinanceS3Client
+            from datetime import datetime
+            import time
+            import boto3
+            import os
+            import io
+            
+            debug_print("=" * 50)
+            debug_print("Manual data reload triggered...")
+            
+            total_start = time.time()
+            s3 = FinanceS3Client()
+            
+            # 1) Instant 데이터 로드
+            instant_start = time.time()
+            instant_df, ts = s3.get_latest_parquet_df(
+                FINANCE_BUCKET,
+                'price-financial-info-instant/'
+            )
+            instant_elapsed = time.time() - instant_start
+            
+            if instant_df is not None:
+                # 시가총액 기준 정렬
+                instant_df['market_cap_numeric'] = pd.to_numeric(instant_df['market_cap'], errors='coerce')
+                instant_df = instant_df.sort_values(
+                    by=['date', 'market_cap_numeric'], 
+                    ascending=[True, False]
+                ).drop(columns=['market_cap_numeric'])
+                
+                # Django 캐시에 저장
+                cache.set('instant_df', instant_df, timeout=None)
+                debug_print(f"✓ Instant data reloaded to cache: {instant_df.shape}")
+            
+            # 2) Profile 데이터 로드 (market별 자동 검색)
+            profile_start = time.time()
+            
+            s3_client = boto3.client(
+                's3',
+                aws_access_key_id=os.getenv('FINANCE_AWS_ACCESS_KEY_ID'),
+                aws_secret_access_key=os.getenv('FINANCE_AWS_SECRET_ACCESS_KEY'),
+                region_name=os.getenv('FINANCE_AWS_REGION')
+            )
+            
+            response = s3_client.list_objects_v2(
+                Bucket=FINANCE_BUCKET,
+                Prefix='company-profile/'
+            )
+            
+            if 'Contents' in response:
+                files = sorted(response['Contents'], key=lambda x: x['LastModified'], reverse=True)
+                
+                kospi_file = None
+                kosdaq_file = None
+                
+                for f in files:
+                    if 'market=kospi' in f['Key'] and kospi_file is None:
+                        kospi_file = f['Key']
+                    if 'market=kosdaq' in f['Key'] and kosdaq_file is None:
+                        kosdaq_file = f['Key']
+                    if kospi_file and kosdaq_file:
+                        break
+                
+                profile_kospi = None
+                profile_kosdaq = None
+                
+                if kospi_file:
+                    obj = s3_client.get_object(Bucket=FINANCE_BUCKET, Key=kospi_file)
+                    profile_kospi = pd.read_parquet(io.BytesIO(obj['Body'].read()))
+                
+                if kosdaq_file:
+                    obj = s3_client.get_object(Bucket=FINANCE_BUCKET, Key=kosdaq_file)
+                    profile_kosdaq = pd.read_parquet(io.BytesIO(obj['Body'].read()))
+                
+                if profile_kosdaq is not None and profile_kospi is not None:
+                    profile_df = pd.concat([profile_kosdaq, profile_kospi])
+                    # Django 캐시에 저장
+                    cache.set('profile_df', profile_df, timeout=None)
+                    debug_print(f"✓ Profile data reloaded to cache: {profile_df.shape}")
+            
+            profile_elapsed = time.time() - profile_start
+            
+            total_elapsed = time.time() - total_start
+            # 로드 시각 저장
+            cache.set('data_last_loaded', datetime.now(), timeout=None)
+            
+            debug_print(f"✓ Total reload time: {total_elapsed:.2f}s")
+            debug_print(f"✓ Data reloaded at: {datetime.now()}")
+            debug_print("=" * 50)
+            
+            # 캐시에서 확인
+            instant_df = cache.get('instant_df')
+            profile_df = cache.get('profile_df')
+            
+            return ok({
+                "message": "Data reloaded successfully",
+                "instant_shape": list(instant_df.shape) if instant_df is not None else None,
+                "profile_shape": list(profile_df.shape) if profile_df is not None else None,
+                "instant_time": f"{instant_elapsed:.2f}s",
+                "profile_time": f"{profile_elapsed:.2f}s",
+                "total_time": f"{total_elapsed:.2f}s",
+                "reloaded_at": str(datetime.now())
+            })
+            
+        except Exception as e:
+            debug_print(f"✗ Error reloading data: {e}")
+            import traceback
+            debug_print(traceback.format_exc())
+            return degraded(str(e), source="reload")
