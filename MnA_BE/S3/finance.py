@@ -59,6 +59,24 @@ class FinanceS3Client(S3Client):
         ts = latest["LastModified"].astimezone(timezone.utc).isoformat()
 
         return df, ts
+    
+    def get_latest_json(self, bucket, prefix):
+        """
+        prefix 내에서 최신 JSON 파일을 찾아서 파싱하여 반환
+        Returns: (dict, timestamp) 또는 (None, None)
+        """
+        import json
+        
+        latest = self.get_latest_object(bucket, prefix)
+        
+        if not latest:
+            return None, None
+        
+        data = self.get(bucket, latest["Key"])
+        json_data = json.loads(data.decode('utf-8'))
+        ts = latest["LastModified"].astimezone(timezone.utc).isoformat()
+        
+        return json_data, ts
 
 
     def put_dataframe(self, bucket: str, key: str, df: pd.DataFrame) -> None:
