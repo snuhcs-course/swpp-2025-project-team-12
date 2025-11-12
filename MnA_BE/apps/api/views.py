@@ -105,7 +105,7 @@ class APIView(viewsets.ViewSet):
                     's3',
                     aws_access_key_id=os.getenv('FINANCE_AWS_ACCESS_KEY_ID'),
                     aws_secret_access_key=os.getenv('FINANCE_AWS_SECRET_ACCESS_KEY'),
-                    region_name=os.getenv('FINANCE_AWS_REGION')
+                    region_name=os.getenv('AWS_REGION')
                 )
 
                 # 최신 날짜의 지수 파일 찾기
@@ -330,7 +330,7 @@ class APIView(viewsets.ViewSet):
         except Exception as e:
             return JsonResponse({ "message": "Unexpected Server Error" }, status=500)
 
-        return JsonResponse(company_overview, status=200)
+        return JsonResponse(company_overview, status=200, safe=False)
 
 
     @action(detail=False, methods=['get'])
@@ -466,7 +466,7 @@ class APIView(viewsets.ViewSet):
                         's3',
                         aws_access_key_id=os.getenv('FINANCE_AWS_ACCESS_KEY_ID'),
                         aws_secret_access_key=os.getenv('FINANCE_AWS_SECRET_ACCESS_KEY'),
-                        region_name=os.getenv('FINANCE_AWS_REGION')
+                        region_name=os.getenv('AWS_REGION')
                     )
 
                     # 최신 지수 파일 찾기
@@ -624,7 +624,7 @@ class APIView(viewsets.ViewSet):
                 's3',
                 aws_access_key_id=os.getenv('FINANCE_AWS_ACCESS_KEY_ID'),
                 aws_secret_access_key=os.getenv('FINANCE_AWS_SECRET_ACCESS_KEY'),
-                region_name=os.getenv('FINANCE_AWS_REGION')
+                region_name=os.getenv('AWS_REGION')
             )
 
             response = s3_client.list_objects_v2(

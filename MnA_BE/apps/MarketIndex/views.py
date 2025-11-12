@@ -39,7 +39,7 @@ class MarketLLMview(viewsets.ViewSet):
         except Exception as e:
             return JsonResponse({"message": "Unexpected Server Error"}, status=500)
 
-        return JsonResponse({"llm_output": llm_output}, status=200)
+        return JsonResponse(llm_output, status=200, safe=False)
 class StockIndexView(viewsets.ViewSet):
     """
     Market Index Views

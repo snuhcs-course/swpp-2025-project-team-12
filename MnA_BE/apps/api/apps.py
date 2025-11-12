@@ -71,7 +71,7 @@ class ApiConfig(AppConfig):
                 's3',
                 aws_access_key_id=os.getenv('FINANCE_AWS_ACCESS_KEY_ID'),
                 aws_secret_access_key=os.getenv('FINANCE_AWS_SECRET_ACCESS_KEY'),
-                region_name=os.getenv('FINANCE_AWS_REGION')
+                region_name=os.getenv('AWS_REGION')
             )
 
             response = s3_client.list_objects_v2(
