@@ -6,6 +6,7 @@ from decorators import default_error_handler
 from utils.pagination import get_pagination
 from apps.api.constants import *
 from utils.for_api import *
+import json
 
 from Mocks.mock_data import MOCK_ARTICLES
 
@@ -37,7 +38,6 @@ class TopArticleView(viewsets.ViewSet):
                         "total": total,
                         "limit": limit,
                         "offset": offset,
-                        "asOf": ts,
                         "source": "s3"
                     })
             except Exception as e:
