@@ -7,9 +7,12 @@ import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
+import androidx.datastore.preferences.core.edit
 import androidx.lifecycle.lifecycleScope
 import com.example.dailyinsight.MainActivity
 import com.example.dailyinsight.R
+import com.example.dailyinsight.data.datastore.CookieKeys
+import com.example.dailyinsight.data.datastore.cookieDataStore
 import com.example.dailyinsight.data.dto.LogInRequest
 import com.example.dailyinsight.data.dto.LogInResponse
 import com.example.dailyinsight.data.dto.SignUpRequest
@@ -22,6 +25,8 @@ import kotlinx.coroutines.launch
 import retrofit2.Call
 import kotlin.math.sign
 import com.google.gson.Gson
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 
 class SignUpActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -77,6 +82,11 @@ class SignUpActivity : AppCompatActivity() {
                     response: retrofit2.Response<SignUpResponse>
                 ) {
                     if (response.isSuccessful) {
+                        CoroutineScope(Dispatchers.IO).launch {
+                            applicationContext.cookieDataStore.edit { prefs ->
+                                prefs[CookieKeys.USERNAME] = id
+                            }
+                        }
                         val intent = Intent(this@SignUpActivity, SetPortfolioActivity::class.java)
                         startActivity(intent)
                     } else {

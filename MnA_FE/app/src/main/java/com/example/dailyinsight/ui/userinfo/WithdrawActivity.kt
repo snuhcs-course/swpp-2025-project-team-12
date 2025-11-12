@@ -7,7 +7,10 @@ import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
+import androidx.datastore.preferences.core.edit
+import androidx.lifecycle.lifecycleScope
 import com.example.dailyinsight.R
+import com.example.dailyinsight.data.datastore.cookieDataStore
 import com.example.dailyinsight.data.dto.LogInResponse
 import com.example.dailyinsight.data.dto.UserProfileResponse
 import com.example.dailyinsight.data.network.RetrofitInstance
@@ -17,6 +20,8 @@ import com.google.android.material.button.MaterialButton
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.google.android.material.textfield.TextInputEditText
 import com.google.gson.Gson
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 import retrofit2.Call
 
 class WithdrawActivity : AppCompatActivity() {
@@ -65,6 +70,9 @@ class WithdrawActivity : AppCompatActivity() {
                                 if (response.isSuccessful) {
                                     Toast.makeText(this@WithdrawActivity, "successfully deleted", Toast.LENGTH_SHORT).show()
                                     // if successful
+                                    lifecycleScope.launch(Dispatchers.IO) {
+                                        applicationContext.cookieDataStore.edit { prefs -> prefs.clear() }
+                                    }
                                     val intent = Intent(this@WithdrawActivity, StartActivity::class.java)
                                     finishAffinity()
                                     startActivity(intent)
