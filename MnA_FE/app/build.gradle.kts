@@ -4,6 +4,7 @@ plugins {
     alias(libs.plugins.kotlin.serialization)
     id("kotlin-parcelize")
     id("androidx.navigation.safeargs.kotlin")
+    id("kotlin-kapt")
 }
 
 android {
@@ -32,6 +33,7 @@ android {
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_11
         targetCompatibility = JavaVersion.VERSION_11
+        isCoreLibraryDesugaringEnabled = true
     }
     kotlinOptions {
         jvmTarget = "11"
@@ -138,4 +140,15 @@ dependencies {
     implementation("androidx.navigation:navigation-fragment-ktx:2.7.7")
     implementation("androidx.navigation:navigation-ui-ktx:2.7.7")
     implementation("com.github.PhilJay:MPAndroidChart:v3.1.0") // 그래프
+
+    //  Room Database
+    val room_version = "2.8.3" // 1. 'def'를 'val'로 변경
+    // 1. Room 런타임
+    implementation("androidx.room:room-runtime:$room_version")
+    // 2. Room 컴파일러 (kapt로 추가)
+    kapt("androidx.room:room-compiler:$room_version")
+    // 3. Kotlin 코루틴 및 Flow 지원 (필수)
+    implementation("androidx.room:room-ktx:$room_version")
+
+    coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.1.2")
 }
