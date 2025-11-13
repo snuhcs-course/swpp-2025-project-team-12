@@ -85,6 +85,8 @@ class ProfileFragment : Fragment() {
                 binding.userName.visibility = View.VISIBLE
                 binding.changeNameButton.visibility = View.VISIBLE
                 binding.favorite.visibility = View.VISIBLE
+                binding.divider.visibility = View.VISIBLE
+                binding.settings.visibility = View.VISIBLE
                 binding.changePasswordButton.visibility = View.VISIBLE
                 binding.logoutButton.visibility = View.VISIBLE
                 binding.withdrawButton.visibility = View.VISIBLE
@@ -94,6 +96,8 @@ class ProfileFragment : Fragment() {
                 binding.userName.visibility = View.GONE
                 binding.changeNameButton.visibility = View.GONE
                 binding.favorite.visibility = View.GONE
+                binding.divider.visibility = View.GONE
+                binding.settings.visibility = View.GONE
                 binding.changePasswordButton.visibility = View.GONE
                 binding.logoutButton.visibility = View.GONE
                 binding.withdrawButton.visibility = View.GONE
