@@ -8,7 +8,7 @@
     <fragment
         android:id="@+id/navigation_stock"
         android:name="com.example.dailyinsight.ui.stock.StockFragment"
-        android:label="@string/title_stock"
+        android:label="@string/title_stock_briefing"
         tools:layout="@layout/fragment_stock">
         <action
             android:id="@+id/action_stock_to_stock_detail"
@@ -18,7 +18,7 @@
     <fragment
         android:id="@+id/navigation_market_index"
         android:name="com.example.dailyinsight.ui.marketindex.MarketIndexFragment"
-        android:label="@string/title_market_index"
+        android:label="@string/title_market_briefing"
         tools:layout="@layout/fragment_market_index" >
         <action
             android:id="@+id/action_navigation_market_index_to_stockIndexDetailFragment"

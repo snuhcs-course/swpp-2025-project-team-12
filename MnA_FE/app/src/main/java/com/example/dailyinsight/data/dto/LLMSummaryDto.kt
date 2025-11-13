@@ -17,7 +17,9 @@ data class LLMSummaryData(
     val kospi: MarketSummary,
     val kosdaq: MarketSummary,
     @SerializedName("news_used")
-    val newsUsed: List<String>
+    val newsUsed: List<String>,
+    @SerializedName("basic_overview") val basicOverview: String?, // 시장 요약 텍스트
+    @SerializedName("news_overview")  val newsOverview: String?
 )
 
 data class MarketSummary(
