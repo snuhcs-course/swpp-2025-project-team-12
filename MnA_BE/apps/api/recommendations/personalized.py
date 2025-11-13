@@ -11,8 +11,8 @@ from apps.api.constants import *
 class PersonalizedRecommendationsView(viewsets.ViewSet):
 
     @action(detail=False, methods=['get'])
-    @default_error_handler
     @require_auth
+    @default_error_handler
     def get(self, request: HttpRequest, year=None, month=None, day=None, user: User=None):
         # Get pagination parameters
         try:
@@ -49,8 +49,8 @@ class PersonalizedRecommendationsView(viewsets.ViewSet):
         style_of_user = user.style_set.first()
         
         if style_of_user:
-            strategy = style_of_user.get("strategy").get("strategy")
-            interests = style_of_user.get("interests").get("interests")
+            strategy = style_of_user.strategy.get("strategy")
+            interests = style_of_user.interests.get("interests")
 
             for tag in interests:
                 datum = llm_output.get(f"{strategy}_{tag}")
