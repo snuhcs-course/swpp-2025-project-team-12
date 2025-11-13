@@ -35,15 +35,15 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-        <activity
-            android:name=".ui.sign.SetPortfolioActivity"
-            android:exported="false" />
-        <activity
-            android:name=".ui.sign.SetStyleActivity"
-            android:exported="false" />
-        <activity
-            android:name=".ui.sign.SetInterestActivity"
-            android:exported="false" />
+<!--        <activity-->
+<!--            android:name=".ui.sign.SetPortfolioActivity"-->
+<!--            android:exported="false" />-->
+<!--        <activity-->
+<!--            android:name=".ui.sign.SetStyleActivity"-->
+<!--            android:exported="false" />-->
+<!--        <activity-->
+<!--            android:name=".ui.sign.SetInterestActivity"-->
+<!--            android:exported="false" />-->
         <activity
             android:name=".ui.sign.SignUpActivity"
             android:exported="false" />

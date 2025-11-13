@@ -6,6 +6,7 @@ from decorators import default_error_handler
 from utils.pagination import get_pagination
 from apps.api.constants import *
 from utils.for_api import *
+import json
 
 from Mocks.mock_data import MOCK_ARTICLES
 
@@ -28,7 +29,8 @@ class TopArticleView(viewsets.ViewSet):
                 )
 
                 if data:
-                    items = data.get("items", [])
+                    # 11월부터 데이터 구조 변경: items → articles
+                    items = data.get("articles", data.get("items", []))
                     total = len(items)
                     page_items = items[offset:offset + limit]
                     return ok({
@@ -36,7 +38,6 @@ class TopArticleView(viewsets.ViewSet):
                         "total": total,
                         "limit": limit,
                         "offset": offset,
-                        "asOf": ts,
                         "source": "s3"
                     })
             except Exception as e:
