@@ -11,8 +11,8 @@ class DefaultRepository(
     override suspend fun getTodayRecommendations(): List<RecommendationDto> =
         api.getTodayRecommendations().data ?: emptyList()
 
-    override suspend fun getHistoryRecommendations(): Map<String, List<RecommendationDto>> =
-        api.getHistoryRecommendations().data ?: emptyMap()
+    override suspend fun getStockRecommendations(): Map<String, List<RecommendationDto>> =
+        api.getStockRecommendations().data ?: emptyMap()
 
     override suspend fun getStockDetail(ticker: String): StockDetailDto {
         return api.getStockDetail(ticker).data

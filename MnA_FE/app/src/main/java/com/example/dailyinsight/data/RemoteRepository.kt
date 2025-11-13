@@ -10,8 +10,8 @@ class RemoteRepository(
     override suspend fun getTodayRecommendations(): List<RecommendationDto> =
         api.getTodayRecommendations().data ?: emptyList()
 
-    override suspend fun getHistoryRecommendations(): Map<String, List<RecommendationDto>> =
-        api.getHistoryRecommendations().data ?: emptyMap()
+    override suspend fun getStockRecommendations(): Map<String, List<RecommendationDto>> =
+        api.getStockRecommendations().data ?: emptyMap()
 
     override suspend fun getStockDetail(ticker: String): StockDetailDto {
         // API 호출을 통해 StockDetailDto를 가져오고,

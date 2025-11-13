@@ -1,10 +1,10 @@
-package com.example.dailyinsight.ui.history
+package com.example.dailyinsight.ui.stock
 
 import com.example.dailyinsight.data.dto.RecommendationDto
 import org.junit.Assert.*
 import org.junit.Test
 
-class HistoryRowsTest {
+class StockRowsTest {
 
     // Helper function to create test recommendation
     private fun createRecommendation(
@@ -31,12 +31,12 @@ class HistoryRowsTest {
 
         // Then: Should have header + 2 items (3 total)
         assertEquals(3, result.size)
-        assertTrue(result[0] is HistoryRow.Header)
-        assertEquals("오늘", (result[0] as HistoryRow.Header).label)
-        assertTrue(result[1] is HistoryRow.Item)
-        assertEquals("삼성전자", (result[1] as HistoryRow.Item).data.name)
-        assertTrue(result[2] is HistoryRow.Item)
-        assertEquals("SK하이닉스", (result[2] as HistoryRow.Item).data.name)
+        assertTrue(result[0] is StockRow.Header)
+        assertEquals("오늘", (result[0] as StockRow.Header).label)
+        assertTrue(result[1] is StockRow.Item)
+        assertEquals("삼성전자", (result[1] as StockRow.Item).data.name)
+        assertTrue(result[2] is StockRow.Item)
+        assertEquals("SK하이닉스", (result[2] as StockRow.Item).data.name)
     }
 
     @Test
@@ -49,8 +49,8 @@ class HistoryRowsTest {
 
         // Then: Should use custom title
         assertEquals(2, result.size)
-        assertTrue(result[0] is HistoryRow.Header)
-        assertEquals("어제", (result[0] as HistoryRow.Header).label)
+        assertTrue(result[0] is StockRow.Header)
+        assertEquals("어제", (result[0] as StockRow.Header).label)
     }
 
     @Test
@@ -75,10 +75,10 @@ class HistoryRowsTest {
 
         // Then: Should have header + 1 item
         assertEquals(2, result.size)
-        assertTrue(result[0] is HistoryRow.Header)
-        assertEquals("2024-01-15", (result[0] as HistoryRow.Header).label)
-        assertTrue(result[1] is HistoryRow.Item)
-        assertEquals("카카오", (result[1] as HistoryRow.Item).data.name)
+        assertTrue(result[0] is StockRow.Header)
+        assertEquals("2024-01-15", (result[0] as StockRow.Header).label)
+        assertTrue(result[1] is StockRow.Item)
+        assertEquals("카카오", (result[1] as StockRow.Item).data.name)
     }
 
     // ===== Tests for Map<String, List<RecommendationDto>>.toRows() =====
@@ -98,10 +98,10 @@ class HistoryRowsTest {
 
         // Then: Should have header "오늘" + 2 items
         assertEquals(3, result.size)
-        assertTrue(result[0] is HistoryRow.Header)
-        assertEquals("오늘", (result[0] as HistoryRow.Header).label)
-        assertEquals("삼성전자", (result[1] as HistoryRow.Item).data.name)
-        assertEquals("SK하이닉스", (result[2] as HistoryRow.Item).data.name)
+        assertTrue(result[0] is StockRow.Header)
+        assertEquals("오늘", (result[0] as StockRow.Header).label)
+        assertEquals("삼성전자", (result[1] as StockRow.Item).data.name)
+        assertEquals("SK하이닉스", (result[2] as StockRow.Item).data.name)
     }
 
     @Test
@@ -119,10 +119,10 @@ class HistoryRowsTest {
 
         // Then: Should have header "어제" + 2 items
         assertEquals(3, result.size)
-        assertTrue(result[0] is HistoryRow.Header)
-        assertEquals("어제", (result[0] as HistoryRow.Header).label)
-        assertEquals("네이버", (result[1] as HistoryRow.Item).data.name)
-        assertEquals("카카오", (result[2] as HistoryRow.Item).data.name)
+        assertTrue(result[0] is StockRow.Header)
+        assertEquals("어제", (result[0] as StockRow.Header).label)
+        assertEquals("네이버", (result[1] as StockRow.Item).data.name)
+        assertEquals("카카오", (result[2] as StockRow.Item).data.name)
     }
 
     @Test
@@ -138,10 +138,10 @@ class HistoryRowsTest {
 
         // Then: "오늘" should come first, then "어제"
         assertEquals(4, result.size)
-        assertEquals("오늘", (result[0] as HistoryRow.Header).label)
-        assertEquals("오늘 주식", (result[1] as HistoryRow.Item).data.name)
-        assertEquals("어제", (result[2] as HistoryRow.Header).label)
-        assertEquals("어제 주식", (result[3] as HistoryRow.Item).data.name)
+        assertEquals("오늘", (result[0] as StockRow.Header).label)
+        assertEquals("오늘 주식", (result[1] as StockRow.Item).data.name)
+        assertEquals("어제", (result[2] as StockRow.Header).label)
+        assertEquals("어제 주식", (result[3] as StockRow.Item).data.name)
     }
 
     @Test
@@ -158,12 +158,12 @@ class HistoryRowsTest {
 
         // Then: Dates should be in descending order (newest first)
         assertEquals(6, result.size)
-        assertEquals("2024-01-15", (result[0] as HistoryRow.Header).label)
-        assertEquals("Stock 15", (result[1] as HistoryRow.Item).data.name)
-        assertEquals("2024-01-10", (result[2] as HistoryRow.Header).label)
-        assertEquals("Stock 10", (result[3] as HistoryRow.Item).data.name)
-        assertEquals("2024-01-05", (result[4] as HistoryRow.Header).label)
-        assertEquals("Stock 05", (result[5] as HistoryRow.Item).data.name)
+        assertEquals("2024-01-15", (result[0] as StockRow.Header).label)
+        assertEquals("Stock 15", (result[1] as StockRow.Item).data.name)
+        assertEquals("2024-01-10", (result[2] as StockRow.Header).label)
+        assertEquals("Stock 10", (result[3] as StockRow.Item).data.name)
+        assertEquals("2024-01-05", (result[4] as StockRow.Header).label)
+        assertEquals("Stock 05", (result[5] as StockRow.Item).data.name)
     }
 
     @Test
@@ -181,14 +181,14 @@ class HistoryRowsTest {
 
         // Then: Order should be "오늘", "어제", then dates descending
         assertEquals(8, result.size)
-        assertEquals("오늘", (result[0] as HistoryRow.Header).label)
-        assertEquals("Today Stock", (result[1] as HistoryRow.Item).data.name)
-        assertEquals("어제", (result[2] as HistoryRow.Header).label)
-        assertEquals("Yesterday Stock", (result[3] as HistoryRow.Item).data.name)
-        assertEquals("2024-01-15", (result[4] as HistoryRow.Header).label)
-        assertEquals("Date Stock", (result[5] as HistoryRow.Item).data.name)
-        assertEquals("2024-01-10", (result[6] as HistoryRow.Header).label)
-        assertEquals("Old Date Stock", (result[7] as HistoryRow.Item).data.name)
+        assertEquals("오늘", (result[0] as StockRow.Header).label)
+        assertEquals("Today Stock", (result[1] as StockRow.Item).data.name)
+        assertEquals("어제", (result[2] as StockRow.Header).label)
+        assertEquals("Yesterday Stock", (result[3] as StockRow.Item).data.name)
+        assertEquals("2024-01-15", (result[4] as StockRow.Header).label)
+        assertEquals("Date Stock", (result[5] as StockRow.Item).data.name)
+        assertEquals("2024-01-10", (result[6] as StockRow.Header).label)
+        assertEquals("Old Date Stock", (result[7] as StockRow.Item).data.name)
     }
 
     @Test
@@ -217,8 +217,8 @@ class HistoryRowsTest {
 
         // Then: Should only include "어제" section (non-empty)
         assertEquals(2, result.size)
-        assertEquals("어제", (result[0] as HistoryRow.Header).label)
-        assertEquals("Yesterday Stock", (result[1] as HistoryRow.Item).data.name)
+        assertEquals("어제", (result[0] as StockRow.Header).label)
+        assertEquals("Yesterday Stock", (result[1] as StockRow.Item).data.name)
     }
 
     @Test
@@ -234,7 +234,7 @@ class HistoryRowsTest {
 
         // Then: Should skip null section
         assertEquals(2, result.size)
-        assertEquals("어제", (result[0] as HistoryRow.Header).label)
+        assertEquals("어제", (result[0] as StockRow.Header).label)
     }
 
     @Test
@@ -253,10 +253,10 @@ class HistoryRowsTest {
 
         // Then: Should have header + 3 items
         assertEquals(4, result.size)
-        assertEquals("오늘", (result[0] as HistoryRow.Header).label)
-        assertEquals("삼성전자", (result[1] as HistoryRow.Item).data.name)
-        assertEquals("SK하이닉스", (result[2] as HistoryRow.Item).data.name)
-        assertEquals("네이버", (result[3] as HistoryRow.Item).data.name)
+        assertEquals("오늘", (result[0] as StockRow.Header).label)
+        assertEquals("삼성전자", (result[1] as StockRow.Item).data.name)
+        assertEquals("SK하이닉스", (result[2] as StockRow.Item).data.name)
+        assertEquals("네이버", (result[3] as StockRow.Item).data.name)
     }
 
     @Test
@@ -276,7 +276,7 @@ class HistoryRowsTest {
         val result = dataMap.toRows()
 
         // Then: Should preserve all recommendation data
-        val item = result[1] as HistoryRow.Item
+        val item = result[1] as StockRow.Item
         assertEquals("005930", item.data.ticker)
         assertEquals("삼성전자", item.data.name)
         assertEquals(70000L, item.data.price)
@@ -303,7 +303,7 @@ class HistoryRowsTest {
         val result = dataMap.toRows()
 
         // Then: Verify complete order and structure
-        val headers = result.filterIsInstance<HistoryRow.Header>()
+        val headers = result.filterIsInstance<StockRow.Header>()
         assertEquals(5, headers.size)
         assertEquals("오늘", headers[0].label)
         assertEquals("어제", headers[1].label)

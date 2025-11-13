@@ -19,7 +19,7 @@ interface ApiService {
     suspend fun getTodayRecommendations(): ApiResponse<List<RecommendationDto>>
 
     @GET("api/recommendations/history/")
-    suspend fun getHistoryRecommendations(): ApiResponse<Map<String, List<RecommendationDto>>>
+    suspend fun getStockRecommendations(): ApiResponse<Map<String, List<RecommendationDto>>>
 
     @GET("api/recommendations/personalized/")
     suspend fun getPersonalizedRecommendations(
@@ -74,8 +74,25 @@ interface ApiService {
     suspend fun setPortfolio(
         @Body portfolio: PortfolioRequest
     ) : Response<PortfolioResponse>
-  
+
+    // ============ Auto Login ============
     @GET("user/info/name")
     fun getName(): Call<UserNameResponse>
 
+    // ============ User Info ============
+    @POST("user/logout")
+    fun logOut(): Call<UserProfileResponse>
+
+    @DELETE("user/withdraw")
+    fun withdraw(): Call<UserProfileResponse>
+
+    @POST("user/info/name")
+    fun changeName(
+        @Body request: ChangeNameRequest
+    ): Call<UserProfileResponse>
+
+    @PUT("user/info/password")
+    fun changePassword(
+        @Body password: ChangePasswordRequest
+    ): Call<UserProfileResponse>
 }

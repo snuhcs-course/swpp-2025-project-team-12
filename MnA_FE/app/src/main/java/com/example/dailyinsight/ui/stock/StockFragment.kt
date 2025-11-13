@@ -1,4 +1,4 @@
-package com.example.dailyinsight.ui.history
+package com.example.dailyinsight.ui.stock
 
 import android.os.Bundle
 import android.view.LayoutInflater
@@ -11,25 +11,25 @@ import androidx.recyclerview.widget.LinearLayoutManager
 // RecyclerView/SwipeRefreshLayout
 import androidx.navigation.fragment.findNavController
 import com.example.dailyinsight.R
-import com.example.dailyinsight.databinding.FragmentHistoryBinding
+import com.example.dailyinsight.databinding.FragmentStockBinding
 import com.example.dailyinsight.ui.common.LoadResult
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 
-class HistoryFragment : Fragment(R.layout.fragment_history) {
+class StockFragment : Fragment(R.layout.fragment_stock) {
 
-    private var _binding: FragmentHistoryBinding? = null
+    private var _binding: FragmentStockBinding? = null
     private val binding get() = _binding!!
 
-    private val viewModel: HistoryViewModel by viewModels()
-    private lateinit var adapter: HistoryAdapter
+    private val viewModel: StockViewModel by viewModels()
+    private lateinit var adapter: StockAdapter
 
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View {
-        _binding = FragmentHistoryBinding.inflate(inflater, container, false)
+        _binding = FragmentStockBinding.inflate(inflater, container, false)
         return binding.root
     }
 
@@ -37,8 +37,8 @@ class HistoryFragment : Fragment(R.layout.fragment_history) {
         super.onViewCreated(view, savedInstanceState)
 
         // 어댑터 초기화 및 RecyclerView 설정 (binding 사용)
-        adapter = HistoryAdapter { item ->
-            val action = HistoryFragmentDirections.actionHistoryToStockDetail(item)
+        adapter = StockAdapter { item ->
+            val action = StockFragmentDirections.actionStockToStockDetail(item)
             findNavController().navigate(action)
         }
 

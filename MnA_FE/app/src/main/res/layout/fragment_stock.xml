@@ -10,7 +10,7 @@
         android:id="@+id/title"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="이슈"
+        android:text="종목 브리핑"
         android:textSize="28sp"
         android:textStyle="bold"
         android:includeFontPadding="false"
@@ -53,7 +53,7 @@
             android:paddingTop="0dp"
             android:paddingBottom="80dp"
             app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager"
-            tools:listitem="@layout/item_history_row"/>
+            tools:listitem="@layout/item_stock_row"/>
     </androidx.swiperefreshlayout.widget.SwipeRefreshLayout>
 
 </androidx.constraintlayout.widget.ConstraintLayout>
