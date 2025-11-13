@@ -15,24 +15,35 @@
         android:theme="@style/Theme.DailyInsight"
         android:usesCleartextTraffic="true">
         <activity
+            android:name=".ui.userinfo.FavoriteListActivity"
+            android:exported="false" />
+        <activity
+            android:name=".ui.userinfo.WithdrawActivity"
+            android:exported="false" />
+        <activity
+            android:name=".ui.userinfo.ChangePasswordActivity"
+            android:exported="false" />
+        <activity
+            android:name=".ui.userinfo.ChangeNameActivity"
+            android:exported="false" />
+        <activity
             android:name=".ui.start.SplashActivity"
             android:exported="true">
-
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-        <activity
-            android:name=".ui.sign.SetPortfolioActivity"
-            android:exported="false" />
-        <activity
-            android:name=".ui.sign.SetStyleActivity"
-            android:exported="false" />
-        <activity
-            android:name=".ui.sign.SetInterestActivity"
-            android:exported="false" />
+<!--        <activity-->
+<!--            android:name=".ui.sign.SetPortfolioActivity"-->
+<!--            android:exported="false" />-->
+<!--        <activity-->
+<!--            android:name=".ui.sign.SetStyleActivity"-->
+<!--            android:exported="false" />-->
+<!--        <activity-->
+<!--            android:name=".ui.sign.SetInterestActivity"-->
+<!--            android:exported="false" />-->
         <activity
             android:name=".ui.sign.SignUpActivity"
             android:exported="false" />
@@ -41,8 +52,7 @@
             android:exported="false" />
         <activity
             android:name=".ui.start.StartActivity"
-            android:exported="true">
-        </activity>
+            android:exported="true" />
         <activity
             android:name=".MainActivity"
             android:exported="false" />

@@ -5,11 +5,11 @@ app_name = 'marketindex'
 
 urlpatterns = [
     # Get latest prices for all indices
-    path('llm_summary', MarketLLMview.as_view({
-        'get': 'get_llm_summary'
+    path('overview', MarketLLMview.as_view({
+        'get': 'get_market_overview'
     }), name='llm_summary_latest'),
-    path('llm_summary/<str:year>/<str:month>/<str:day>', MarketLLMview.as_view({
-        'get': 'get_llm_summary'
+    path('overview/<str:year>/<str:month>/<str:day>', MarketLLMview.as_view({
+        'get': 'get_market_overview'
     }), name='llm_summary'),
     # GET /marketindex/stockindex/latest/
     path('stockindex/latest/', StockIndexView.as_view({

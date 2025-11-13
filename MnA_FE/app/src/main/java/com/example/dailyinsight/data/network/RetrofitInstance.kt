@@ -10,11 +10,14 @@ import okhttp3.ResponseBody.Companion.toResponseBody
 import okhttp3.Protocol
 import okhttp3.JavaNetCookieJar
 import android.util.Log
+import androidx.datastore.preferences.core.edit
+import kotlinx.coroutines.runBlocking
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
 import java.net.CookieManager
 import java.net.CookiePolicy
 import java.net.HttpURLConnection
+import com.example.dailyinsight.data.datastore.cookieDataStore
 
 /**
  * Unified Retrofit Instance for all API calls
@@ -37,6 +40,7 @@ object RetrofitInstance {
     fun init(context: Context) {
         client = OkHttpClient.Builder()
             .cookieJar(MyCookieJar(context.applicationContext))
+            .addInterceptor(AuthInterceptor(context.applicationContext))
             .apply {
                 if (MOCK_MODE) addInterceptor(MockInterceptor())
                 addInterceptor(logging)
@@ -50,6 +54,20 @@ object RetrofitInstance {
             .build()
             .create(ApiService::class.java)
     }
+
+    private class AuthInterceptor(private val context: Context) : Interceptor {
+        override fun intercept(chain: Interceptor.Chain): Response {
+            val response = chain.proceed(chain.request())
+
+            if (response.code == 401) {
+                runBlocking {
+                    context.cookieDataStore.edit { it.clear() }
+                }
+            }
+            return response
+        }
+    }
+
 
 //    val cookieManager = CookieManager()
 

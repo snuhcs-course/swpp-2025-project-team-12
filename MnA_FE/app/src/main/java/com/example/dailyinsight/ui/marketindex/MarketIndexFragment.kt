@@ -35,9 +35,6 @@ class MarketIndexFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        // Tell the Activity that this fragment has an options menu.
-        setHasOptionsMenu(true)
-
         marketIndexViewModel.marketData.observe(viewLifecycleOwner) { dataMap ->
             // Update KOSPI UI
             dataMap["KOSPI"]?.let { kospiData ->
@@ -121,27 +118,6 @@ class MarketIndexFragment : Fragment() {
             dataMap["KOSPI"]?.let { updateIndexUI(it, binding.kospiBlock.name, binding.kospiBlock.price, binding.kospiBlock.priceChange, binding.kospiBlock.description) }
             dataMap["KOSDAQ"]?.let { updateIndexUI(it, binding.kosdaqBlock.name, binding.kosdaqBlock.price, binding.kosdaqBlock.priceChange, binding.kosdaqBlock.description) }
         }*/
-    }
-
-    // Inflate the menu resource into the toolbar.
-    override fun onCreateOptionsMenu(menu: Menu, inflater: MenuInflater) {
-        inflater.inflate(R.menu.main_toolbar_menu, menu)
-        super.onCreateOptionsMenu(menu, inflater)
-    }
-
-    // Optional: Handle menu item clicks
-    override fun onOptionsItemSelected(item: MenuItem): Boolean {
-        return when (item.itemId) {
-            R.id.action_notifications -> {
-                // Handle notifications icon tap
-                true
-            }
-            R.id.action_profile -> {
-                // Handle profile icon tap
-                true
-            }
-            else -> super.onOptionsItemSelected(item)
-        }
     }
 
     private fun updateIndexUI(
