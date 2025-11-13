@@ -6,7 +6,7 @@ class User(models.Model):
     id = models.AutoField(primary_key=True, editable=False) # integer increment
     password = models.CharField(max_length=TINY_TEXT)
     name = models.CharField(max_length=TINY_TEXT, unique=True)
-    portfolio = models.JSONField(default=dict())
+    portfolio = models.JSONField(default=dict)
 
     refresh_token = models.CharField(max_length=TINY_TEXT, default="")
 
