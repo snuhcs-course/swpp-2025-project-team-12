@@ -41,7 +41,7 @@
             android:layout_height="wrap_content"
             android:layout_marginTop="6dp"
             android:text="지수 요약 텍스트가 들어갑니다."
-            android:textSize="13sp"
+            android:textSize="18sp"
             android:textColor="#111111"
             android:lineSpacingExtra="2dp"/>
 

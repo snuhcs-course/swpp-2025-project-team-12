@@ -6,11 +6,25 @@ import androidx.room.Room
 import androidx.room.RoomDatabase
 import androidx.room.TypeConverters
 
-@Database(entities = [CachedHistory::class], version = 1, exportSchema = false)
-@TypeConverters(StockHistoryConverter::class)
+@Database(
+    entities = [
+        CachedHistory::class,         // 차트 1년치
+        BriefingCardCache::class,     // 브리핑 리스트
+        OverviewCache::class          // 상세 표
+    ],
+    version = 2,
+    exportSchema = false
+)
+@TypeConverters(
+    StockHistoryConverter::class,
+    BriefingListConverter::class,
+    OverviewConverter::class
+)
 abstract class AppDatabase : RoomDatabase() {
 
     abstract fun historyCacheDao(): HistoryCacheDao
+    abstract fun briefingDao(): BriefingDao
+    abstract fun overviewDao(): OverviewDao
 
     companion object {
         // @Volatile: 이 변수가 모든 스레드에 즉시 공유되도록 보장
