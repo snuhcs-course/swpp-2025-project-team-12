@@ -1,6 +1,6 @@
 # apps/api/apps.py
-
 from django.apps import AppConfig
+from django.core.cache import cache
 import pandas as pd
 from utils.debug_print import debug_print
 
@@ -8,20 +8,17 @@ from utils.debug_print import debug_print
 class ApiConfig(AppConfig):
     default_auto_field = 'django.db.models.BigAutoField'
     name = 'apps.api'
-    
-    # 클래스 변수로 데이터 저장 (메모리에 상주)
-    instant_df = None
-    profile_df = None
-    last_loaded = None
 
     def ready(self):
         """
         Django 앱 시작 시 한 번만 실행
-        instant 데이터를 메모리에 로드
+        instant 데이터를 Django 캐시에 로드
         """
-        # 개발 서버 reload 시 중복 실행 방지
         import os
-        if os.environ.get('RUN_MAIN') == 'true' or os.environ.get('WERKZEUG_RUN_MAIN') == 'true':
+
+        run_main = os.environ.get('RUN_MAIN')
+        if run_main != 'true' and run_main is not None:
+            debug_print("Skipping data load in main process (reloader)")
             return
             
         try:
@@ -29,9 +26,9 @@ class ApiConfig(AppConfig):
             from apps.api.constants import FINANCE_BUCKET
             from datetime import datetime
             import time
-            
+
             debug_print("=" * 50)
-            debug_print("Loading instant data into memory...")
+            debug_print("Loading instant data into Django cache...")
             
             total_start = time.time()
             s3 = FinanceS3Client()
@@ -43,45 +40,101 @@ class ApiConfig(AppConfig):
                 'price-financial-info-instant/'
             )
             instant_elapsed = time.time() - instant_start
-            
+
             if instant_df is not None:
-                # 시가총액 기준으로 정렬 (내림차순: 큰 것부터)
+                # 시가총액 기준으로 정렬
                 sort_start = time.time()
                 instant_df['market_cap_numeric'] = pd.to_numeric(instant_df['market_cap'], errors='coerce')
                 instant_df = instant_df.sort_values(
-                    by=['date', 'market_cap_numeric'], 
+                    by=['date', 'market_cap_numeric'],
                     ascending=[True, False]
                 ).drop(columns=['market_cap_numeric'])
                 sort_elapsed = time.time() - sort_start
-                
-                ApiConfig.instant_df = instant_df
-                debug_print(f"✓ Instant data loaded: {instant_df.shape}")
+
+                # Django 캐시에 저장 (영구)
+                cache.set('instant_df', instant_df, timeout=None)
+
+                debug_print(f"✓ Instant data loaded to cache: {instant_df.shape}")
                 debug_print(f"  - S3 download time: {instant_elapsed:.2f}s")
                 debug_print(f"  - Sort time: {sort_elapsed:.2f}s")
                 debug_print(f"  - Unique tickers: {instant_df['ticker'].nunique()}")
                 debug_print(f"  - Date range: {instant_df['date'].min()} ~ {instant_df['date'].max()}")
                 debug_print(f"  - Sorted by: date (asc), market_cap (desc)")
-            
-            # 2) Company Profile 데이터 로드
+
+            # 2) Company Profile 데이터 로드 (KOSPI + KOSDAQ 자동 검색)
             profile_start = time.time()
-            profile_df, _ = s3.get_latest_parquet_df(
-                FINANCE_BUCKET,
-                'company-profile/'
+
+            import boto3
+            import io
+
+            s3_client = boto3.client(
+                's3',
+                aws_access_key_id=os.getenv('FINANCE_AWS_ACCESS_KEY_ID'),
+                aws_secret_access_key=os.getenv('FINANCE_AWS_SECRET_ACCESS_KEY'),
+                region_name=os.getenv('AWS_REGION')
             )
+
+            response = s3_client.list_objects_v2(
+                Bucket=FINANCE_BUCKET,
+                Prefix='company-profile/'
+            )
+            
+            if 'Contents' in response:
+                files = sorted(response['Contents'], key=lambda x: x['LastModified'], reverse=True)
+
+                kospi_file = None
+                kosdaq_file = None
+
+                for f in files:
+                    if 'market=kospi' in f['Key'] and kospi_file is None:
+                        kospi_file = f['Key']
+                    if 'market=kosdaq' in f['Key'] and kosdaq_file is None:
+                        kosdaq_file = f['Key']
+                    if kospi_file and kosdaq_file:
+                        break
+
+                profile_kospi = None
+                profile_kosdaq = None
+
+                if kospi_file:
+                    obj = s3_client.get_object(Bucket=FINANCE_BUCKET, Key=kospi_file)
+                    profile_kospi = pd.read_parquet(io.BytesIO(obj['Body'].read()))
+                    debug_print(f"  - KOSPI profile from: {kospi_file}")
+
+                if kosdaq_file:
+                    obj = s3_client.get_object(Bucket=FINANCE_BUCKET, Key=kosdaq_file)
+                    profile_kosdaq = pd.read_parquet(io.BytesIO(obj['Body'].read()))
+                    debug_print(f"  - KOSDAQ profile from: {kosdaq_file}")
+
+                if profile_kosdaq is not None and profile_kospi is not None:
+                    profile_df = pd.concat([profile_kosdaq, profile_kospi])
+
+                    # Django 캐시에 저장 (영구)
+                    cache.set('profile_df', profile_df, timeout=None)
+
+                    debug_print(f"✓ Profile data loaded to cache: {profile_df.shape}")
+                    debug_print(f"  - KOSDAQ: {len(profile_kosdaq)} 종목")
+                    debug_print(f"  - KOSPI: {len(profile_kospi)} 종목")
+                    debug_print(f"  - Total: {len(profile_df)} 종목")
+                elif profile_kosdaq is not None:
+                    cache.set('profile_df', profile_kosdaq, timeout=None)
+                    debug_print(f"✓ Profile data loaded (KOSDAQ only): {profile_kosdaq.shape}")
+                elif profile_kospi is not None:
+                    cache.set('profile_df', profile_kospi, timeout=None)
+                    debug_print(f"✓ Profile data loaded (KOSPI only): {profile_kospi.shape}")
+
             profile_elapsed = time.time() - profile_start
-            
-            if profile_df is not None:
-                ApiConfig.profile_df = profile_df
-                debug_print(f"✓ Profile data loaded: {profile_df.shape}")
-                debug_print(f"  - Load time: {profile_elapsed:.2f}s")
-            
+            debug_print(f"  - Load time: {profile_elapsed:.2f}s")
+
+            # 로드 시각 저장
             total_elapsed = time.time() - total_start
-            ApiConfig.last_loaded = datetime.now()
+            cache.set('data_last_loaded', datetime.now(), timeout=None)
+
             debug_print(f"✓ Total loading time: {total_elapsed:.2f}s")
-            debug_print(f"✓ Data loaded at: {ApiConfig.last_loaded}")
+            debug_print(f"✓ Data loaded at: {datetime.now()}")
             debug_print("=" * 50)
             
         except Exception as e:
             debug_print(f"✗ Error loading data: {e}")
-            ApiConfig.instant_df = None
-            ApiConfig.profile_df = None
+            import traceback
+            debug_print(traceback.format_exc())

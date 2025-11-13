@@ -35,9 +35,6 @@ class MarketIndexFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        // Tell the Activity that this fragment has an options menu.
-        setHasOptionsMenu(true)
-
         marketIndexViewModel.marketData.observe(viewLifecycleOwner) { dataMap ->
             // Update KOSPI UI
             dataMap["KOSPI"]?.let { kospiData ->
@@ -64,6 +61,55 @@ class MarketIndexFragment : Fragment() {
             }
         }
 
+        // Observe LLM summary data
+        /*
+        marketIndexViewModel.llmSummary.observe(viewLifecycleOwner) { summaryData ->
+            // 전반 박스
+            val combined = buildString {
+                if (!summaryData.basicOverview.isNullOrBlank()) append(summaryData.basicOverview)
+                if (!summaryData.newsOverview.isNullOrBlank()) {
+                    if (isNotEmpty()) append("\n\n")
+                    append(summaryData.newsOverview)
+                }
+            }
+            binding.overviewBlock.MarketTitle.text = getString(R.string.label_overview) // "전반"
+            binding.overviewBlock.MarketSummary.text =
+                if (combined.isBlank()) getString(R.string.placeholder_loading) else combined
+
+            // 지수 설명(LLM 요약) – 있으면 우선 적용
+            summaryData.kospi?.summary?.let { binding.kospiBlock.description.text = it }
+            summaryData.kosdaq?.summary?.let { binding.kosdaqBlock.description.text = it }
+        }*/
+        // "전반", "KOSPI", "KOSDAQ"의 모든 LLM 요약 텍스트를 업데이트
+        // 로딩 중일 때 표시할 텍스트
+        val loadingText = getString(R.string.placeholder_loading) // "불러오는 중..."
+        // "전반" 텍스트 업데이트 (로딩/실패/성공)
+        marketIndexViewModel.llmOverviewText.observe(viewLifecycleOwner) { overviewText ->
+            binding.overviewBlock.MarketTitle.text = getString(R.string.label_overview)
+            if (overviewText.isBlank()) {
+                // API 로딩 중이거나 실패하면 모든 요약 필드를 "불러오는 중..."으로 설정
+                binding.overviewBlock.MarketSummary.text = loadingText
+                binding.kospiBlock.description.text = loadingText
+                binding.kosdaqBlock.description.text = loadingText
+            } else {
+                // API 성공 시 "전반" 텍스트 설정
+                binding.overviewBlock.MarketSummary.text = overviewText
+            }
+        }
+
+        // KOSPI/KOSDAQ 개별 요약 텍스트 업데이트 (성공 시) (이 옵저버는 API가 성공할 때만 호출됩니다)
+        marketIndexViewModel.llmSummary.observe(viewLifecycleOwner) { summaryData ->
+            // KOSPI 요약 텍스트 (null이 아니고 비어있지 않으면)
+            summaryData.kospi?.summary?.takeIf { it.isNotBlank() }?.let {
+                binding.kospiBlock.description.text = it
+            }
+
+            // KOSDAQ 요약 텍스트 (null이 아니고 비어있지 않으면)
+            summaryData.kosdaq?.summary?.takeIf { it.isNotBlank() }?.let {
+                binding.kosdaqBlock.description.text = it
+            }
+        }
+
         // Set up click listeners
         binding.kospiBlock.root.setOnClickListener {
             // Navigation logic for KOSPI
@@ -77,27 +123,20 @@ class MarketIndexFragment : Fragment() {
                 .actionNavigationMarketIndexToStockIndexDetailFragment(stockIndexType = "KOSDAQ")
             findNavController().navigate(action)
         }
-    }
 
-    // Inflate the menu resource into the toolbar.
-    override fun onCreateOptionsMenu(menu: Menu, inflater: MenuInflater) {
-        inflater.inflate(R.menu.main_toolbar_menu, menu)
-        super.onCreateOptionsMenu(menu, inflater)
-    }
-
-    // Optional: Handle menu item clicks
-    override fun onOptionsItemSelected(item: MenuItem): Boolean {
-        return when (item.itemId) {
-            R.id.action_notifications -> {
-                // Handle notifications icon tap
-                true
-            }
-            R.id.action_profile -> {
-                // Handle profile icon tap
-                true
-            }
-            else -> super.onOptionsItemSelected(item)
+        marketIndexViewModel.error.observe(viewLifecycleOwner) { msg ->
+            // TODO: Snackbar/Toast로 표시
         }
+        /*
+        marketIndexViewModel.marketData.observe(viewLifecycleOwner) { dataMap ->
+            if (dataMap.isNullOrEmpty()) {
+                // TODO: placeholder 노출(“데이터가 없습니다”) 또는 스켈레톤 유지
+                return@observe
+            }
+            // 정확한 키 사용
+            dataMap["KOSPI"]?.let { updateIndexUI(it, binding.kospiBlock.name, binding.kospiBlock.price, binding.kospiBlock.priceChange, binding.kospiBlock.description) }
+            dataMap["KOSDAQ"]?.let { updateIndexUI(it, binding.kosdaqBlock.name, binding.kosdaqBlock.price, binding.kosdaqBlock.priceChange, binding.kosdaqBlock.description) }
+        }*/
     }
 
     private fun updateIndexUI(
@@ -110,8 +149,6 @@ class MarketIndexFragment : Fragment() {
         nameView.text = data.name
         valueView.text = String.format(Locale.getDefault(), "%.2f", data.close)
         // change this to data.description later
-        descriptionView.text = "LLM generated description"
-
         val sign = if (data.changeAmount >= 0) "+" else ""
         val changeText = String.format(
             Locale.getDefault(),
@@ -126,6 +163,8 @@ class MarketIndexFragment : Fragment() {
         val colorRes = if (data.changeAmount >= 0) R.color.positive_red else R.color.negative_blue
         changeView.setTextColor(ContextCompat.getColor(requireContext(), colorRes))
     }
+
+
 
 
     override fun onDestroyView() {

@@ -47,9 +47,6 @@ data class StockIndexData(
     @SerializedName("change_percent")
     val changePercent: Double,
 
-    @SerializedName("description")
-    val description: String,
-
     @SerializedName("date")
     val date: String,
 

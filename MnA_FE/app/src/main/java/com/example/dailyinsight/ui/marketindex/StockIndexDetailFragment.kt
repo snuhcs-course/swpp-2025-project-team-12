@@ -11,7 +11,6 @@ import androidx.navigation.fragment.navArgs
 import com.example.dailyinsight.R
 import com.example.dailyinsight.data.dto.StockIndexData
 import com.example.dailyinsight.databinding.FragmentStockIndexDetailBinding
-import com.example.dailyinsight.databinding.ViewStockChartWithRangeBinding
 import com.example.dailyinsight.ui.common.chart.ChartViewController
 import com.example.dailyinsight.ui.common.chart.ChartViewConfig
 import java.text.SimpleDateFormat
@@ -41,7 +40,7 @@ class StockIndexDetailFragment : Fragment() {
 
         // Create the ViewModel using the Factory, passing in the type
         val viewModelFactory = StockIndexDetailViewModelFactory(requireActivity().application, stockIndexType)
-        viewModel = ViewModelProvider(this, viewModelFactory).get(StockIndexDetailViewModel::class.java)
+        viewModel = ViewModelProvider(this, viewModelFactory)[StockIndexDetailViewModel::class.java]
 
         // Initialize chart controller
         setupChartController()
@@ -54,14 +53,29 @@ class StockIndexDetailFragment : Fragment() {
         }
 
         viewModel.historicalData.observe(viewLifecycleOwner) { dataPoints ->
-            // Convert to ChartDataPoint and pass to controller
-            val chartData = dataPoints.map {
-                com.example.dailyinsight.ui.common.chart.ChartDataPoint(
-                    timestamp = it.timestamp,
-                    value = it.closePrice
-                )
+
+            // 1.  Flow가 '빈 리스트'를 방출했는지, '데이터'를 방출했는지 확인
+            if (dataPoints.isEmpty()) {
+                // --- 상태 1: 첫 실행 (캐시 없음) ---
+                // API가 데이터를 아직 가져오지 못함
+                binding.chartProgressBar.visibility = View.VISIBLE
+                binding.chartView.lineChart.visibility = View.INVISIBLE
+
+            } else {
+                // --- 상태 2: 캐시 있거나, API가 데이터 가져옴 ---
+                // (즉시 또는 지연 후)
+                binding.chartProgressBar.visibility = View.GONE
+                binding.chartView.lineChart.visibility = View.VISIBLE
+
+                // 차트 데이터 설정 (기존과 동일)
+                val chartData = dataPoints.map {
+                    com.example.dailyinsight.ui.common.chart.ChartDataPoint(
+                        timestamp = it.timestamp,
+                        value = it.closePrice
+                    )
+                }
+                chartViewController?.setData(chartData)
             }
-            chartViewController?.setData(chartData)
         }
 
         // --- ADD OBSERVERS FOR 1-YEAR HIGH/LOW ---
@@ -70,7 +84,6 @@ class StockIndexDetailFragment : Fragment() {
                 binding.tvYearHighValue.text = String.format(Locale.getDefault(), "%.2f", it)
             }
         }
-
         viewModel.yearLow.observe(viewLifecycleOwner) { low ->
             low?.let {
                 binding.tvYearLowValue.text = String.format(Locale.getDefault(), "%.2f", it)
@@ -80,10 +93,7 @@ class StockIndexDetailFragment : Fragment() {
     }
 
     private fun setupChartController() {
-        // Bind the included chart view
-        val chartBinding = ViewStockChartWithRangeBinding.bind(binding.chartView.root)
-
-        // Config (ChartViewController creates its own X-axis formatter internally)
+        val chartBinding = binding.chartView // 이미 포함된 include 바인딩
         val config = ChartViewConfig(
             lineColorRes = R.color.positive_red,
             fillDrawableRes = R.drawable.chart_fade_red,
@@ -106,34 +116,21 @@ class StockIndexDetailFragment : Fragment() {
 
     // --- UPDATE THIS ENTIRE FUNCTION ---
     private fun updateIndexUI(data: StockIndexData) {
-        // Header Price
-        binding.stockIndexItem.price.text = String.format(Locale.getDefault(), "%.2f", data.close)
 
-        // Header Price Change
+        binding.tvPrice.text = String.format("%.2f", data.close)
+
         val sign = if (data.changeAmount >= 0) "+" else ""
-        val changeText = String.format(
-            Locale.getDefault(),
-            "%s%.2f (%.2f%%)",
-            sign,
-            data.changeAmount,
-            data.changePercent
-        )
-        binding.stockIndexItem.priceChange.text = changeText
+        binding.tvChange.text = "$sign${data.changeAmount} (${sign}${data.changePercent}%)"
 
-        // Header Price Change Color
-        val colorRes = if (data.changeAmount >= 0) R.color.positive_red else R.color.negative_blue
-        binding.stockIndexItem.priceChange.setTextColor(ContextCompat.getColor(requireContext(), colorRes))
+        val color = if (data.changeAmount >= 0) R.color.positive_red else R.color.negative_blue
+        binding.tvChange.setTextColor(ContextCompat.getColor(requireContext(), color))
 
-        // --- "시세" (Market Price) Section ---
         binding.tvMarketPriceDate.text = formatDate(data.date)
-        binding.tvOpenValue.text = String.format(Locale.getDefault(), "%.2f", data.open)
-        binding.tvCloseValue.text = String.format(Locale.getDefault(), "%.2f", data.close)
-        binding.tvDayHighValue.text = String.format(Locale.getDefault(), "%.2f", data.high)
-        binding.tvDayLowValue.text = String.format(Locale.getDefault(), "%.2f", data.low)
+        binding.tvOpenValue.text = "%.2f".format(data.open)
+        binding.tvCloseValue.text = "%.2f".format(data.close)
+        binding.tvDayHighValue.text = "%.2f".format(data.high)
+        binding.tvDayLowValue.text = "%.2f".format(data.low)
         binding.tvVolumeValue.text = formatVolume(data.volume)
-
-        // Note: 1-Year High/Low (tvYearHighValue, tvYearLowValue) are set
-        // by their own observers since they come from a different data source.
     }
 
     // --- ADD HELPER FUNCTIONS ---
@@ -146,9 +143,9 @@ class StockIndexDetailFragment : Fragment() {
             val parser = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
             val formatter = SimpleDateFormat("M월 d일 기준", Locale.KOREA)
             val date = parser.parse(dateStr)
-            formatter.format(date)
-        } catch (e: Exception) {
-            dateStr // Fallback to the original string on error
+            date?.let { formatter.format(it) } ?: dateStr
+        } catch (_: Exception) {
+            dateStr
         }
     }
 

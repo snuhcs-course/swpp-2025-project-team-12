@@ -1,11 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
-<com.google.android.material.card.MaterialCardView
+<androidx.core.widget.NestedScrollView
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
-    android:id="@+id/cardChart"
     android:layout_width="match_parent"
-    android:layout_height="wrap_content"
-    android:layout_marginTop="12dp">
+    android:layout_height="match_parent">
 
     <LinearLayout
         android:layout_width="match_parent"
@@ -13,14 +11,13 @@
         android:orientation="vertical"
         android:padding="16dp">
 
-        <!-- 차트 -->
         <com.github.mikephil.charting.charts.LineChart
             android:id="@+id/lineChart"
             android:layout_width="match_parent"
-            android:layout_height="280dp"
-            android:layout_marginTop="16dp" />
+            android:layout_height="180dp"
+            android:layout_margin="0dp"
+            android:padding="0dp" />
 
-        <!-- Segmented pill -->
         <com.google.android.material.button.MaterialButtonToggleGroup
             android:id="@+id/btnGroupRange"
             android:layout_width="match_parent"
@@ -35,7 +32,7 @@
                 android:id="@+id/btn1W"
                 style="@style/Widget.DI.SegButton"
                 android:layout_width="0dp"
-                android:layout_height="40dp"
+                android:layout_height="48dp"
                 android:layout_weight="1"
                 android:text="@string/_1W"/>
 
@@ -43,7 +40,7 @@
                 android:id="@+id/btn3M"
                 style="@style/Widget.DI.SegButton"
                 android:layout_width="0dp"
-                android:layout_height="40dp"
+                android:layout_height="48dp"
                 android:layout_weight="1"
                 android:text="@string/_3M"/>
 
@@ -51,7 +48,7 @@
                 android:id="@+id/btn6M"
                 style="@style/Widget.DI.SegButton"
                 android:layout_width="0dp"
-                android:layout_height="40dp"
+                android:layout_height="48dp"
                 android:layout_weight="1"
                 android:text="@string/_6M"/>
 
@@ -59,7 +56,7 @@
                 android:id="@+id/btn9M"
                 style="@style/Widget.DI.SegButton"
                 android:layout_width="0dp"
-                android:layout_height="40dp"
+                android:layout_height="48dp"
                 android:layout_weight="1"
                 android:text="@string/_9M"/>
 
@@ -67,11 +64,10 @@
                 android:id="@+id/btn1Y"
                 style="@style/Widget.DI.SegButton"
                 android:layout_width="0dp"
-                android:layout_height="40dp"
+                android:layout_height="48dp"
                 android:layout_weight="1"
                 android:text="@string/_1Y"/>
 
         </com.google.android.material.button.MaterialButtonToggleGroup>
-
     </LinearLayout>
-</com.google.android.material.card.MaterialCardView>
+</androidx.core.widget.NestedScrollView>

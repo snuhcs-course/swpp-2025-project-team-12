@@ -177,3 +177,17 @@ AWS_DEFAULT_ACL = None
 AWS_S3_OBJECT_PARAMETERS = {
     'CacheControl': 'max-age=86400',
 }
+
+# ============================================================================
+# Django Cache Configuration
+# ============================================================================
+# 로컬 메모리 캐시 사용 (instant_df, profile_df 저장용)
+CACHES = {
+    'default': {
+        'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
+        'LOCATION': 'finance-data-cache',
+        'OPTIONS': {
+            'MAX_ENTRIES': 10,  # 캐시 항목 최대 개수
+        }
+    }
+}

@@ -1,8 +1,10 @@
 <resources>
     <string name="app_name">DailyInsight</string>
-    <string name="title_today">포트폴리오</string>
-    <string name="title_history">이슈</string>
-    <string name="title_market_index">주요 지수</string>
+    <string name="title_profile">프로필</string>
+    <string name="title_stock_briefing">종목 브리핑</string>
+    <string name="title_market_briefing">시장 브리핑</string>
+    <string name="title_stock">종목</string>
+    <string name="title_market_index">시장</string>
     <string name="title_stock_detail">종목 상세</string>
     <string name="title_stock_index_detail">코스피</string>
     <string name="today">오늘</string>
@@ -26,4 +28,6 @@
     <string name="_9M">9M</string>
     <string name="_1Y">1Y</string>
     <string name="no_chart_data">no chart data</string>
+    <string name="placeholder_loading">불러오는 중…</string>
+    <string name="label_overview">전반</string>
 </resources>

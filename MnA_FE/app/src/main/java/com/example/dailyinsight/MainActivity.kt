@@ -14,6 +14,7 @@ import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import com.example.dailyinsight.di.ServiceLocator
 import androidx.navigation.NavController
+import com.google.android.material.appbar.AppBarLayout
 
 class MainActivity : AppCompatActivity() {
 
@@ -39,9 +40,9 @@ class MainActivity : AppCompatActivity() {
         // This prevents the back arrow (Up button) from showing on these screens.
         val appBarConfiguration = AppBarConfiguration(
             setOf(
-                R.id.navigation_today,
-                R.id.navigation_history,
-                R.id.navigation_market_index
+                R.id.navigation_stock,
+                R.id.navigation_market_index,
+                R.id.navigation_profile
             )
         )
 
@@ -69,6 +70,28 @@ class MainActivity : AppCompatActivity() {
         // Connect your BottomNavigationView for navigation
         val navView: BottomNavigationView = binding.navView
         navView.setupWithNavController(navController)
+
+        // Handle bottom navigation item reselection to do nothing (prevent reloading)
+        navView.setOnItemReselectedListener { /* Do nothing to prevent reloading */ }
+
+        // Expand the AppBarLayout whenever navigation occurs
+        navController.addOnDestinationChangedListener { _, destination, _ ->
+            binding.appBarLayout.setExpanded(true, true)
+
+            // Update bottom nav selection based on the navigation graph hierarchy
+            // This ensures the correct bottom nav item is selected even when in detail fragments
+            when (destination.id) {
+                R.id.navigation_stock, R.id.stock_detail_fragment -> {
+                    navView.menu.findItem(R.id.navigation_stock)?.isChecked = true
+                }
+                R.id.navigation_market_index, R.id.stockIndexDetailFragment -> {
+                    navView.menu.findItem(R.id.navigation_market_index)?.isChecked = true
+                }
+                R.id.navigation_profile -> {
+                    navView.menu.findItem(R.id.navigation_profile)?.isChecked = true
+                }
+            }
+        }
     }
 
     // onSupportNavigateUp()이 있어야지 뒤로가기 버튼이 제대로 작동합니다.

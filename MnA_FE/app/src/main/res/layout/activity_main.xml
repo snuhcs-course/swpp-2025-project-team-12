@@ -20,7 +20,7 @@
             android:layout_width="match_parent"
             android:layout_height="120dp"
             android:fitsSystemWindows="true"
-            app:contentScrim="@android:color/white"
+            app:contentScrim="?attr/colorSurface"
             app:layout_scrollFlags="scroll|exitUntilCollapsed|snap"
             app:expandedTitleTextAppearance="@style/TextAppearance.App.DisplaySmallEmphasis"
             app:collapsedTitleTextAppearance="?attr/textAppearanceTitleLarge">
@@ -29,8 +29,7 @@
                 android:id="@+id/material_toolbar"
                 android:layout_width="match_parent"
                 android:layout_height="?attr/actionBarSize"
-                app:layout_collapseMode="pin"
-                app:menu="@menu/main_toolbar_menu" />
+                app:layout_collapseMode="pin"/>
 
         </com.google.android.material.appbar.CollapsingToolbarLayout>
 
@@ -44,13 +43,16 @@
         app:defaultNavHost="true"
         app:layout_behavior="@string/appbar_scrolling_view_behavior"
         app:navGraph="@navigation/mobile_navigation"
-        android:layout_marginBottom="80dp"/>
+        android:paddingBottom="80dp"
+        android:clipToPadding="false"/>
 
     <com.google.android.material.bottomnavigation.BottomNavigationView
         android:id="@+id/nav_view"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_gravity="bottom"
+        android:background="#F5F5F5"
+        app:itemRippleColor="@drawable/bottom_nav_ripple_color"
         app:menu="@menu/bottom_nav_menu" />
 
 </androidx.coordinatorlayout.widget.CoordinatorLayout>
