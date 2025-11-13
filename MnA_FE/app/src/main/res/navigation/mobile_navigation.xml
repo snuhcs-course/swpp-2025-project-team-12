@@ -3,31 +3,23 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/mobile_navigation"
-    app:startDestination="@id/navigation_today">
+    app:startDestination="@id/navigation_stock">
 
     <fragment
-        android:id="@+id/navigation_today"
-        android:name="com.example.dailyinsight.ui.today.TodayFragment"
-        android:label="@string/title_briefing"
-        tools:layout="@layout/fragment_today">
-    </fragment>
-
-    <fragment
-        android:id="@+id/navigation_history"
-        android:name="com.example.dailyinsight.ui.history.HistoryFragment"
-        android:label="@string/title_history"
-        tools:layout="@layout/fragment_history">
+        android:id="@+id/navigation_stock"
+        android:name="com.example.dailyinsight.ui.stock.StockFragment"
+        android:label="@string/title_stock_briefing"
+        tools:layout="@layout/fragment_stock">
         <action
-            android:id="@+id/action_history_to_stock_detail"
+            android:id="@+id/action_stock_to_stock_detail"
             app:destination="@id/stock_detail_fragment" />
     </fragment>
 
     <fragment
         android:id="@+id/navigation_market_index"
         android:name="com.example.dailyinsight.ui.marketindex.MarketIndexFragment"
-        android:label="@string/title_market_index"
+        android:label="@string/title_market_briefing"
         tools:layout="@layout/fragment_market_index" >
-        <!-- action: MarketIndex -> StockIndexDetail-->
         <action
             android:id="@+id/action_navigation_market_index_to_stockIndexDetailFragment"
             app:destination="@id/stockIndexDetailFragment" />
@@ -48,6 +40,13 @@
         <argument
             android:name="item"
             app:argType="com.example.dailyinsight.data.dto.RecommendationDto" />
+    </fragment>
+
+    <fragment
+        android:id="@+id/navigation_profile"
+        android:name="com.example.dailyinsight.ui.profile.ProfileFragment"
+        android:label="@string/title_profile"
+        tools:layout="@layout/fragment_profile">
     </fragment>
 
 </navigation>

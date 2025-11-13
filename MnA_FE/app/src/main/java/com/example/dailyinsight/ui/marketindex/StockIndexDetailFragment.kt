@@ -53,14 +53,29 @@ class StockIndexDetailFragment : Fragment() {
         }
 
         viewModel.historicalData.observe(viewLifecycleOwner) { dataPoints ->
-            // Convert to ChartDataPoint and pass to controller
-            val chartData = dataPoints.map {
-                com.example.dailyinsight.ui.common.chart.ChartDataPoint(
-                    timestamp = it.timestamp,
-                    value = it.closePrice
-                )
+
+            // 1.  Flow가 '빈 리스트'를 방출했는지, '데이터'를 방출했는지 확인
+            if (dataPoints.isEmpty()) {
+                // --- 상태 1: 첫 실행 (캐시 없음) ---
+                // API가 데이터를 아직 가져오지 못함
+                binding.chartProgressBar.visibility = View.VISIBLE
+                binding.chartView.lineChart.visibility = View.INVISIBLE
+
+            } else {
+                // --- 상태 2: 캐시 있거나, API가 데이터 가져옴 ---
+                // (즉시 또는 지연 후)
+                binding.chartProgressBar.visibility = View.GONE
+                binding.chartView.lineChart.visibility = View.VISIBLE
+
+                // 차트 데이터 설정 (기존과 동일)
+                val chartData = dataPoints.map {
+                    com.example.dailyinsight.ui.common.chart.ChartDataPoint(
+                        timestamp = it.timestamp,
+                        value = it.closePrice
+                    )
+                }
+                chartViewController?.setData(chartData)
             }
-            chartViewController?.setData(chartData)
         }
 
         // --- ADD OBSERVERS FOR 1-YEAR HIGH/LOW ---
@@ -69,7 +84,6 @@ class StockIndexDetailFragment : Fragment() {
                 binding.tvYearHighValue.text = String.format(Locale.getDefault(), "%.2f", it)
             }
         }
-
         viewModel.yearLow.observe(viewLifecycleOwner) { low ->
             low?.let {
                 binding.tvYearLowValue.text = String.format(Locale.getDefault(), "%.2f", it)

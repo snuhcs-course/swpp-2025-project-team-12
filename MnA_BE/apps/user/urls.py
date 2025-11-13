@@ -3,6 +3,7 @@ from .views import UserView
 from .info import urlpatterns as info_urls
 from .style import urlpatterns as style_urls
 
+
 urlpatterns = [
     path('login', UserView.as_view({ 'post': 'login' }) , name='login'),
     path('logout', UserView.as_view({ 'post': 'logout' }), name='logout'),

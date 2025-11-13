@@ -7,10 +7,15 @@ import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
+import androidx.lifecycle.asLiveData
+import androidx.lifecycle.map
 import androidx.lifecycle.viewModelScope
+import com.example.dailyinsight.data.database.CachedHistory
 import com.example.dailyinsight.data.dto.StockIndexData
-import com.example.dailyinsight.data.dto.StockIndexHistoryItem // New import
+import com.example.dailyinsight.data.dto.StockIndexHistoryItem
 import com.example.dailyinsight.data.repository.MarketIndexRepository
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
 import java.util.Locale
@@ -25,51 +30,58 @@ class StockIndexDetailViewModel(application: Application, private val stockIndex
     private val _stockIndexData = MutableLiveData<StockIndexData>()
     val stockIndexData: LiveData<StockIndexData> = _stockIndexData
 
-    private val _historicalData = MutableLiveData<List<ChartDataPoint>>()
-    val historicalData: LiveData<List<ChartDataPoint>> = _historicalData
-
     private val _error = MutableLiveData<String>()
     val error: LiveData<String> = _error
 
-    // --- ADD LIVE DATA FOR 1-YEAR HIGH/LOW ---
-    private val _yearHigh = MutableLiveData<Double>()
-    val yearHigh: LiveData<Double> = _yearHigh
+    // --- DB Flow를 관찰하는 LiveData (수정) ---
 
-    private val _yearLow = MutableLiveData<Double>()
-    val yearLow: LiveData<Double> = _yearLow
-    // --- END ---
+    // 1. DB Flow를 ViewModel에서 구독 (이것이 "단일 진실 공급원")
+    private val cacheFlow: Flow<CachedHistory?> = repository.getHistoryCacheFlow(stockIndexType)
+
+    // 2. 차트 데이터용 LiveData (cacheFlow에서 'data' 필드만 추출)
+    val historicalData: LiveData<List<ChartDataPoint>> = cacheFlow
+        .map { it?.data ?: emptyList() } // 캐시에서 'data' 리스트만 추출
+        .map { parseHistoryListToChartPoints(it) } // 차트용으로 변환
+        .asLiveData() // LiveData로 만듦
+
+    // 3. 52주 최고가용 LiveData (cacheFlow에서 'yearHigh' 필드만 추출)
+    val yearHigh: LiveData<Double?> = cacheFlow
+        .map { it?.yearHigh } // 캐시에서 'yearHigh' 값만 추출
+        .asLiveData()
+
+    // 4. 52주 최저가용 LiveData (cacheFlow에서 'yearLow' 필드만 추출)
+    val yearLow: LiveData<Double?> = cacheFlow
+        .map { it?.yearLow } // 캐시에서 'yearLow' 값만 추출
+        .asLiveData()
 
     init {
-        loadData()
+        // ViewModel이 생성되면 2가지 작업을 병렬로 실행
+        loadHeaderData()   // 1. 헤더 (빠른 API)
+        refreshChartData() // 2. 차트/52주 (느린 API -> DB 업데이트)
     }
 
-    private fun loadData() {
+    // 1. 헤더 데이터 로드 (빠른 API 호출)
+    private fun loadHeaderData() {
         viewModelScope.launch {
             try {
-                // Fetch latest data for the header (no changes here)
+                // (Repository가 name을 채워주므로 VM은 받기만 함)
                 val latestDataMap = repository.getMarketData()
                 latestDataMap[stockIndexType]?.let {
                     _stockIndexData.postValue(it)
                 }
-
-                // Fetch 1 year (365 days) of historical data
-                val historicalDataList = repository.getHistoricalData(stockIndexType, 365) // This now returns a List
-                val chartPoints = parseHistoryListToChartPoints(historicalDataList) // Pass the list to the parser
-                _historicalData.postValue(chartPoints)
-
-                // --- ADD LOGIC TO CALCULATE 1-YEAR HIGH/LOW ---
-                if (historicalDataList.isNotEmpty()) {
-                    val yearHigh = historicalDataList.maxOfOrNull { it.close }
-                    val yearLow = historicalDataList.minOfOrNull { it.close }
-                    _yearHigh.postValue(yearHigh)
-                    _yearLow.postValue(yearLow)
-                }
-                // --- END ---
-
             } catch (e: Exception) {
-                _error.postValue("Failed to fetch data: ${e.message}")
+                _error.postValue("Failed to fetch header data: ${e.message}")
                 Log.e("StockIndexDetailVM", "API Call Failed", e)
             }
+        }
+    }
+
+    // 2. 차트 데이터를 백그라운드에서 새로고침 (DB 업데이트 트리거)
+    private fun refreshChartData() {
+        viewModelScope.launch {
+            // (이 함수는 UI를 직접 업데이트하지 않고, DB를 업데이트함)
+            // (DB가 업데이트되면 위의 'cacheFlow'가 자동으로 반응)
+            repository.refreshHistoricalData(stockIndexType)
         }
     }
 

@@ -1,7 +1,8 @@
 # Welcome M&A's Backend Server!!
 
 ### Description
-TODO
+public address:
+ec2-3-34-197-82.ap-northeast-2.compute.amazonaws.com
 
 ## Helpful commands
 

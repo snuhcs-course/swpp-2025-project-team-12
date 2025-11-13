@@ -1,4 +1,4 @@
-package com.example.dailyinsight.ui.today
+package com.example.dailyinsight.ui.profile
 
 import androidx.arch.core.executor.testing.InstantTaskExecutorRule
 import com.example.dailyinsight.data.Repository

@@ -77,6 +77,22 @@ class MyCookieJar(private val context : Context) : CookieJar {
         }
     }
 
+    // null-safe version
+//    private fun saveTokensToDataStore(cookies: List<Cookie>) {
+//        val accessToken = cookies.find { it.name == "access_token" }?.value
+//        val refreshToken = cookies.find { it.name == "refresh_token" }?.value
+//
+//        if (accessToken == null && refreshToken == null) return // 저장할 토큰 없으면 패스
+//
+//        CoroutineScope(Dispatchers.IO).launch {
+//            context.cookieDataStore.edit { prefs ->
+//                accessToken?.let { prefs[CookieKeys.ACCESS_TOKEN] = it }
+//                refreshToken?.let { prefs[CookieKeys.REFRESH_TOKEN] = it }
+//            }
+//        }
+//    }
+
+
     private fun cleanDataStore() {
         // wipe all cookies
         // never used here

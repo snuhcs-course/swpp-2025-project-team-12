@@ -1,4 +1,4 @@
-package com.example.dailyinsight.ui.history
+package com.example.dailyinsight.ui.stock
 
 import com.example.dailyinsight.data.Repository
 import com.example.dailyinsight.data.dto.RecommendationDto
@@ -19,10 +19,10 @@ import org.mockito.kotlin.whenever
 import java.io.IOException
 
 @ExperimentalCoroutinesApi
-class HistoryViewModelTest {
+class StockViewModelTest {
 
     private lateinit var repository: Repository
-    private lateinit var viewModel: HistoryViewModel
+    private lateinit var viewModel: StockViewModel
     private val testDispatcher = StandardTestDispatcher()
 
     @Before
@@ -59,7 +59,7 @@ class HistoryViewModelTest {
         whenever(repository.getHistoryRecommendations()).thenReturn(dataMap)
 
         // When: Create ViewModel (init calls refresh)
-        viewModel = HistoryViewModel(repository)
+        viewModel = StockViewModel(repository)
         advanceUntilIdle()
 
         // Then: State should be Success
@@ -81,7 +81,7 @@ class HistoryViewModelTest {
         whenever(repository.getHistoryRecommendations()).thenReturn(dataMap)
 
         // When: Create ViewModel and wait for init
-        viewModel = HistoryViewModel(repository)
+        viewModel = StockViewModel(repository)
         advanceUntilIdle()
 
         // Then: State should be Success with rows
@@ -103,7 +103,7 @@ class HistoryViewModelTest {
         whenever(repository.getHistoryRecommendations()).thenReturn(dataMap)
 
         // When: Create ViewModel
-        viewModel = HistoryViewModel(repository)
+        viewModel = StockViewModel(repository)
         advanceUntilIdle()
 
         // Then: Dates should be sorted descending by string (newest first)
@@ -124,7 +124,7 @@ class HistoryViewModelTest {
         whenever(repository.getHistoryRecommendations()).thenReturn(emptyMap())
 
         // When: Create ViewModel
-        viewModel = HistoryViewModel(repository)
+        viewModel = StockViewModel(repository)
         advanceUntilIdle()
 
         // Then: State should be Success with empty list
@@ -141,7 +141,7 @@ class HistoryViewModelTest {
         whenever(repository.getHistoryRecommendations()).thenThrow(exception)
 
         // When: Create ViewModel
-        viewModel = HistoryViewModel(repository)
+        viewModel = StockViewModel(repository)
         advanceUntilIdle()
 
         // Then: State should be Error
@@ -157,7 +157,7 @@ class HistoryViewModelTest {
         whenever(repository.getHistoryRecommendations()).thenReturn(dataMap)
 
         // When: Create ViewModel (don't advance idle yet)
-        viewModel = HistoryViewModel(repository)
+        viewModel = StockViewModel(repository)
 
         // Then: State should be Loading
         assertTrue(viewModel.state.value is LoadResult.Loading)
@@ -181,7 +181,7 @@ class HistoryViewModelTest {
         whenever(repository.getHistoryRecommendations()).thenReturn(dataMap)
 
         // When: Create ViewModel
-        viewModel = HistoryViewModel(repository)
+        viewModel = StockViewModel(repository)
         advanceUntilIdle()
 
         // Then: Should have 1 header + 2 items
@@ -210,7 +210,7 @@ class HistoryViewModelTest {
             .thenReturn(dataMap2)
 
         // When: Create ViewModel and call refresh twice
-        viewModel = HistoryViewModel(repository)
+        viewModel = StockViewModel(repository)
         advanceUntilIdle()
 
         val firstState = viewModel.state.value
@@ -239,7 +239,7 @@ class HistoryViewModelTest {
         whenever(repository.getHistoryRecommendations()).thenReturn(dataMap)
 
         // When: Create ViewModel
-        viewModel = HistoryViewModel(repository)
+        viewModel = StockViewModel(repository)
         advanceUntilIdle()
 
         // Then: Should have 1 header + 4 items = 5 rows
@@ -265,7 +265,7 @@ class HistoryViewModelTest {
         whenever(repository.getHistoryRecommendations()).thenReturn(dataMap)
 
         // When: Create ViewModel
-        viewModel = HistoryViewModel(repository)
+        viewModel = StockViewModel(repository)
         advanceUntilIdle()
 
         // Then: All 10 dates should be present in descending order (string comparison)
@@ -294,7 +294,7 @@ class HistoryViewModelTest {
         whenever(repository.getHistoryRecommendations()).thenReturn(dataMap)
 
         // When: Create ViewModel
-        viewModel = HistoryViewModel(repository)
+        viewModel = StockViewModel(repository)
         advanceUntilIdle()
 
         // Then: Data should be preserved
