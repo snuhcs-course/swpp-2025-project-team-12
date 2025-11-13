@@ -17,27 +17,29 @@ class MarketLLMview(viewsets.ViewSet):
 
     @action(detail=False, methods=['get'])
     @default_error_handler
-    def get_llm_summary(self, request, year = None, month = None, day = None):
+    def get_market_overview(self, request, year = None, month = None, day = None):
         """Get the latest LLM output for market analysis from S3 JSON data."""
-        bucket_name=os.environ.get('FINANCE_BUCKET_NAME')
+        bucket_name = os.environ.get('FINANCE_BUCKET_NAME')
 
         # if no date provided, get the latest
         if year is None and month is None and day is None:
-            source = FinanceS3Client().check_source(bucket=bucket_name, prefix="llm_output")
+            source = FinanceS3Client().check_source(
+                bucket=bucket_name,
+                prefix="llm_output/market-index-overview"
+            )
             if not source["ok"]: return JsonResponse({ "message": "No LLM output found" }, status=404)
             year, month, day = source["latest"].split("-")
 
-        path = f"llm_output/{get_path_with_date('index_info', year, month, day)}"
+        path = f"llm_output/market-index-overview/year={year}/month={month}/{year}-{month}-{day}"
         try:
             llm_output = FinanceS3Client().get_json(
                 bucket=bucket_name,
                 key=path
             )
         except Exception as e:
-            return JsonResponse({ "message": "Unexpected Server Error" }, status=500)
+            return JsonResponse({"message": "Unexpected Server Error"}, status=500)
 
-        return JsonResponse({ "llm_output": llm_output }, status=200)
-
+        return JsonResponse(llm_output, status=200, safe=False)
 class StockIndexView(viewsets.ViewSet):
     """
     Market Index Views
