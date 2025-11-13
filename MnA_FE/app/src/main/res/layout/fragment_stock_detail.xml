@@ -36,7 +36,7 @@
             android:layout_height="wrap_content"
             android:layout_marginTop="12dp"
             android:textStyle="bold"
-            android:textSize="34sp"
+            android:textSize="28sp"
             android:textColor="?attr/colorOnSurface"/>
 
         <!-- Change (한 줄: -5 (-0,72%)) -->
@@ -77,9 +77,7 @@
             android:layout_height="wrap_content"
             android:layout_marginTop="12dp"
             app:cardUseCompatPadding="true"
-            app:cardCornerRadius="16dp"
-            app:strokeWidth="1dp"
-            app:strokeColor="?attr/colorOutline">
+            app:cardCornerRadius="16dp">
 
             <LinearLayout
                 android:layout_width="match_parent"
@@ -91,8 +89,14 @@
                 <com.github.mikephil.charting.charts.LineChart
                     android:id="@+id/lineChart"
                     android:layout_width="match_parent"
-                    android:layout_height="300dp"
+                    android:layout_height="180dp"
                     android:layout_marginTop="16dp" />
+
+                <HorizontalScrollView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:scrollbars="none"
+                    android:paddingTop="8dp">
 
                 <!-- Segmented pill -->
                 <com.google.android.material.button.MaterialButtonToggleGroup
@@ -104,53 +108,87 @@
                     app:selectionRequired="true"
                     app:checkedButton="@id/btn6M">
 
-                    <!-- 각 버튼은 높이 고정 + 폭 가중치로 균등 분배 -->
                     <com.google.android.material.button.MaterialButton
                         android:id="@+id/btn1W"
                         style="@style/Widget.DI.SegButton"
-                        android:layout_width="0dp"
-                        android:layout_height="40dp"
-                        android:layout_weight="1"
+                        android:layout_width="wrap_content"
+                        android:layout_height="48dp"
+                        android:minWidth="67dp"
                         android:text="@string/_1W"/>
+
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/btn1M"
+                        style="@style/Widget.DI.SegButton"
+                        android:layout_width="wrap_content"
+                        android:layout_height="48dp"
+                        android:minWidth="67dp"
+                        android:text="@string/_1M"/>
 
                     <com.google.android.material.button.MaterialButton
                         android:id="@+id/btn3M"
                         style="@style/Widget.DI.SegButton"
-                        android:layout_width="0dp"
-                        android:layout_height="40dp"
-                        android:layout_weight="1"
+                        android:layout_width="wrap_content"
+                        android:layout_height="48dp"
+                        android:minWidth="67dp"
                         android:text="@string/_3M"/>
 
                     <com.google.android.material.button.MaterialButton
                         android:id="@+id/btn6M"
                         style="@style/Widget.DI.SegButton"
-                        android:layout_width="0dp"
-                        android:layout_height="40dp"
-                        android:layout_weight="1"
+                        android:layout_width="wrap_content"
+                        android:layout_height="48dp"
+                        android:minWidth="67dp"
                         android:text="@string/_6M"/>
 
                     <com.google.android.material.button.MaterialButton
-                        android:id="@+id/btn9M"
+                        android:id="@+id/btnYTD"
                         style="@style/Widget.DI.SegButton"
-                        android:layout_width="0dp"
-                        android:layout_height="40dp"
-                        android:layout_weight="1"
-                        android:text="@string/_9M"/>
+                        android:layout_width="wrap_content"
+                        android:layout_height="48dp"
+                        android:minWidth="67dp"
+                        android:text="@string/_YTD"/>
 
                     <com.google.android.material.button.MaterialButton
                         android:id="@+id/btn1Y"
                         style="@style/Widget.DI.SegButton"
-                        android:layout_width="0dp"
-                        android:layout_height="40dp"
-                        android:layout_weight="1"
+                        android:layout_width="wrap_content"
+                        android:layout_height="48dp"
+                        android:minWidth="67dp"
                         android:text="@string/_1Y"/>
 
-                </com.google.android.material.button.MaterialButtonToggleGroup>
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/btn3Y"
+                        style="@style/Widget.DI.SegButton"
+                        android:layout_width="wrap_content"
+                        android:layout_height="48dp"
+                        android:minWidth="67dp"
+                        android:text="@string/_3Y"/>
 
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/btn5Y"
+                        style="@style/Widget.DI.SegButton"
+                        android:layout_width="wrap_content"
+                        android:layout_height="48dp"
+                        android:minWidth="67dp"
+                        android:text="@string/_5Y"/>
+
+                </com.google.android.material.button.MaterialButtonToggleGroup>
+                </HorizontalScrollView>
             </LinearLayout>
         </com.google.android.material.card.MaterialCardView>
 
-        <!-- Net income -->
+        <TextView
+            android:id="@+id/tvDate"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            android:layout_marginEnd="8dp"
+            android:layout_gravity="end"
+            android:textSize="20sp"
+            android:textAppearance="?attr/textAppearanceLabelSmall"
+            android:textColor="?attr/colorOnSurfaceVariant"/>
+
+        <!-- size -->
         <com.google.android.material.card.MaterialCardView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -165,70 +203,13 @@
 
                 <TextView
                     style="@style/TextAppearance.Material3.TitleMedium"
-                    android:text="@string/net_income"
+                    android:text="@string/size"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content" />
 
-                <!-- 요약 2줄 (라벨-값) -->
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="12dp"
-                    android:orientation="vertical">
-
-                    <!-- Market Cap -->
-                    <LinearLayout
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:orientation="horizontal">
-
-                        <TextView
-                            android:layout_width="0dp"
-                            android:layout_height="wrap_content"
-                            android:layout_weight="1"
-                            android:text="@string/market_cap"
-                            android:textColor="?attr/colorOnSurfaceVariant"
-                            android:textSize="13sp"/>
-
-                        <TextView
-                            android:id="@+id/tvMarketCap"
-                            android:layout_width="0dp"
-                            android:layout_height="wrap_content"
-                            android:layout_weight="1"
-                            android:gravity="end"
-                            android:textStyle="bold"
-                            android:textSize="13sp"/>
-                    </LinearLayout>
-
-                    <!-- Current Share Outstanding -->
-                    <LinearLayout
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:orientation="horizontal"
-                        android:layout_marginTop="6dp">
-
-                        <TextView
-                            android:layout_width="0dp"
-                            android:layout_height="wrap_content"
-                            android:layout_weight="1"
-                            android:text="@string/current_share_outstanding"
-                            android:textColor="?attr/colorOnSurfaceVariant"
-                            android:textSize="13sp"/>
-
-                        <TextView
-                            android:id="@+id/tvSharesOutstanding"
-                            android:layout_width="0dp"
-                            android:layout_height="wrap_content"
-                            android:layout_weight="1"
-                            android:gravity="end"
-                            android:textStyle="bold"
-                            android:textSize="13sp"/>
-                    </LinearLayout>
-                </LinearLayout>
-
                 <!-- 표 -->
                 <TableLayout
-                    android:id="@+id/tblNetIncome"
+                    android:id="@+id/tblSize"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="12dp"
@@ -236,72 +217,76 @@
             </LinearLayout>
         </com.google.android.material.card.MaterialCardView>
 
-        <!-- Valuation -->
-        <com.google.android.material.card.MaterialCardView
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="12dp">
-
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:orientation="vertical"
-                android:padding="16dp">
-
-                <TextView
-                    style="@style/TextAppearance.Material3.TitleMedium"
-                    android:text="@string/valuation"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content" />
-
-                <TableLayout
-                    android:id="@+id/tblValuation"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="8dp"
-                    android:stretchColumns="1" />
-            </LinearLayout>
-        </com.google.android.material.card.MaterialCardView>
-
-        <!-- Solvency -->
-        <com.google.android.material.card.MaterialCardView
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="12dp">
-
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:orientation="vertical"
-                android:padding="16dp">
-
-                <TextView
-                    style="@style/TextAppearance.Material3.TitleMedium"
-                    android:text="@string/solvency"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content" />
-
-                <TableLayout
-                    android:id="@+id/tblSolvency"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="8dp"
-                    android:stretchColumns="1" />
-            </LinearLayout>
-        </com.google.android.material.card.MaterialCardView>
-
-        <!-- Dividend -->
+        <!-- value -->
         <com.google.android.material.card.MaterialCardView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="12dp"
-            android:layout_marginBottom="24dp">
+            android:clipToPadding="false">
 
             <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
                 android:orientation="vertical"
-                android:padding="16dp">
+                android:padding="16dp"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content">
+
+                <TextView
+                    style="@style/TextAppearance.Material3.TitleMedium"
+                    android:text="@string/value"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content" />
+
+                <!-- 표 -->
+                <TableLayout
+                    android:id="@+id/tblValue"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="12dp"
+                    android:stretchColumns="1,2,3"/>
+            </LinearLayout>
+        </com.google.android.material.card.MaterialCardView>
+
+        <!-- profitability -->
+        <com.google.android.material.card.MaterialCardView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="12dp"
+            android:clipToPadding="false">
+
+            <LinearLayout
+                android:orientation="vertical"
+                android:padding="16dp"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content">
+
+                <TextView
+                    style="@style/TextAppearance.Material3.TitleMedium"
+                    android:text="@string/profitability"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content" />
+
+                <!-- 표 -->
+                <TableLayout
+                    android:id="@+id/tblProfitability"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="12dp"
+                    android:stretchColumns="1,2,3"/>
+            </LinearLayout>
+        </com.google.android.material.card.MaterialCardView>
+
+        <!-- dividend -->
+        <com.google.android.material.card.MaterialCardView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="12dp"
+            android:clipToPadding="false">
+
+            <LinearLayout
+                android:orientation="vertical"
+                android:padding="16dp"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content">
 
                 <TextView
                     style="@style/TextAppearance.Material3.TitleMedium"
@@ -309,12 +294,13 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content" />
 
+                <!-- 표 -->
                 <TableLayout
                     android:id="@+id/tblDividend"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_marginTop="8dp"
-                    android:stretchColumns="1" />
+                    android:layout_marginTop="12dp"
+                    android:stretchColumns="1,2,3"/>
             </LinearLayout>
         </com.google.android.material.card.MaterialCardView>
 
@@ -335,6 +321,11 @@
             android:gravity="center"
             android:padding="12dp"
             android:visibility="gone"/>
+
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="80dp" />
+
     </LinearLayout>
 
 </androidx.core.widget.NestedScrollView>

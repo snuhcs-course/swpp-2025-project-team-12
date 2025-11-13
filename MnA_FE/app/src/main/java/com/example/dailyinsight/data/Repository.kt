@@ -1,5 +1,4 @@
 package com.example.dailyinsight.data
-
 import com.example.dailyinsight.data.dto.RecommendationDto
 import com.example.dailyinsight.data.dto.StockDetailDto
 

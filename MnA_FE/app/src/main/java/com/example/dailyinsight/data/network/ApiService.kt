@@ -4,6 +4,7 @@ import com.example.dailyinsight.data.dto.*
 import retrofit2.Call
 import retrofit2.Response
 import retrofit2.http.*
+import okhttp3.ResponseBody
 /**
  * Unified API Service for all endpoints
  * Base URL: http://10.0.2.2:8000/ (no /api suffix)
@@ -21,17 +22,17 @@ interface ApiService {
     @GET("api/recommendations/history/")
     suspend fun getStockRecommendations(): ApiResponse<Map<String, List<RecommendationDto>>>
 
-    @GET("api/recommendations/personalized/")
-    suspend fun getPersonalizedRecommendations(
-        @Query("userId") userId: String
-    ): ApiResponse<List<RecommendationDto>>
+    // ============ Stock Briefing ============
+
+    @GET("marketindex/api/overview/{ticker}")
+    suspend fun getStockBriefing(): LLMSummaryResponse
 
     // ============ Stock Details ============
     @GET("api/stocks/{ticker}/")
     suspend fun getStockDetail(
         @Path("ticker") ticker: String
     ): ApiResponse<StockDetailDto>
-    
+
     @GET("api/company-list")
     suspend fun getCompanyList(
         @Query("limit") limit: Int,
@@ -48,8 +49,8 @@ interface ApiService {
         @Query("days") days: Int
     ): StockIndexHistoryResponse
 
-    @GET("marketindex/llm_summary")
-    suspend fun getLLMSummary(): LLMSummaryResponse
+    @GET("marketindex/overview")
+    suspend fun getLLMSummaryLatest(): ResponseBody
 
     // ============ Authentication ============
     @GET("user/csrf")
