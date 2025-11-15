@@ -1,6 +1,7 @@
 package com.example.dailyinsight.data
 import com.example.dailyinsight.data.dto.StockDetailDto
 import com.example.dailyinsight.data.dto.RecommendationDto
+import com.example.dailyinsight.data.dto.StockOverviewDto
 import com.example.dailyinsight.data.network.ApiService
 
 class RemoteRepository(
@@ -13,10 +14,11 @@ class RemoteRepository(
     override suspend fun getStockRecommendations(): Map<String, List<RecommendationDto>> =
         api.getStockRecommendations().data ?: emptyMap()
 
-    override suspend fun getStockDetail(ticker: String): StockDetailDto {
-        // API 호출을 통해 StockDetailDto를 가져오고,
-        // 데이터가 null이면 예외를 던지도록 처리합니다.
-        return api.getStockDetail(ticker).data
-            ?: throw NoSuchElementException("Stock detail not found for $ticker")
+    override suspend fun getStockReport(ticker: String): StockDetailDto {
+        return api.getStockReport(ticker)
+    }
+
+    override suspend fun getStockOverview(ticker: String): StockOverviewDto {
+        return api.getStockOverview(ticker)
     }
 }
