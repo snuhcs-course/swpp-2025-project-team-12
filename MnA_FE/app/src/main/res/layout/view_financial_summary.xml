@@ -28,7 +28,7 @@
             android:textStyle="bold"
             android:textSize="20sp"
             android:textColor="#111111"
-            android:paddingStart="8dp"
+            android:paddingStart="0dp"
             android:paddingEnd="8dp"
             android:paddingTop="4dp"
             android:paddingBottom="4dp"
@@ -60,7 +60,7 @@
                 android:textSize="12sp"
                 android:textColor="#111111"
                 android:paddingEnd="4dp"
-                android:text="2750.43"/>
+                android:text=""/>
 
             <TextView
                 android:id="@+id/price_change"

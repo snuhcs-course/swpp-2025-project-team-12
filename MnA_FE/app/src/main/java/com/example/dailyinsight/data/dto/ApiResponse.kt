@@ -1,10 +1,15 @@
 package com.example.dailyinsight.data.dto
 
-import kotlinx.serialization.Serializable
+import com.google.gson.annotations.SerializedName
 
-@Serializable
 data class ApiResponse<T>(
+
+    @SerializedName("data")
     val data: T,
-    val status: String? = null,   // 선택(기본값)
-    val message: String? = null   // 선택(기본값)
+
+    @SerializedName("status")
+    val status: String? = null,
+
+    @SerializedName("message")
+    val message: String? = null
 )

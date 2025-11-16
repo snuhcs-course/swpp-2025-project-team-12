@@ -1,72 +1,64 @@
 package com.example.dailyinsight.data.dto
 
-import kotlinx.serialization.SerialName
-import kotlinx.serialization.Serializable
-import kotlinx.serialization.json.JsonNames
+import com.google.gson.annotations.SerializedName
 
-@Serializable
 data class StockDetailDto(
-    @SerialName("ticker") val ticker: String? = null,
-    @SerialName("name") val name: String? = null,
+    @SerializedName("ticker") val ticker: String? = null,
+    @SerializedName("name") val name: String? = null,
 
-    // 1. "오늘" 데이터 (헤더 + 2025년 표)
-    @SerialName("current") val current: CurrentData? = null,
-    @SerialName("valuation") val valuation: ValuationData? = null,
-    @SerialName("dividend") val dividend: DividendData? = null,
-    @SerialName("financials") val financials: FinancialsData? = null,
+    // 1. "올해" 데이터 (헤더 + 올해 표)
+    @SerializedName("current") val current: CurrentData? = null,
+    @SerializedName("valuation") val valuation: ValuationData? = null,
+    @SerializedName("dividend") val dividend: DividendData? = null,
+    @SerializedName("financials") val financials: FinancialsData? = null,
 
-    // 2. "과거" 데이터 (차트 + 2024, 2023년 표)
-    @SerialName("history") val history: List<HistoryItem>? = null,
+    // 2. "과거" 데이터 (차트 + 작년~ 표)
+    @SerializedName("history") val history: List<HistoryItem>? = null,
 
     // 3. 기타
-    @SerialName("profile") val profile: ProfileData? = null,
-    @SerialName("asOf") val asOf: String? = null // 기준일
+    @SerializedName("profile") val profile: ProfileData? = null,
+    @SerializedName("asOf") val asOf: String? = null // 기준일
 )
 
-@Serializable
+
 data class CurrentData(
-    @SerialName("price") val price: Long? = null,
-    @SerialName("change") val change: Long? = null,
-    @SerialName("change_rate") val changeRate: Double? = null,
-    @SerialName("market_cap") val marketCap: Long? = null,
+    @SerializedName("price") val price: Long? = null,
+    @SerializedName("change") val change: Long? = null,
+    @SerializedName("change_rate") val changeRate: Double? = null,
+    @SerializedName("market_cap") val marketCap: Long? = null,
     //@SerialName("shares_outstanding") val sharesOutstanding: Long? = null,
-    @SerialName("date") val date: String? = null // "2025-11-12 00:00:00"
+    @SerializedName("date") val date: String? = null // "2025-11-12 00:00:00"
 )
 
-@Serializable
 data class ValuationData(
-    @SerialName("pe_ttm") val peTtm: Double? = null,
-    @SerialName("pb") val priceToBook: Double? = null, // pbr
-    @SerialName("bps") val bps: Long? = null
+    @SerializedName("pe_ttm") val peTtm: Double? = null,
+    @SerializedName("pb") val priceToBook: Double? = null, // pbr
+    @SerializedName("bps") val bps: Long? = null
 )
 
-@Serializable
 data class DividendData(
-    @SerialName("yield") val `yield`: Double? = null // div
+    @SerializedName("yield") val `yield`: Double? = null // div
 )
 
-@Serializable
 data class FinancialsData(
-    @SerialName("eps") val eps: Long? = null,
-    @SerialName("dps") val dps: Long? = null,
-    @SerialName("roe") val roe: Double? = null
+    @SerializedName("eps") val eps: Long? = null,
+    @SerializedName("dps") val dps: Long? = null,
+    @SerializedName("roe") val roe: Double? = null
 )
 
-@Serializable
 data class HistoryItem(
-    @SerialName("date") val date: String,
-    @SerialName("close") val close: Double,
-    @SerialName("market_cap") val marketCap: Long? = null,
-    @SerialName("PER") val per: Double? = null,
-    @SerialName("PBR") val pbr: Double? = null,
-    @SerialName("EPS") val eps: Long? = null,
-    @SerialName("BPS") val bps: Long? = null,
-    @SerialName("DIV") val divYield: Double? = null,
-    @SerialName("DPS") val dps: Long? = null,
-    @SerialName("ROE") val roe: Double? = null
+    @SerializedName("date") val date: String,
+    @SerializedName("close") val close: Double,
+    @SerializedName("market_cap") val marketCap: Long? = null,
+    @SerializedName("PER") val per: Double? = null,
+    @SerializedName("PBR") val pbr: Double? = null,
+    @SerializedName("EPS") val eps: Long? = null,
+    @SerializedName("BPS") val bps: Long? = null,
+    @SerializedName("DIV") val divYield: Double? = null,
+    @SerializedName("DPS") val dps: Long? = null,
+    @SerializedName("ROE") val roe: Double? = null
 )
 
-@Serializable
 data class ProfileData(
-    @SerialName("explanation") val explanation: String? = null
+    @SerializedName("explanation") val explanation: String? = null
 )

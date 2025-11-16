@@ -25,6 +25,7 @@ import com.example.dailyinsight.data.dto.DividendData
 import com.example.dailyinsight.data.dto.FinancialsData
 import com.example.dailyinsight.data.dto.RecommendationDto
 import com.example.dailyinsight.data.dto.StockDetailDto
+import com.example.dailyinsight.data.dto.StockOverviewDto
 import com.example.dailyinsight.data.dto.HistoryItem
 import com.example.dailyinsight.data.dto.ValuationData
 import com.example.dailyinsight.databinding.FragmentStockDetailBinding
@@ -172,6 +173,20 @@ class StockDetailFragment : Fragment(R.layout.fragment_stock_detail) {
                 }
             }
         }
+        // --- 2. 👈 (신규) '요약' 상태 수집 ---
+        viewLifecycleOwner.lifecycleScope.launch {
+            viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
+                viewModel.overviewState.collect { st ->
+                    when (st) {
+                        is LoadResult.Success -> {
+                            bindOverview(st.data) // 텍스트 바인딩 함수 호출
+                        }
+                        // 로딩/에러는 _state가 이미 처리하므로 여기선 생략 가능
+                        else -> Unit
+                    }
+                }
+            }
+        }
 
         // 상태 수집 (차트)
         viewLifecycleOwner.lifecycleScope.launch {
@@ -201,6 +216,31 @@ class StockDetailFragment : Fragment(R.layout.fragment_stock_detail) {
 
         setupChart()
         setupRangeButtons() // 버튼 연결
+    }
+
+    // --- 3. 요약/분석/뉴스 바인딩 함수 ---
+    private fun bindOverview(overview: StockOverviewDto) = with(binding) {
+        // 1. 요약
+        overview.summary?.takeIf { it.isNotBlank() }?.let {
+            cardSummary.isVisible = true
+            tvSummary.text = it
+        }
+        // 2. 기본적 분석
+        overview.fundamental?.takeIf { it.isNotBlank() }?.let {
+            cardFundamental.isVisible = true
+            tvFundamental.text = it
+        }
+        // 3. 기술적 분석
+        overview.technical?.takeIf { it.isNotBlank() }?.let {
+            cardTechnical.isVisible = true
+            tvTechnical.text = it
+        }
+        // 4. 관련 뉴스
+        overview.news?.takeIf { it.isNotEmpty() }?.let { newsList ->
+            cardNews.isVisible = true
+            // 뉴스를 "• 항목 1\n• 항목 2" 형태로 변환
+            tvNews.text = newsList.joinToString("\n") { "• $it" }
+        }
     }
 
     /** 상단 헤더(요약) */
@@ -394,7 +434,7 @@ class StockDetailFragment : Fragment(R.layout.fragment_stock_detail) {
     private fun renderSizeTable(
         table: TableLayout,
         header: List<String>,
-        today: CurrentData?,
+        today: HistoryItem?,
         yLast: HistoryItem?,
         yBefore: HistoryItem?,
         calculatedShares: Long?
@@ -410,6 +450,8 @@ class StockDetailFragment : Fragment(R.layout.fragment_stock_detail) {
         val rowShares = rowBody(listOf("상장 주식수", "–", "–", "–"), false)
         // TO의 sharesOutstanding 대신 계산된 값(calculatedShares)을 사용
         (rowShares.getChildAt(1) as? TextView)?.text = formatKrwShort(calculatedShares, true)
+        (rowShares.getChildAt(2) as? TextView)?.text = formatKrwShort(calculatedShares, true)
+        (rowShares.getChildAt(3) as? TextView)?.text = formatKrwShort(calculatedShares, true)
         table.addView(rowShares)
     }
 
@@ -417,7 +459,7 @@ class StockDetailFragment : Fragment(R.layout.fragment_stock_detail) {
     private fun renderValueTable(
         table: TableLayout,
         header: List<String>,
-        today: ValuationData?,
+        today: HistoryItem?,
         yLast: HistoryItem?,
         yBefore: HistoryItem?
     ) {
@@ -431,13 +473,13 @@ class StockDetailFragment : Fragment(R.layout.fragment_stock_detail) {
         table.addView(rowBps)
 
         val rowPer = rowBody(listOf("주가수익률", "–", "–", "–"), false)
-        (rowPer.getChildAt(1) as? TextView)?.setNumberOrDash(today?.peTtm, " 배")
+        (rowPer.getChildAt(1) as? TextView)?.setNumberOrDash(today?.per, " 배")
         (rowPer.getChildAt(2) as? TextView)?.setNumberOrDash(yLast?.per, " 배")
         (rowPer.getChildAt(3) as? TextView)?.setNumberOrDash(yBefore?.per, " 배")
         table.addView(rowPer)
 
         val rowPbr = rowBody(listOf("주가순자산비율", "–", "–", "–"), false)
-        (rowPbr.getChildAt(1) as? TextView)?.setNumberOrDash(today?.priceToBook, " 배")
+        (rowPbr.getChildAt(1) as? TextView)?.setNumberOrDash(today?.pbr, " 배")
         (rowPbr.getChildAt(2) as? TextView)?.setNumberOrDash(yLast?.pbr, " 배")
         (rowPbr.getChildAt(3) as? TextView)?.setNumberOrDash(yBefore?.pbr, " 배")
         table.addView(rowPbr)
@@ -447,7 +489,7 @@ class StockDetailFragment : Fragment(R.layout.fragment_stock_detail) {
     private fun renderProfitabilityTable(
         table: TableLayout,
         header: List<String>,
-        today: FinancialsData?,
+        today: HistoryItem?,
         yLast: HistoryItem?,
         yBefore: HistoryItem?
     ) {
@@ -471,8 +513,7 @@ class StockDetailFragment : Fragment(R.layout.fragment_stock_detail) {
     private fun renderDividendTable(
         table: TableLayout,
         header: List<String>,
-        today: FinancialsData?,
-        todayDiv: DividendData?,
+        today: HistoryItem?,
         yLast: HistoryItem?,
         yBefore: HistoryItem?
     ) {
@@ -486,7 +527,7 @@ class StockDetailFragment : Fragment(R.layout.fragment_stock_detail) {
         table.addView(rowDps)
 
         val rowDiv = rowBody(listOf("배당 수익률", "–", "–", "–"), false)
-        (rowDiv.getChildAt(1) as? TextView)?.setNumberOrDash(todayDiv?.`yield`, "%")
+        (rowDiv.getChildAt(1) as? TextView)?.setNumberOrDash(today?.divYield, "%")
         (rowDiv.getChildAt(2) as? TextView)?.setNumberOrDash(yLast?.divYield, "%")
         (rowDiv.getChildAt(3) as? TextView)?.setNumberOrDash(yBefore?.divYield, "%")
         table.addView(rowDiv)
@@ -581,6 +622,7 @@ class StockDetailFragment : Fragment(R.layout.fragment_stock_detail) {
         val lastYearStr = (currentYear - 1).toString() // "2024"
         val twoYearsAgoStr = (currentYear - 2).toString() // "2023"
 
+        val yToday = financials.lastOrNull() // "오늘" 데이터
         // 작년(2024년) 12월 31일(또는 마지막 거래일) 데이터 찾기
         val yLast = financials.filter { it.date.startsWith(lastYearStr) }.lastOrNull()
         // 재작년(2023년) 12월 31일(또는 마지막 거래일) 데이터 찾기
@@ -596,10 +638,18 @@ class StockDetailFragment : Fragment(R.layout.fragment_stock_detail) {
         }
 
         // === 4. 테이블 렌더링 ===
-        renderSizeTable(tblSize, dynamicHeader, d.current, yLast, yBefore, calculatedShares)
-        renderValueTable(tblValue, dynamicHeader, d.valuation, yLast, yBefore)
-        renderProfitabilityTable(tblProfitability, dynamicHeader, d.financials, yLast, yBefore)
-        renderDividendTable(tblDividend, dynamicHeader, d.financials, d.dividend, yLast, yBefore)
+        renderSizeTable(tblSize, dynamicHeader, yToday, yLast, yBefore, calculatedShares)
+        renderValueTable(tblValue, dynamicHeader, yToday, yLast, yBefore)
+        renderProfitabilityTable(tblProfitability, dynamicHeader, yToday, yLast, yBefore)
+        renderDividendTable(tblDividend, dynamicHeader, yToday, yLast, yBefore)
+
+        // === 5. "기업 overview" 바인딩 ===
+        d.profile?.explanation?.takeIf { it.isNotBlank() }?.let {
+            cardExplanation.isVisible = true
+            tvExplanation.text = it
+        }
+
+
     }
 
     override fun onDestroyView() {

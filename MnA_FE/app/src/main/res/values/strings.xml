@@ -32,7 +32,6 @@
     <string name="_1Y">1년</string>
     <string name="_3Y">3년</string>
     <string name="_5Y">5년</string>
-
     <string name="no_chart_data">no chart data</string>
     <string name="placeholder_loading">불러오는 중…</string>
     <string name="label_overview">전반</string>

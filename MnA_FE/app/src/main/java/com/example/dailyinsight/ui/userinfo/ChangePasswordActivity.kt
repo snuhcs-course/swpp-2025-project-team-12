@@ -1,6 +1,9 @@
 package com.example.dailyinsight.ui.userinfo
 
+import android.content.Context
 import android.os.Bundle
+import android.view.inputmethod.EditorInfo
+import android.view.inputmethod.InputMethodManager
 import android.widget.Toast
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
@@ -37,6 +40,17 @@ class ChangePasswordActivity : AppCompatActivity() {
         val PWTextField = findViewById<TextInputEditText>(R.id.PWTextField)
         val verifyPWField = findViewById<TextInputEditText>(R.id.verifyPWField)
         val changeButton = findViewById<MaterialButton>(R.id.changeButton)
+
+        verifyPWField.setOnEditorActionListener { v, actionId, _ ->
+            if (actionId == EditorInfo.IME_ACTION_DONE) {
+                val imm = getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager
+                imm.hideSoftInputFromWindow(v.windowToken, 0)
+                changeButton.performClick()
+                true
+            } else {
+                false
+            }
+        }
 
         changeButton.setOnClickListener {
             val password = PWTextField.text.toString().trim()
