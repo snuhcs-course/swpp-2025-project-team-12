@@ -1,7 +1,4 @@
 # apps/api/views.py
-import json, time
-from datetime import datetime
-
 from django.http import HttpRequest
 from django.core.cache import cache
 from rest_framework import viewsets
@@ -13,6 +10,7 @@ from utils.debug_print import debug_print
 from utils.pagination import get_pagination
 from utils.for_api import *
 from utils.store import store
+from utils import instant_data
 from apps.api.constants import *
 import pandas as pd
 
@@ -88,6 +86,22 @@ class APIView(viewsets.ViewSet):
             "asOf": iso_now()
         })
 
+    @action(detail=False, methods=['post'])
+    @default_error_handler
+    def reload_data(self, request: HttpRequest):
+        """
+        POST /api/reload-data
+        관리자가 수동으로 instant/profile 데이터를 리로드
+        서버 재시작 없이 최신 데이터로 업데이트
+        """
+        try:
+            return instant_data.reload()
+        except Exception as e:
+            debug_print(f"✗ Error reloading data: {e}")
+            import traceback
+            debug_print(traceback.format_exc())
+            return degraded(str(e), source="reload")
+
     @action(detail=False, methods=['get'])
     @default_error_handler
     def get_indices(self, request: HttpRequest):
@@ -97,11 +111,6 @@ class APIView(viewsets.ViewSet):
         """
         if INDICES_SOURCE == "s3":
             try:
-                from datetime import datetime
-                import json
-                import boto3
-                import os
-
                 # S3 클라이언트 생성
                 s3 = FinanceS3Client()
 
@@ -551,102 +560,3 @@ class APIView(viewsets.ViewSet):
             import traceback
             debug_print(traceback.format_exc())
             return degraded(str(e), source="cache")
-
-    @action(detail=False, methods=['post'])
-    @default_error_handler
-    def reload_data(self, request: HttpRequest):
-        """
-        POST /api/reload-data
-        관리자가 수동으로 instant/profile 데이터를 리로드
-        서버 재시작 없이 최신 데이터로 업데이트
-        """
-        try:
-
-            debug_print("=" * 50)
-            debug_print("Manual data reload triggered...")
-
-            total_start = time.time()
-            s3 = FinanceS3Client()
-
-            # 1) Instant 데이터 로드
-            instant_start = time.time()
-            instant_df, ts = s3.get_latest_parquet_df(
-                FINANCE_BUCKET,
-                'price-financial-info-instant/'
-            )
-            instant_elapsed = time.time() - instant_start
-
-            if instant_df is not None:
-                # 시가총액 기준 정렬
-                instant_df['market_cap_numeric'] = pd.to_numeric(instant_df['market_cap'], errors='coerce')
-                instant_df = instant_df.sort_values(
-                    by=['date', 'market_cap_numeric'],
-                    ascending=[True, False]
-                ).drop(columns=['market_cap_numeric'])
-
-                # Django 캐시에 저장
-                store.set_data('instant_df', instant_df)
-                debug_print(f"✓ Instant data reloaded to cache: {instant_df.shape}")
-
-            # 2) Profile 데이터 로드 (market별 자동 검색)
-            profile_start = time.time()
-
-            response = s3.get_list_v2(
-                FINANCE_BUCKET, 'company-profile/'
-            )
-
-            if 'Contents' in response:
-                files = sorted(response['Contents'], key=lambda x: x['LastModified'], reverse=True)
-
-                kospi_file = None
-                kosdaq_file = None
-
-                for f in files:
-                    if 'market=kospi' in f['Key'] and kospi_file is None:
-                        kospi_file = f['Key']
-                    if 'market=kosdaq' in f['Key'] and kosdaq_file is None:
-                        kosdaq_file = f['Key']
-                    if kospi_file and kosdaq_file:
-                        break
-
-                profile_kospi = None
-                profile_kosdaq = None
-
-                if kospi_file: profile_kospi = s3.get_dataframe(FINANCE_BUCKET, kospi_file)
-                if kosdaq_file: profile_kosdaq = s3.get_dataframe(FINANCE_BUCKET, kosdaq_file)
-
-                if profile_kosdaq is not None and profile_kospi is not None:
-                    profile_df = pd.concat([profile_kosdaq, profile_kospi])
-                    # Django 캐시에 저장
-                    cache.set('profile_df', profile_df, timeout=None)
-                    debug_print(f"✓ Profile data reloaded to cache: {profile_df.shape}")
-
-            profile_elapsed = time.time() - profile_start
-
-            total_elapsed = time.time() - total_start
-            # 로드 시각 저장
-            store.set_data('data_last_loaded', datetime.now(), timeout=None)
-
-            debug_print(f"✓ Total reload time: {total_elapsed:.2f}s")
-            debug_print(f"✓ Data reloaded at: {datetime.now()}")
-            debug_print("=" * 50)
-
-            # 캐시에서 확인
-            instant_df = cache.get('instant_df')
-            profile_df = cache.get('profile_df')
-
-            return ok({
-                "message": "Data reloaded successfully",
-                "instant_shape": list(instant_df.shape) if instant_df is not None else None,
-                "profile_shape": list(profile_df.shape) if profile_df is not None else None,
-                "instant_time": f"{instant_elapsed:.2f}s",
-                "profile_time": f"{profile_elapsed:.2f}s",
-                "total_time": f"{total_elapsed:.2f}s",
-                "reloaded_at": str(datetime.now())
-            })
-
-        except Exception as e:
-            debug_print(f"✗ Error reloading data: {e}")
-            import traceback
-            debug_print(traceback.format_exc())
-            return degraded(str(e), source="reload")
