@@ -1,4 +1,6 @@
+# apps/api/tests/integration/test_company_profiles.py
 from django.test import TestCase, Client
+from unittest.mock import patch, Mock
 
 
 class ApiCompanyProfilesTests(TestCase):
@@ -156,7 +158,7 @@ class ApiCompanyProfilesTests(TestCase):
         
         # source 필드가 있으면
         if "source" in data:
-            self.assertIn(data["source"], ["s3", "mock"])
+            self.assertIn(data["source"], ["s3", "mock", "memory"])
     
     def test_company_profiles_has_asof_field(self):
         """응답에 asOf 필드가 있는지 확인"""
@@ -259,3 +261,51 @@ class ApiCompanyProfilesTests(TestCase):
         # 10초 이내 응답 (S3 호출 가능)
         self.assertLess(elapsed, 10.0, "Response should be within 10 seconds")
         self.assertEqual(response.status_code, 200)
+    
+    def test_company_profiles_with_symbol_found(self):
+        """특정 심볼 검색 - 찾았을 때 (lines 152-166)"""
+        # 실제 존재하는 심볼 (삼성전자)
+        response = self.client.get(self.url, {"symbol": "005930"})
+        data = response.json()
+        
+        self.assertEqual(response.status_code, 200)
+        
+        # S3 데이터가 있으면
+        if not data.get("degraded") and data.get("total", 0) > 0:
+            self.assertEqual(data["total"], 1)
+            self.assertEqual(len(data["items"]), 1)
+            self.assertEqual(data["items"][0]["ticker"], "005930")
+    
+    def test_company_profiles_with_symbol_not_found(self):
+        """특정 심볼 검색 - 못 찾았을 때 (lines 167-175)"""
+        # 존재하지 않는 심볼
+        response = self.client.get(self.url, {"symbol": "INVALID999"})
+        data = response.json()
+        
+        self.assertEqual(response.status_code, 200)
+        
+        # S3 데이터가 있으면 빈 결과
+        if not data.get("degraded"):
+            self.assertEqual(data["total"], 0)
+            self.assertEqual(len(data["items"]), 0)
+    
+    @patch('apps.api.views.ApiConfig')
+    def test_company_profiles_symbol_in_index(self, mock_config):
+        """특정 심볼이 인덱스에 있을 때 (lines 185-190)"""
+        import pandas as pd
+        
+        # Mock DataFrame with symbol in index
+        mock_df = pd.DataFrame({
+            'explanation': ['Test company explanation']
+        }, index=['TEST001'])
+        
+        mock_config.profile_df = mock_df
+        mock_config.instant_df = None
+        
+        response = self.client.get(self.url, {"symbol": "TEST001"})
+        data = response.json()
+        
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(data["total"], 1)
+        self.assertEqual(len(data["items"]), 1)
+        self.assertEqual(data["items"][0]["ticker"], "TEST001")

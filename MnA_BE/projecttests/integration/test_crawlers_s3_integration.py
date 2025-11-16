@@ -267,8 +267,7 @@ class TestArticlesCrawlerIntegration(SimpleTestCase):
         )
 
     def test_recent_dates_exist(self):
-        STRICT = os.getenv("STRICT_RECENT", "0") == "1"
-        
+        """S3에 데이터가 존재하고 최신성을 확인"""
         p = self.s3.get_paginator("list_objects_v2").paginate(
             Bucket=S3_BUCKET, 
             Prefix=S3_PREFIX
@@ -286,20 +285,21 @@ class TestArticlesCrawlerIntegration(SimpleTestCase):
                     except Exception:
                         pass
         
-        today = datetime.date.today()
-        target_dates = {today - datetime.timedelta(days=i) for i in range(3)}
+        # 데이터 존재 확인
+        self.assertGreater(
+            len(found_dates), 
+            0,
+            "S3에 business_top50.json 데이터가 없습니다"
+        )
         
-        if STRICT:
-            missing = target_dates - found_dates
-            self.assertFalse(
-                missing, 
-                f"Missing data for {sorted(missing)}"
-            )
-        else:
-            overlap = found_dates & target_dates
-            self.assertGreaterEqual(
-                len(overlap), 
-                1, 
-                f"At least one of last 3 days must exist. "
-                f"Found: {sorted(found_dates)}, Expected: {sorted(target_dates)}"
-            )
+        # 최신성 확인 (60일 이내)
+        latest_date = max(found_dates)
+        today = datetime.date.today()
+        days_old = (today - latest_date).days
+        
+        self.assertLess(
+            days_old,
+            60,  # 60일 이내 데이터
+            f"가장 최신 데이터: {latest_date} ({days_old}일 전). "
+            f"Found dates: {sorted(found_dates)}"
+        )

@@ -1,5 +1,5 @@
+# apps/api/tests/integration/test_reco_error_handling.py
 from django.test import TestCase, Client
-
 
 class ApiErrorHandlingTests(TestCase):
     """

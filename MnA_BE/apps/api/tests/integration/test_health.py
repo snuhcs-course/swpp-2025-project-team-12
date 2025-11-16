@@ -1,6 +1,6 @@
+# apps/api/tests/integration/test_health.py
 from django.test import TestCase, Client
 import os
-
 
 class ApiHealthTests(TestCase):
     """

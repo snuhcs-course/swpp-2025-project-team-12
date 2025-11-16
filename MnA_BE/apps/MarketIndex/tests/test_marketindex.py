@@ -37,44 +37,44 @@ class StockindexManagerTests(TestCase):
         self.assertIn('KOSDAQ', manager.indices)
         self.assertEqual(manager.max_days, 365)
     
-    def test_get_file_path(self):
-        """_get_file_path - 파일 경로 생성"""
+    def test_get_local_file_path(self):
+        """_get_local_file_path - 파일 경로 생성"""
         from apps.MarketIndex.stockindex_manager import StockindexManager
         
         manager = StockindexManager(data_dir_name=self.test_data_dir)
         
-        path = manager._get_file_path('KOSPI')
+        path = manager._get_local_file_path('KOSPI')
         
         self.assertIsInstance(path, Path)
         self.assertTrue(str(path).endswith('KOSPI.json'))
     
-    def test_load_data_file_not_exists(self):
-        """_load_data - 파일 없을 때"""
+    def test_load_local_data_file_not_exists(self):
+        """_load_local_data - 파일 없을 때"""
         from apps.MarketIndex.stockindex_manager import StockindexManager
         
         manager = StockindexManager(data_dir_name=self.test_data_dir)
         
-        data = manager._load_data('KOSPI')
+        data = manager._load_local_data('KOSPI')
         
         self.assertEqual(data, {})
     
-    def test_load_data_file_exists(self):
-        """_load_data - 파일 있을 때"""
+    def test_load_local_data_file_exists(self):
+        """_load_local_data - 파일 있을 때"""
         from apps.MarketIndex.stockindex_manager import StockindexManager
         
         manager = StockindexManager(data_dir_name=self.test_data_dir)
         
         # 테스트 데이터 저장
         test_data = {'2025-01-01': {'close': 2500.0}}
-        manager._save_data('KOSPI', test_data)
+        manager._save_local_data('KOSPI', test_data)
         
         # 로드
-        loaded = manager._load_data('KOSPI')
+        loaded = manager._load_local_data('KOSPI')
         
         self.assertEqual(loaded, test_data)
     
-    def test_save_data_basic(self):
-        """_save_data - 기본 저장"""
+    def test_save_local_data_basic(self):
+        """_save_local_data - 기본 저장"""
         from apps.MarketIndex.stockindex_manager import StockindexManager
         
         manager = StockindexManager(data_dir_name=self.test_data_dir)
@@ -84,13 +84,13 @@ class StockindexManagerTests(TestCase):
             '2025-01-02': {'close': 2510.0}
         }
         
-        manager._save_data('KOSPI', test_data)
+        manager._save_local_data('KOSPI', test_data)
         
-        file_path = manager._get_file_path('KOSPI')
+        file_path = manager._get_local_file_path('KOSPI')
         self.assertTrue(file_path.exists())
     
-    def test_save_data_keeps_max_days(self):
-        """_save_data - 최대 365일만 유지"""
+    def test_save_local_data_keeps_max_days(self):
+        """_save_local_data - 최대 365일만 유지"""
         from apps.MarketIndex.stockindex_manager import StockindexManager
         
         manager = StockindexManager(data_dir_name=self.test_data_dir)
@@ -102,10 +102,10 @@ class StockindexManagerTests(TestCase):
             date_str = (base_date + timedelta(days=i)).strftime('%Y-%m-%d')
             test_data[date_str] = {'close': 2500.0 + i}
         
-        manager._save_data('KOSPI', test_data)
+        manager._save_local_data('KOSPI', test_data)
         
         # 로드해서 확인
-        loaded = manager._load_data('KOSPI')
+        loaded = manager._load_local_data('KOSPI')
         self.assertEqual(len(loaded), 365)
     
     @patch('apps.MarketIndex.stockindex_manager.yf.Ticker')
@@ -220,7 +220,7 @@ class StockindexManagerTests(TestCase):
                 'change_percent': 0.4
             }
         }
-        manager._save_data('KOSPI', existing_data)
+        manager._save_local_data('KOSPI', existing_data)
         
         # Mock - 동일한 데이터
         mock_hist = pd.DataFrame({
@@ -273,7 +273,7 @@ class StockindexManagerTests(TestCase):
             '2025-01-01': {'close': 2500.0},
             '2025-01-02': {'close': 2510.0}
         }
-        manager._save_data('KOSPI', test_data)
+        manager._save_local_data('KOSPI', test_data)
         
         result = manager.get_latest()
         
@@ -292,7 +292,7 @@ class StockindexManagerTests(TestCase):
             date_str = (datetime.now() - timedelta(days=9-i)).strftime('%Y-%m-%d')
             test_data[date_str] = {'date': date_str, 'close': 2500.0 + i}
         
-        manager._save_data('KOSPI', test_data)
+        manager._save_local_data('KOSPI', test_data)
         
         result = manager.get_history('KOSPI', days=5)
         
@@ -346,7 +346,7 @@ class StockindexManagerTests(TestCase):
                 'volume': 1000000
             }
         
-        manager._save_data('KOSPI', test_data)
+        manager._save_local_data('KOSPI', test_data)
         
         result = manager.get_summary()
         
@@ -417,15 +417,25 @@ class ViewsTests(TestCase):
         if test_path.exists():
             shutil.rmtree(test_path)
     
+    @patch('apps.MarketIndex.views.FinanceS3Client')
     @patch('apps.MarketIndex.views.StockindexManager')
-    def test_stockindex_latest(self, mock_manager_class):
+    def test_stockindex_latest(self, mock_manager_class, mock_s3_client):
         """stockindex_latest view"""
+        # StockindexManager Mock
         mock_manager = MagicMock()
         mock_manager.get_latest.return_value = {
             'KOSPI': {'close': 2500.0},
             'KOSDAQ': {'close': 800.0}
         }
         mock_manager_class.return_value = mock_manager
+        
+        # FinanceS3Client Mock
+        mock_s3 = MagicMock()
+        mock_s3.get_json.return_value = {
+            'KOSPI': {'value': 2500.0, 'change': 10.0},
+            'KOSDAQ': {'value': 800.0, 'change': 5.0}
+        }
+        mock_s3_client.return_value = mock_s3
         
         response = self.client.get('/marketindex/stockindex/latest/')
         
@@ -584,7 +594,7 @@ class CoverageCompletionTests(TestCase):
         
         # 기존 데이터 (업데이트될 것)
         today = datetime.now().strftime('%Y-%m-%d')
-        manager._save_data('KOSPI', {today: {'date': today, 'close': 2400.0}})
+        manager._save_local_data('KOSPI', {today: {'date': today, 'close': 2400.0}})
         
         # Mock 데이터: 오래된 날짜 + 최근 날짜
         dates = [
@@ -632,7 +642,7 @@ class CoverageCompletionTests(TestCase):
         
         manager.fetch_historical(days=5)
         
-        data = manager._load_data('KOSPI')
+        data = manager._load_local_data('KOSPI')
         for record in data.values():
             # NaN은 None으로 저장됨
             if record.get('open') is None:
@@ -647,7 +657,7 @@ class CoverageCompletionTests(TestCase):
         
         # 어제 데이터 저장
         yesterday = (datetime.now() - timedelta(days=1)).strftime('%Y-%m-%d')
-        manager._save_data('KOSPI', {
+        manager._save_local_data('KOSPI', {
             yesterday: {'date': yesterday, 'close': 2400.0}
         })
         
@@ -690,7 +700,7 @@ class CoverageCompletionTests(TestCase):
         
         manager.fetch_historical(days=5)
         
-        data = manager._load_data('KOSPI')
+        data = manager._load_local_data('KOSPI')
         first_record = list(data.values())[0]
         self.assertEqual(first_record['change_amount'], 0)
     
@@ -761,3 +771,203 @@ class CoverageCompletionTests(TestCase):
         
         sys.argv = old_argv
         mock_view.assert_called()
+
+# ==================== 추가: 타임아웃 및 실패 케이스 테스트 ====================
+class StockindexTimeoutAndErrorTests(TestCase):
+    """타임아웃 및 데이터 파싱 오류 테스트"""
+    
+    @patch('apps.MarketIndex.stockindex_manager.yf.Ticker')
+    def test_fetch_historical_timeout(self, mock_ticker):
+        """yfinance API 타임아웃"""
+        from apps.MarketIndex.stockindex_manager import StockindexManager
+        
+        mock_ticker.return_value.history.side_effect = Exception("Request timed out")
+        
+        manager = StockindexManager(data_dir_name="test_stockindex_timeout")
+        results = manager.fetch_historical(days=30)
+        
+        # 타임아웃 시 에러 기록
+        self.assertIn('KOSPI', results)
+        self.assertIn('error', results['KOSPI'])
+        self.assertIn('timed out', results['KOSPI']['error'].lower())
+        
+        # Cleanup
+        import shutil
+        if manager.data_dir.exists():
+            shutil.rmtree(manager.data_dir)
+    
+    @patch('apps.MarketIndex.stockindex_manager.yf.Ticker')
+    def test_fetch_daily_network_error(self, mock_ticker):
+        """일일 업데이트 네트워크 오류"""
+        from apps.MarketIndex.stockindex_manager import StockindexManager
+        
+        mock_ticker.return_value.history.side_effect = ConnectionError("Network unreachable")
+        
+        manager = StockindexManager(data_dir_name="test_stockindex_network")
+        results = manager.fetch_daily()
+        
+        # 네트워크 오류 시 에러 반환
+        self.assertIn('KOSPI', results)
+        self.assertIn('error', results['KOSPI'])
+        
+        # Cleanup
+        import shutil
+        if manager.data_dir.exists():
+            shutil.rmtree(manager.data_dir)
+    
+    @patch('apps.MarketIndex.stockindex_manager.yf.Ticker')
+    def test_fetch_historical_empty_dataframe(self, mock_ticker):
+        """빈 DataFrame 처리"""
+        from apps.MarketIndex.stockindex_manager import StockindexManager
+        
+        mock_hist = pd.DataFrame()  # 빈 DataFrame
+        mock_ticker.return_value.history.return_value = mock_hist
+        
+        manager = StockindexManager(data_dir_name="test_stockindex_empty")
+        results = manager.fetch_historical(days=30)
+        
+        # 빈 DataFrame은 결과가 비어있거나 'new'=0이어야 함
+        self.assertIsInstance(results, dict)
+        # KOSPI가 있으면 new=0, 없으면 빈 dict
+        if 'KOSPI' in results:
+            self.assertEqual(results['KOSPI'].get('new', 0), 0)
+        else:
+            # 빈 데이터는 빈 dict 반환 가능
+            self.assertEqual(results, {})
+        
+        # Cleanup
+        import shutil
+        if manager.data_dir.exists():
+            shutil.rmtree(manager.data_dir)
+    
+    @patch('apps.MarketIndex.stockindex_manager.yf.Ticker')
+    def test_fetch_historical_nan_values(self, mock_ticker):
+        """NaN 값 처리"""
+        from apps.MarketIndex.stockindex_manager import StockindexManager
+        
+        dates = pd.date_range(start='2025-01-01', periods=5)
+        mock_hist = pd.DataFrame({
+            'Open': [100, float('nan'), 102, 103, 104],
+            'High': [105, 106, float('nan'), 108, 109],
+            'Low': [95, 96, 97, float('nan'), 99],
+            'Close': [102, 103, 104, 105, 106],
+            'Volume': [1000, float('nan'), 1200, 1300, 1400]
+        }, index=dates)
+        
+        mock_ticker.return_value.history.return_value = mock_hist
+        
+        manager = StockindexManager(data_dir_name="test_stockindex_nan")
+        results = manager.fetch_historical(days=30)
+        
+        # NaN 값은 None으로 변환되어야 함
+        self.assertIn('KOSPI', results)
+        if 'new' in results['KOSPI']:
+            self.assertIsInstance(results['KOSPI']['new'], int)
+        
+        # Cleanup
+        import shutil
+        if manager.data_dir.exists():
+            shutil.rmtree(manager.data_dir)
+    
+    @patch('apps.MarketIndex.stockindex_manager.yf.Ticker')
+    def test_fetch_historical_zero_previous_close(self, mock_ticker):
+        """이전 종가 0인 경우 (division by zero 방지)"""
+        from apps.MarketIndex.stockindex_manager import StockindexManager
+        
+        dates = pd.date_range(start='2025-01-01', periods=2)
+        mock_hist = pd.DataFrame({
+            'Open': [0, 100],
+            'High': [0, 105],
+            'Low': [0, 95],
+            'Close': [0, 102],
+            'Volume': [0, 1000]
+        }, index=dates)
+        
+        mock_ticker.return_value.history.return_value = mock_hist
+        
+        manager = StockindexManager(data_dir_name="test_stockindex_zero")
+        results = manager.fetch_historical(days=30)
+        
+        # 0으로 나누기 오류가 발생하지 않아야 함
+        self.assertIn('KOSPI', results)
+        
+        # Cleanup
+        import shutil
+        if manager.data_dir.exists():
+            shutil.rmtree(manager.data_dir)
+    
+    def test_get_history_invalid_index(self):
+        """잘못된 인덱스 타입"""
+        from apps.MarketIndex.stockindex_manager import StockindexManager
+        
+        manager = StockindexManager(data_dir_name="test_stockindex_invalid")
+        
+        with self.assertRaises(ValueError):
+            manager.get_history('NASDAQ', days=30)
+        
+        # Cleanup
+        import shutil
+        if manager.data_dir.exists():
+            shutil.rmtree(manager.data_dir)
+    
+    def test_get_history_empty_data(self):
+        """데이터 없을 때"""
+        from apps.MarketIndex.stockindex_manager import StockindexManager
+        
+        manager = StockindexManager(data_dir_name="test_stockindex_empty_history")
+        
+        result = manager.get_history('KOSPI', days=30)
+        
+        # 빈 리스트 반환
+        self.assertEqual(result, [])
+        
+        # Cleanup
+        import shutil
+        if manager.data_dir.exists():
+            shutil.rmtree(manager.data_dir)
+    
+    def test_get_latest_no_data(self):
+        """최신 데이터 없을 때"""
+        from apps.MarketIndex.stockindex_manager import StockindexManager
+        
+        manager = StockindexManager(data_dir_name="test_stockindex_no_latest")
+        
+        result = manager.get_latest()
+        
+        # 빈 dict 반환
+        self.assertEqual(result, {})
+        
+        # Cleanup
+        import shutil
+        if manager.data_dir.exists():
+            shutil.rmtree(manager.data_dir)
+    
+    def test_save_local_data_trims_old_data(self):
+        """365일 이상 데이터 자동 제거"""
+        from apps.MarketIndex.stockindex_manager import StockindexManager
+        
+        manager = StockindexManager(data_dir_name="test_stockindex_trim")
+        
+        # 400일치 데이터 생성
+        test_data = {}
+        for i in range(400):
+            date = (datetime.now() - timedelta(days=i)).strftime('%Y-%m-%d')
+            test_data[date] = {
+                'date': date,
+                'close': 100 + i,
+                'change_amount': 1.0,
+                'change_percent': 1.0
+            }
+        
+        manager._save_local_data('KOSPI', test_data)
+        
+        # 다시 로드
+        loaded = manager._load_local_data('KOSPI')
+        
+        # 365일만 유지되어야 함
+        self.assertLessEqual(len(loaded), 365)
+        
+        # Cleanup
+        import shutil
+        if manager.data_dir.exists():
+            shutil.rmtree(manager.data_dir)
