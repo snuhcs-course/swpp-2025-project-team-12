@@ -225,7 +225,7 @@ class APIView(viewsets.ViewSet):
                 "limit": limit,
                 "offset": offset,
                 "source": "cache",
-                # "asOf": str(latest_date) if latest_date else iso_now()
+                "asOf": str(latest_date) if latest_date else iso_now()
             })
 
         except Exception as e:
