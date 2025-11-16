@@ -116,7 +116,8 @@ class BaseBucket:
 
     # --- json ---
     def get_json(self, key):
-        data = self.get(f"{key}.json").decode("utf-8")
+        if not key.lower().endswith(".json"): return None
+        data = self.get(key).decode("utf-8")
         return json.loads(data)
 
     def get_latest_json(self, prefix):

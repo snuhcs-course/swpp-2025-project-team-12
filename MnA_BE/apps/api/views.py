@@ -13,6 +13,7 @@ from utils.for_api import *
 from utils.store import store
 from utils import instant_data
 from apps.api.constants import *
+import json
 import pandas as pd
 
 
@@ -48,7 +49,7 @@ class APIView(viewsets.ViewSet):
 
         s3 = FinanceBucket()
 
-        company_profile_head = s3.check_source( S3_PREFIX_COMPANY)
+        company_profile_head = s3.check_source(S3_PREFIX_COMPANY)
         price_financial_head = s3.check_source(S3_PREFIX_PRICE)
 
         s3_status = {
@@ -215,7 +216,7 @@ class APIView(viewsets.ViewSet):
                 {
                     "ticker": row["ticker"],
                     "name": str(row["name"]),
-                    "overview": company_overview.get(row["ticker"], None)
+                    "overview": json.loads(company_overview.get(row["ticker"], "{}"))
                 }
                 for idx, row in page_df.iterrows()
             ]
@@ -322,7 +323,7 @@ class APIView(viewsets.ViewSet):
         except Exception as e:
             return JsonResponse({ "message": "Unexpected Server Error" }, status=500)
 
-        return JsonResponse(company_overview.get(ticker, {}), status=200, safe=False)
+        return JsonResponse(json.loads(company_overview.get(ticker, "{}")), status=200, safe=False)
 
 
     @action(detail=False, methods=['get'])

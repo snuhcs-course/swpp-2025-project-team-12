@@ -19,6 +19,7 @@ class MarketLLMview(viewsets.ViewSet):
     def get_market_overview(self, request, year = None, month = None, day = None):
         """Get the latest LLM output for market analysis from S3 JSON data."""
         try:
+            import json
             llm_output = get_latest_overview("market-index-overview")
         except Exception as e:
             return JsonResponse({"message": "Unexpected Server Error"}, status=500)

@@ -1,5 +1,6 @@
 from S3.finance import FinanceBucket
 from django.http import JsonResponse
+import json
 
 def get_latest_overview(sector: str):
     s3 = FinanceBucket()
@@ -8,7 +9,7 @@ def get_latest_overview(sector: str):
     year, month, day = source["latest"].split("-")
 
     llm_output = s3.get_json(
-        key=f"llm_output/{sector}/year={year}/month={month}/{year}-{month}-{day}"
+        key=f"llm_output/{sector}/year={year}/month={month}/{year}-{month}-{day}.json"
     )
 
     return llm_output
