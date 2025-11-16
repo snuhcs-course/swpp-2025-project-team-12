@@ -47,6 +47,8 @@
             android:id="@+id/IDTextField"
             android:layout_width="344dp"
             android:layout_height="wrap_content"
+            android:singleLine="true"
+            android:imeOptions="actionDone"
             android:hint="아이디"
             app:counterEnabled="true"
             app:counterMaxLength="20" />

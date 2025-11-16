@@ -48,6 +48,9 @@
             android:id="@+id/PWTextField"
             android:layout_width="344dp"
             android:layout_height="wrap_content"
+            android:singleLine="true"
+            android:inputType="textPassword"
+            android:imeOptions="actionDone"
             android:hint="비밀번호"
             app:counterEnabled="true"
             app:counterMaxLength="20" />

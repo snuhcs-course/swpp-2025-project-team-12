@@ -1,7 +1,9 @@
 package com.example.dailyinsight.ui.userinfo
 
+import android.content.Context
 import android.content.Intent
 import android.os.Bundle
+import android.view.inputmethod.EditorInfo
 import android.widget.Toast
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
@@ -23,6 +25,7 @@ import com.google.gson.Gson
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import retrofit2.Call
+import android.view.inputmethod.InputMethodManager
 
 class WithdrawActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -42,6 +45,17 @@ class WithdrawActivity : AppCompatActivity() {
 
         val PWTextField = findViewById<TextInputEditText>(R.id.PWTextField)
         val changeButton = findViewById<MaterialButton>(R.id.changeButton)
+
+        PWTextField.setOnEditorActionListener { v, actionId, _ ->
+            if (actionId == EditorInfo.IME_ACTION_DONE) {
+                val imm = getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager
+                imm.hideSoftInputFromWindow(v.windowToken, 0)
+                changeButton.performClick()
+                true
+            } else {
+                false
+            }
+        }
 
         changeButton.setOnClickListener {
             val password = PWTextField.text.toString().trim()
