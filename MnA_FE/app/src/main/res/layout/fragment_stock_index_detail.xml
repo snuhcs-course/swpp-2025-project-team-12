@@ -23,7 +23,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginTop="4dp"
-            android:text="2,750.43"
+            android:text="4,150.39"
             android:textStyle="bold"
             android:textSize="24sp"
             android:textColor="@color/black"/>
@@ -250,6 +250,10 @@
                     android:layout_marginBottom="24dp"/>
             </LinearLayout>
         </LinearLayout>
+
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="80dp" />
 
     </LinearLayout>
 </androidx.core.widget.NestedScrollView>

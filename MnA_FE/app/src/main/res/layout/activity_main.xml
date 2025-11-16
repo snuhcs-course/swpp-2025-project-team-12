@@ -52,7 +52,7 @@
         android:layout_height="wrap_content"
         android:layout_gravity="bottom"
         android:background="#F5F5F5"
-        app:itemRippleColor="@drawable/bottom_nav_ripple_color"
+        app:itemActiveIndicatorStyle="@style/App.Custom.Indicator"
         app:menu="@menu/bottom_nav_menu" />
 
 </androidx.coordinatorlayout.widget.CoordinatorLayout>

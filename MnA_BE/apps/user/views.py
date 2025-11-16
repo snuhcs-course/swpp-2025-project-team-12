@@ -10,7 +10,7 @@ import bcrypt
 from utils.token_handler import *
 from utils.validation import validate_password, validate_name
 from decorators import *
-from S3.base import S3Client
+from S3.base import BaseBucket
 from django.views.decorators.csrf import csrf_exempt
 import os
 import json
@@ -19,7 +19,7 @@ class UserView(viewsets.ModelViewSet):
     """
     user/ views
     ---
-    hello!
+    Welcome MnA_BE !!!
     """
 
     @action(detail=False, methods=['post'])
@@ -137,10 +137,10 @@ class UserView(viewsets.ModelViewSet):
 
         # remove profile from S3 (키는 문자열로)
         try:
-            S3Client().get(os.environ.get("PROFILE_BUCKET_NAME"), str(user.id))
+            BaseBucket().get(str(user.id))
 
             try:
-                S3Client().delete(os.environ.get("PROFILE_BUCKET_NAME"), str(user.id))
+                BaseBucket().delete(str(user.id))
             except Exception:
                 return JsonResponse({"message": "PROFILE DELETE FAILED"}, status=500)
         except:  # File Not exists

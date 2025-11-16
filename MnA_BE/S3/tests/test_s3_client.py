@@ -19,10 +19,10 @@ class S3ClientTests(TestCase):
     @patch('S3.base.boto3.client')
     def test_init_with_all_env_vars(self, mock_boto_client):
         """모든 환경변수가 있을 때 초기화"""
-        from S3.base import S3Client
+        from S3.base import BaseBucket
         
         # 명시적으로 credentials 전달 (기본값 무시)
-        client = S3Client(
+        client = BaseBucket(
             access_key='test_access',
             secret_key='test_secret'
         )
@@ -35,10 +35,10 @@ class S3ClientTests(TestCase):
     @patch('S3.base.boto3.client')
     def test_init_with_aws_prefix_env(self, mock_boto_client):
         """AWS_ 접두사 환경변수 사용"""
-        from S3.base import S3Client
+        from S3.base import BaseBucket
         
         # 명시적으로 credentials 전달
-        client = S3Client(
+        client = BaseBucket(
             access_key='test_access',
             secret_key='test_secret'
         )
@@ -51,26 +51,26 @@ class S3ClientTests(TestCase):
     @patch('S3.base.boto3.client')
     def test_init_without_credentials(self, mock_boto_client):
         """자격증명 없이 초기화 (IAM Role 사용)"""
-        from S3.base import S3Client
+        from S3.base import BaseBucket
         
-        client = S3Client()
+        client = BaseBucket()
         
         mock_boto_client.assert_called_once()
     
     @patch('S3.base.boto3.client')
     def test_init_boto3_exception(self, mock_boto_client):
         """boto3 초기화 실패"""
-        from S3.base import S3Client
+        from S3.base import BaseBucket
         
         mock_boto_client.side_effect = Exception("Boto3 initialization failed")
         
         with self.assertRaises(Exception):
-            client = S3Client()
+            client = BaseBucket()
     
     @patch('S3.base.boto3.client')
     def test_get_success(self, mock_boto_client):
         """S3 객체 가져오기 성공"""
-        from S3.base import S3Client
+        from S3.base import BaseBucket
         
         mock_s3 = MagicMock()
         mock_boto_client.return_value = mock_s3
@@ -79,7 +79,7 @@ class S3ClientTests(TestCase):
         body_mock.read.return_value = b"test data"
         mock_s3.get_object.return_value = {"Body": body_mock}
         
-        client = S3Client()
+        client = BaseBucket()
         result = client.get("test-bucket", "test-key")
         
         self.assertEqual(result, b"test data")
@@ -88,13 +88,13 @@ class S3ClientTests(TestCase):
     @patch('S3.base.boto3.client')
     def test_get_exception(self, mock_boto_client):
         """S3 객체 가져오기 실패"""
-        from S3.base import S3Client
+        from S3.base import BaseBucket
         
         mock_s3 = MagicMock()
         mock_boto_client.return_value = mock_s3
         mock_s3.get_object.side_effect = Exception("S3 Error")
         
-        client = S3Client()
+        client = BaseBucket()
         
         with self.assertRaises(Exception) as context:
             client.get("test-bucket", "test-key")
@@ -104,12 +104,12 @@ class S3ClientTests(TestCase):
     @patch('S3.base.boto3.client')
     def test_delete_success(self, mock_boto_client):
         """S3 객체 삭제 성공"""
-        from S3.base import S3Client
+        from S3.base import BaseBucket
         
         mock_s3 = MagicMock()
         mock_boto_client.return_value = mock_s3
         
-        client = S3Client()
+        client = BaseBucket()
         client.delete("test-bucket", "test-key")
         
         mock_s3.delete_object.assert_called_once_with(Bucket="test-bucket", Key="test-key")
@@ -117,13 +117,13 @@ class S3ClientTests(TestCase):
     @patch('S3.base.boto3.client')
     def test_delete_exception(self, mock_boto_client):
         """S3 객체 삭제 실패"""
-        from S3.base import S3Client
+        from S3.base import BaseBucket
         
         mock_s3 = MagicMock()
         mock_boto_client.return_value = mock_s3
         mock_s3.delete_object.side_effect = Exception("Delete Error")
         
-        client = S3Client()
+        client = BaseBucket()
         
         with self.assertRaises(Exception) as context:
             client.delete("test-bucket", "test-key")
@@ -133,7 +133,7 @@ class S3ClientTests(TestCase):
     @patch('S3.base.boto3.client')
     def test_put_file_with_content_type(self, mock_boto_client):
         """put_file: ContentType 있을 때"""
-        from S3.base import S3Client
+        from S3.base import BaseBucket
         
         mock_s3 = MagicMock()
         mock_boto_client.return_value = mock_s3
@@ -143,7 +143,7 @@ class S3ClientTests(TestCase):
         
         with patch('builtins.open', m):
             with patch('S3.mimetypes.guess_type', return_value=('text/plain', None)):
-                client = S3Client()
+                client = BaseBucket()
                 client.put_file("test-bucket", "test-key", "/fake/path.txt")
                 
                 mock_s3.put_object.assert_called_once()
@@ -153,7 +153,7 @@ class S3ClientTests(TestCase):
     @patch('S3.base.boto3.client')
     def test_put_file_without_content_type(self, mock_boto_client):
         """put_file: ContentType 없을 때"""
-        from S3.base import S3Client
+        from S3.base import BaseBucket
         
         mock_s3 = MagicMock()
         mock_boto_client.return_value = mock_s3
@@ -163,7 +163,7 @@ class S3ClientTests(TestCase):
         
         with patch('builtins.open', m):
             with patch('S3.mimetypes.guess_type', return_value=(None, None)):
-                client = S3Client()
+                client = BaseBucket()
                 client.put_file("test-bucket", "test-key", "/fake/unknown")
                 
                 mock_s3.put_object.assert_called_once()
@@ -173,13 +173,13 @@ class S3ClientTests(TestCase):
     @patch('S3.base.boto3.client')
     def test_put_file_exception(self, mock_boto_client):
         """put_file: Exception 처리"""
-        from S3.base import S3Client
+        from S3.base import BaseBucket
         
         mock_s3 = MagicMock()
         mock_boto_client.return_value = mock_s3
         
         with patch('builtins.open', side_effect=FileNotFoundError("File not found")):
-            client = S3Client()
+            client = BaseBucket()
             
             with self.assertRaises(Exception) as context:
                 client.put_file("test-bucket", "test-key", "/nonexistent.txt")
@@ -189,7 +189,7 @@ class S3ClientTests(TestCase):
     @patch('S3.base.boto3.client')
     def test_get_image_url_success(self, mock_boto_client):
         """이미지를 base64 URL로 변환 성공"""
-        from S3.base import S3Client
+        from S3.base import BaseBucket
         
         mock_s3 = MagicMock()
         mock_boto_client.return_value = mock_s3
@@ -201,7 +201,7 @@ class S3ClientTests(TestCase):
             "ContentType": "image/png"
         }
         
-        client = S3Client()
+        client = BaseBucket()
         result = client.get_image_url("test-bucket", "image.png")
         
         self.assertTrue(result.startswith("data:image/png;base64,"))
@@ -209,13 +209,13 @@ class S3ClientTests(TestCase):
     @patch('S3.base.boto3.client')
     def test_get_image_url_exception(self, mock_boto_client):
         """이미지 가져오기 실패"""
-        from S3.base import S3Client
+        from S3.base import BaseBucket
         
         mock_s3 = MagicMock()
         mock_boto_client.return_value = mock_s3
         mock_s3.get_object.side_effect = Exception("Image Error")
         
-        client = S3Client()
+        client = BaseBucket()
         
         with self.assertRaises(Exception) as context:
             client.get_image_url("test-bucket", "image.png")
@@ -225,7 +225,7 @@ class S3ClientTests(TestCase):
     @patch('S3.base.boto3.client')
     def test_put_image_success(self, mock_boto_client):
         """base64 이미지 업로드 성공"""
-        from S3.base import S3Client
+        from S3.base import BaseBucket
         
         mock_s3 = MagicMock()
         mock_boto_client.return_value = mock_s3
@@ -235,7 +235,7 @@ class S3ClientTests(TestCase):
         b64_data = base64.b64encode(fake_data).decode('utf-8')
         image_url = f"data:image/png;base64,{b64_data}"
         
-        client = S3Client()
+        client = BaseBucket()
         client.put_image("test-bucket", "image.png", image_url)
         
         mock_s3.put_object.assert_called_once()
@@ -245,12 +245,12 @@ class S3ClientTests(TestCase):
     @patch('S3.base.boto3.client')
     def test_put_image_invalid_format(self, mock_boto_client):
         """잘못된 형식의 이미지 URL"""
-        from S3.base import S3Client
+        from S3.base import BaseBucket
         
         mock_s3 = MagicMock()
         mock_boto_client.return_value = mock_s3
         
-        client = S3Client()
+        client = BaseBucket()
         
         with self.assertRaises(Exception) as context:
             client.put_image("test-bucket", "image.png", "not-a-valid-url")
@@ -260,12 +260,12 @@ class S3ClientTests(TestCase):
     @patch('S3.base.boto3.client')
     def test_put_image_invalid_base64(self, mock_boto_client):
         """잘못된 base64 데이터"""
-        from S3.base import S3Client
+        from S3.base import BaseBucket
         
         mock_s3 = MagicMock()
         mock_boto_client.return_value = mock_s3
         
-        client = S3Client()
+        client = BaseBucket()
         
         with self.assertRaises(Exception) as context:
             client.put_image("test-bucket", "image.png", "data:image/png;base64,invalid!!!")
@@ -275,7 +275,7 @@ class S3ClientTests(TestCase):
     @patch('S3.finance.boto3.client')
     def test_get_dataframe_parquet(self, mock_boto_client):
         """Parquet DataFrame 가져오기"""
-        from S3.finance import FinanceS3Client
+        from S3.finance import FinanceBucket
         
         mock_s3 = MagicMock()
         mock_boto_client.return_value = mock_s3
@@ -289,7 +289,7 @@ class S3ClientTests(TestCase):
         body_mock.read.return_value = parquet_bytes
         mock_s3.get_object.return_value = {"Body": body_mock}
         
-        client = FinanceS3Client()
+        client = FinanceBucket()
         result_df = client.get_dataframe("test-bucket", "data.parquet")
         
         self.assertIsInstance(result_df, pd.DataFrame)
@@ -298,7 +298,7 @@ class S3ClientTests(TestCase):
     @patch('S3.finance.boto3.client')
     def test_get_dataframe_csv(self, mock_boto_client):
         """CSV DataFrame 가져오기"""
-        from S3.finance import FinanceS3Client
+        from S3.finance import FinanceBucket
         
         mock_s3 = MagicMock()
         mock_boto_client.return_value = mock_s3
@@ -310,7 +310,7 @@ class S3ClientTests(TestCase):
         body_mock.read.return_value = csv_bytes
         mock_s3.get_object.return_value = {"Body": body_mock}
         
-        client = FinanceS3Client()
+        client = FinanceBucket()
         result_df = client.get_dataframe("test-bucket", "data.csv")
         
         self.assertIsInstance(result_df, pd.DataFrame)
@@ -319,7 +319,7 @@ class S3ClientTests(TestCase):
     @patch('S3.finance.boto3.client')
     def test_get_dataframe_auto_detect_parquet(self, mock_boto_client):
         """확장자 없을 때 자동으로 parquet 시도"""
-        from S3.finance import FinanceS3Client
+        from S3.finance import FinanceBucket
         
         mock_s3 = MagicMock()
         mock_boto_client.return_value = mock_s3
@@ -333,7 +333,7 @@ class S3ClientTests(TestCase):
         body_mock.read.return_value = parquet_bytes
         mock_s3.get_object.return_value = {"Body": body_mock}
         
-        client = FinanceS3Client()
+        client = FinanceBucket()
         result_df = client.get_dataframe("test-bucket", "data")
         
         self.assertIsInstance(result_df, pd.DataFrame)
@@ -341,7 +341,7 @@ class S3ClientTests(TestCase):
     @patch('S3.finance.boto3.client')
     def test_get_dataframe_fallback_to_csv(self, mock_boto_client):
         """parquet 실패 후 csv fallback"""
-        from S3.finance import FinanceS3Client
+        from S3.finance import FinanceBucket
         
         mock_s3 = MagicMock()
         mock_boto_client.return_value = mock_s3
@@ -353,7 +353,7 @@ class S3ClientTests(TestCase):
         body_mock.read.return_value = csv_bytes
         mock_s3.get_object.return_value = {"Body": body_mock}
         
-        client = FinanceS3Client()
+        client = FinanceBucket()
         result_df = client.get_dataframe("test-bucket", "data")
         
         self.assertIsInstance(result_df, pd.DataFrame)
@@ -362,13 +362,13 @@ class S3ClientTests(TestCase):
     @patch('S3.finance.boto3.client')
     def test_get_dataframe_exception(self, mock_boto_client):
         """DataFrame 로드 실패"""
-        from S3.finance import FinanceS3Client
+        from S3.finance import FinanceBucket
         
         mock_s3 = MagicMock()
         mock_boto_client.return_value = mock_s3
         mock_s3.get_object.side_effect = Exception("S3 Error")
         
-        client = FinanceS3Client()
+        client = FinanceBucket()
         
         with self.assertRaises(Exception) as context:
             client.get_dataframe("test-bucket", "data.parquet")
@@ -378,14 +378,14 @@ class S3ClientTests(TestCase):
     @patch('S3.finance.boto3.client')
     def test_put_dataframe_parquet(self, mock_boto_client):
         """DataFrame을 Parquet으로 저장"""
-        from S3.finance import FinanceS3Client
+        from S3.finance import FinanceBucket
         
         mock_s3 = MagicMock()
         mock_boto_client.return_value = mock_s3
         
         df = pd.DataFrame({'col1': [1, 2, 3]})
         
-        client = FinanceS3Client()
+        client = FinanceBucket()
         client.put_dataframe("test-bucket", "data.parquet", df)
         
         mock_s3.put_object.assert_called_once()
@@ -395,14 +395,14 @@ class S3ClientTests(TestCase):
     @patch('S3.finance.boto3.client')
     def test_put_dataframe_csv(self, mock_boto_client):
         """DataFrame을 CSV로 저장"""
-        from S3.finance import FinanceS3Client
+        from S3.finance import FinanceBucket
         
         mock_s3 = MagicMock()
         mock_boto_client.return_value = mock_s3
         
         df = pd.DataFrame({'col1': [1, 2, 3]})
         
-        client = FinanceS3Client()
+        client = FinanceBucket()
         client.put_dataframe("test-bucket", "data.csv", df)
         
         mock_s3.put_object.assert_called_once()
@@ -412,14 +412,14 @@ class S3ClientTests(TestCase):
     @patch('S3.finance.boto3.client')
     def test_put_dataframe_default_parquet(self, mock_boto_client):
         """확장자 없을 때 기본 parquet"""
-        from S3.finance import FinanceS3Client
+        from S3.finance import FinanceBucket
         
         mock_s3 = MagicMock()
         mock_boto_client.return_value = mock_s3
         
         df = pd.DataFrame({'col1': [1, 2, 3]})
         
-        client = FinanceS3Client()
+        client = FinanceBucket()
         client.put_dataframe("test-bucket", "data", df)
         
         mock_s3.put_object.assert_called_once()
@@ -427,13 +427,13 @@ class S3ClientTests(TestCase):
     @patch('S3.finance.boto3.client')
     def test_put_dataframe_exception(self, mock_boto_client):
         """DataFrame 저장 실패"""
-        from S3.finance import FinanceS3Client
+        from S3.finance import FinanceBucket
         
         mock_s3 = MagicMock()
         mock_boto_client.return_value = mock_s3
         mock_s3.put_object.side_effect = Exception("Put Error")
         
-        client = FinanceS3Client()
+        client = FinanceBucket()
         df = pd.DataFrame({'col1': [1]})
         
         with self.assertRaises(Exception) as context:
@@ -479,17 +479,17 @@ class BaseS3ClientTests(TestCase):
     @patch('S3.base.boto3.client')
     def test_init_exception(self, mock_boto_client):
         """__init__ Exception 처리"""
-        from S3.base import S3Client
+        from S3.base import BaseBucket
         
         mock_boto_client.side_effect = Exception("Boto3 init failed")
         
         with self.assertRaises(Exception):
-            client = S3Client()
+            client = BaseBucket()
     
     @patch('S3.base.boto3.client')
     def test_get_latest_object_success(self, mock_boto_client):
         """최신 객체 찾기 성공"""
-        from S3.base import S3Client
+        from S3.base import BaseBucket
         
         mock_s3 = MagicMock()
         mock_boto_client.return_value = mock_s3
@@ -510,7 +510,7 @@ class BaseS3ClientTests(TestCase):
             {"Contents": [obj1, obj2]},
         ]
         
-        client = S3Client()
+        client = BaseBucket()
         result = client.get_latest_object("test-bucket", "data/")
         
         self.assertEqual(result["Key"], "data/2025-01-02.json")
@@ -518,7 +518,7 @@ class BaseS3ClientTests(TestCase):
     @patch('S3.base.boto3.client')
     def test_get_latest_object_empty(self, mock_boto_client):
         """객체 없을 때"""
-        from S3.base import S3Client
+        from S3.base import BaseBucket
         
         mock_s3 = MagicMock()
         mock_boto_client.return_value = mock_s3
@@ -527,7 +527,7 @@ class BaseS3ClientTests(TestCase):
         mock_s3.get_paginator.return_value = paginator_mock
         paginator_mock.paginate.return_value = [{"Contents": []}]
         
-        client = S3Client()
+        client = BaseBucket()
         result = client.get_latest_object("test-bucket", "data/")
         
         self.assertIsNone(result)
@@ -535,7 +535,7 @@ class BaseS3ClientTests(TestCase):
     @patch('S3.base.boto3.client')
     def test_get_latest_object_multiple_pages(self, mock_boto_client):
         """여러 페이지에서 latest 업데이트 확인"""
-        from S3.base import S3Client
+        from S3.base import BaseBucket
         
         mock_s3 = MagicMock()
         mock_boto_client.return_value = mock_s3
@@ -562,7 +562,7 @@ class BaseS3ClientTests(TestCase):
             {"Contents": [obj3]},
         ]
         
-        client = S3Client()
+        client = BaseBucket()
         result = client.get_latest_object("test-bucket", "data/")
         
         self.assertEqual(result["Key"], "data/newest.json")
@@ -570,7 +570,7 @@ class BaseS3ClientTests(TestCase):
     @patch('S3.base.boto3.client')
     def test_check_source_with_timestamp(self, mock_boto_client):
         """check_source: 파일명에 날짜 있을 때"""
-        from S3.base import S3Client
+        from S3.base import BaseBucket
         
         mock_s3 = MagicMock()
         mock_boto_client.return_value = mock_s3
@@ -584,7 +584,7 @@ class BaseS3ClientTests(TestCase):
         }
         paginator_mock.paginate.return_value = [{"Contents": [obj]}]
         
-        client = S3Client()
+        client = BaseBucket()
         result = client.check_source("test-bucket", "data/")
         
         self.assertTrue(result["ok"])
@@ -593,7 +593,7 @@ class BaseS3ClientTests(TestCase):
     @patch('S3.base.boto3.client')
     def test_check_source_no_object(self, mock_boto_client):
         """check_source: 객체 없을 때"""
-        from S3.base import S3Client
+        from S3.base import BaseBucket
         
         mock_s3 = MagicMock()
         mock_boto_client.return_value = mock_s3
@@ -602,7 +602,7 @@ class BaseS3ClientTests(TestCase):
         mock_s3.get_paginator.return_value = paginator_mock
         paginator_mock.paginate.return_value = [{"Contents": []}]
         
-        client = S3Client()
+        client = BaseBucket()
         result = client.check_source("test-bucket", "data/")
         
         self.assertFalse(result["ok"])
@@ -611,7 +611,7 @@ class BaseS3ClientTests(TestCase):
     @patch('S3.base.boto3.client')
     def test_check_source_without_slash(self, mock_boto_client):
         """파일명에 / 없을 때"""
-        from S3.base import S3Client
+        from S3.base import BaseBucket
         
         mock_s3 = MagicMock()
         mock_boto_client.return_value = mock_s3
@@ -625,7 +625,7 @@ class BaseS3ClientTests(TestCase):
         }
         paginator_mock.paginate.return_value = [{"Contents": [obj]}]
         
-        client = S3Client()
+        client = BaseBucket()
         result = client.check_source("test-bucket", "")
         
         self.assertTrue(result["ok"])
@@ -634,7 +634,7 @@ class BaseS3ClientTests(TestCase):
     @patch('S3.base.boto3.client')
     def test_check_source_no_date_pattern(self, mock_boto_client):
         """파일명에 날짜 패턴 없을 때"""
-        from S3.base import S3Client
+        from S3.base import BaseBucket
         
         mock_s3 = MagicMock()
         mock_boto_client.return_value = mock_s3
@@ -648,7 +648,7 @@ class BaseS3ClientTests(TestCase):
         }
         paginator_mock.paginate.return_value = [{"Contents": [obj]}]
         
-        client = S3Client()
+        client = BaseBucket()
         result = client.check_source("test-bucket", "prefix/")
         
         self.assertTrue(result["ok"])
@@ -657,7 +657,7 @@ class BaseS3ClientTests(TestCase):
     @patch('S3.base.boto3.client')
     def test_get_latest_json_success(self, mock_boto_client):
         """최신 JSON 가져오기 성공"""
-        from S3.base import S3Client
+        from S3.base import BaseBucket
         
         mock_s3 = MagicMock()
         mock_boto_client.return_value = mock_s3
@@ -676,7 +676,7 @@ class BaseS3ClientTests(TestCase):
         body_mock.read.return_value = json.dumps(json_data).encode("utf-8")
         mock_s3.get_object.return_value = {"Body": body_mock}
         
-        client = S3Client()
+        client = BaseBucket()
         data, ts = client.get_latest_json("test-bucket", "data/")
         
         self.assertEqual(data, json_data)
@@ -685,7 +685,7 @@ class BaseS3ClientTests(TestCase):
     @patch('S3.base.boto3.client')
     def test_get_latest_json_not_json_file(self, mock_boto_client):
         """JSON 파일이 아닐 때"""
-        from S3.base import S3Client
+        from S3.base import BaseBucket
         
         mock_s3 = MagicMock()
         mock_boto_client.return_value = mock_s3
@@ -699,7 +699,7 @@ class BaseS3ClientTests(TestCase):
         }
         paginator_mock.paginate.return_value = [{"Contents": [obj]}]
         
-        client = S3Client()
+        client = BaseBucket()
         data, ts = client.get_latest_json("test-bucket", "data/")
         
         self.assertIsNone(data)
@@ -708,7 +708,7 @@ class BaseS3ClientTests(TestCase):
     @patch('S3.base.boto3.client')
     def test_get_image_url_default_content_type(self, mock_boto_client):
         """이미지 ContentType 없을 때 기본값 사용"""
-        from S3.base import S3Client
+        from S3.base import BaseBucket
         
         mock_s3 = MagicMock()
         mock_boto_client.return_value = mock_s3
@@ -719,7 +719,7 @@ class BaseS3ClientTests(TestCase):
             "Body": body_mock,
         }
         
-        client = S3Client()
+        client = BaseBucket()
         result = client.get_image_url("test-bucket", "image.png")
         
         self.assertTrue(result.startswith("data:application/octet-stream;base64,"))
@@ -727,7 +727,7 @@ class BaseS3ClientTests(TestCase):
     @patch('S3.base.boto3.client')
     def test_put_image_no_colon_in_header(self, mock_boto_client):
         """이미지 URL에 : 없을 때"""
-        from S3.base import S3Client
+        from S3.base import BaseBucket
         import base64
         
         mock_s3 = MagicMock()
@@ -737,7 +737,7 @@ class BaseS3ClientTests(TestCase):
         b64_data = base64.b64encode(fake_data).decode('utf-8')
         image_url = f"data;base64,{b64_data}"
         
-        client = S3Client()
+        client = BaseBucket()
         client.put_image("test-bucket", "image.png", image_url)
         
         call_kwargs = mock_s3.put_object.call_args[1]
@@ -746,12 +746,12 @@ class BaseS3ClientTests(TestCase):
     @patch('S3.base.boto3.client')
     def test_put_image_invalid_url_format(self, mock_boto_client):
         """put_image: 잘못된 URL 형식"""
-        from S3.base import S3Client
+        from S3.base import BaseBucket
         
         mock_s3 = MagicMock()
         mock_boto_client.return_value = mock_s3
         
-        client = S3Client()
+        client = BaseBucket()
         
         with self.assertRaises(Exception) as context:
             client.put_image("test-bucket", "image.png", "not-a-data-url")
@@ -761,12 +761,12 @@ class BaseS3ClientTests(TestCase):
     @patch('S3.base.boto3.client')
     def test_put_image_invalid_base64(self, mock_boto_client):
         """put_image: 잘못된 base64"""
-        from S3.base import S3Client
+        from S3.base import BaseBucket
         
         mock_s3 = MagicMock()
         mock_boto_client.return_value = mock_s3
         
-        client = S3Client()
+        client = BaseBucket()
         
         with self.assertRaises(Exception) as context:
             client.put_image("test-bucket", "image.png", "data:image/png;base64,invalid!!!")
@@ -776,7 +776,7 @@ class BaseS3ClientTests(TestCase):
     @patch('S3.base.boto3.client')
     def test_put_image_s3_exception(self, mock_boto_client):
         """put_image: S3 업로드 실패"""
-        from S3.base import S3Client
+        from S3.base import BaseBucket
         import base64
         
         mock_s3 = MagicMock()
@@ -784,7 +784,7 @@ class BaseS3ClientTests(TestCase):
         
         mock_s3.put_object.side_effect = Exception("S3 put failed")
         
-        client = S3Client()
+        client = BaseBucket()
         
         fake_data = b"test"
         b64_data = base64.b64encode(fake_data).decode('utf-8')
@@ -800,12 +800,12 @@ class BaseS3ClientTests(TestCase):
     @patch('builtins.open', new_callable=mock_open, read_data=b'test content')
     def test_put_file_success(self, mock_file, mock_guess_type, mock_boto_client):
         """파일 업로드 성공 (라인 65-68 커버)"""
-        from S3.base import S3Client
+        from S3.base import BaseBucket
         
         mock_s3 = MagicMock()
         mock_boto_client.return_value = mock_s3
         
-        client = S3Client()
+        client = BaseBucket()
         client.put_file("test-bucket", "test-key", "/fake/path.txt")
         
         # open이 제대로 호출되었는지 확인
@@ -821,14 +821,14 @@ class BaseS3ClientTests(TestCase):
     @patch('S3.base.boto3.client')
     def test_put_file_exception(self, mock_boto_client):
         """파일 업로드 실패 - except 블록 커버 (라인 69-71)"""
-        from S3.base import S3Client
+        from S3.base import BaseBucket
         
         mock_s3 = MagicMock()
         mock_boto_client.return_value = mock_s3
         
         # open이 FileNotFoundError를 발생시키도록 설정
         with patch('builtins.open', side_effect=FileNotFoundError("File not found")):
-            client = S3Client()
+            client = BaseBucket()
             
             with self.assertRaises(Exception) as context:
                 client.put_file("test-bucket", "test-key", "/nonexistent.txt")
@@ -841,13 +841,13 @@ class BaseS3ClientTests(TestCase):
     @patch('S3.base.boto3.client')
     def test_delete_exception(self, mock_boto_client):
         """삭제 실패"""
-        from S3.base import S3Client
+        from S3.base import BaseBucket
         
         mock_s3 = MagicMock()
         mock_boto_client.return_value = mock_s3
         mock_s3.delete_object.side_effect = Exception("Delete Error")
         
-        client = S3Client()
+        client = BaseBucket()
         
         with self.assertRaises(Exception) as context:
             client.delete("test-bucket", "test-key")
@@ -857,13 +857,13 @@ class BaseS3ClientTests(TestCase):
     @patch('S3.base.boto3.client')
     def test_get_exception(self, mock_boto_client):
         """가져오기 실패"""
-        from S3.base import S3Client
+        from S3.base import BaseBucket
         
         mock_s3 = MagicMock()
         mock_boto_client.return_value = mock_s3
         mock_s3.get_object.side_effect = Exception("Get Error")
         
-        client = S3Client()
+        client = BaseBucket()
         
         with self.assertRaises(Exception) as context:
             client.get("test-bucket", "test-key")
@@ -873,13 +873,13 @@ class BaseS3ClientTests(TestCase):
     @patch('S3.base.boto3.client')
     def test_get_image_url_exception(self, mock_boto_client):
         """이미지 URL 가져오기 실패"""
-        from S3.base import S3Client
+        from S3.base import BaseBucket
         
         mock_s3 = MagicMock()
         mock_boto_client.return_value = mock_s3
         mock_s3.get_object.side_effect = Exception("Image Error")
         
-        client = S3Client()
+        client = BaseBucket()
         
         with self.assertRaises(Exception) as context:
             client.get_image_url("test-bucket", "image.png")

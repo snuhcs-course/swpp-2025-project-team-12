@@ -40,6 +40,12 @@ class MarketIndexViewModel : ViewModel() {
         preCacheChartData()
     }
 
+    fun fetchMarketBriefing() {
+        viewModelScope.launch {
+            _llmSummary.value = repository.getLLMSummaryLatest()
+        }
+    }
+
     private fun fetchMarketData() {
         viewModelScope.launch {
             try {
@@ -63,7 +69,7 @@ class MarketIndexViewModel : ViewModel() {
     private fun fetchLLMSummary() {
         viewModelScope.launch {
             try {
-                val summaryData = repository.getLLMSummary()
+                val summaryData = repository.getLLMSummaryLatest()
                 _llmSummary.postValue(summaryData)
                 val combined = buildString {
                     if (!summaryData.basicOverview.isNullOrBlank()) append(summaryData.basicOverview)

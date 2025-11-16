@@ -1,6 +1,5 @@
 package com.example.dailyinsight.di
 
-import com.example.dailyinsight.data.DefaultRepository
 import com.example.dailyinsight.data.MockRepository
 import com.example.dailyinsight.data.Repository
 import com.example.dailyinsight.data.RemoteRepository

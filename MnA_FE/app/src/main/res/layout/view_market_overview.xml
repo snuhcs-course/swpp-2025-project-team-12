@@ -25,7 +25,7 @@
             android:id="@+id/MarketTitle"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:paddingStart="8dp"
+            android:paddingStart="0dp"
             android:paddingTop="4dp"
             android:paddingEnd="8dp"
             android:paddingBottom="4dp"
@@ -40,7 +40,7 @@
             android:layout_height="wrap_content"
             android:layout_marginTop="6dp"
             android:textColor="#111111"
-            android:textSize="13sp"
+            android:textSize="18sp"
             android:lineSpacingExtra="2dp"
             android:text="시장 요약 텍스트가 들어갑니다."/>
     </LinearLayout>

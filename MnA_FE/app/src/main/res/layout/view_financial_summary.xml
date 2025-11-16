@@ -28,7 +28,7 @@
             android:textStyle="bold"
             android:textSize="20sp"
             android:textColor="#111111"
-            android:paddingStart="8dp"
+            android:paddingStart="0dp"
             android:paddingEnd="8dp"
             android:paddingTop="4dp"
             android:paddingBottom="4dp"
@@ -41,7 +41,7 @@
             android:layout_height="wrap_content"
             android:layout_marginTop="6dp"
             android:text="지수 요약 텍스트가 들어갑니다."
-            android:textSize="13sp"
+            android:textSize="18sp"
             android:textColor="#111111"
             android:lineSpacingExtra="2dp"/>
 
@@ -60,7 +60,7 @@
                 android:textSize="12sp"
                 android:textColor="#111111"
                 android:paddingEnd="4dp"
-                android:text="2750.43"/>
+                android:text=""/>
 
             <TextView
                 android:id="@+id/price_change"

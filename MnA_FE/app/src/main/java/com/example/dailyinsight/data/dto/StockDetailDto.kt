@@ -1,77 +1,64 @@
 package com.example.dailyinsight.data.dto
 
-import kotlinx.serialization.SerialName
-import kotlinx.serialization.Serializable
-import kotlinx.serialization.json.JsonNames
-@Serializable
+import com.google.gson.annotations.SerializedName
+
 data class StockDetailDto(
-    @SerialName("market_cap") val marketCap: String? = null,
-    @SerialName("shares_outstanding") val sharesOutstanding: String? = null,
+    @SerializedName("ticker") val ticker: String? = null,
+    @SerializedName("name") val name: String? = null,
 
-    @SerialName("valuation") val valuation: Valuation = Valuation(),
-    @SerialName("solvency")  val solvency: Solvency  = Solvency(),
-    @SerialName("dividend")  val dividend: Dividend  = Dividend(),
+    // 1. "올해" 데이터 (헤더 + 올해 표)
+    @SerializedName("current") val current: CurrentData? = null,
+    @SerializedName("valuation") val valuation: ValuationData? = null,
+    @SerializedName("dividend") val dividend: DividendData? = null,
+    @SerializedName("financials") val financials: FinancialsData? = null,
 
+    // 2. "과거" 데이터 (차트 + 작년~ 표)
+    @SerializedName("history") val history: List<HistoryItem>? = null,
 
-    // price 시계열 맵(날짜→값)을 담아올 자리
-    @JsonNames("price_financial_info", "priceFinancialInfo")
-    val priceFinancialInfo: PriceFinancialInfoDto? = null,
-
-    // (옵션) 상단 헤더/차트/표용 보강 필드들
-    @SerialName("ticker") val ticker: String? = null,
-    @SerialName("name")   val name: String? = null,
-    @SerialName("price")  val price: Long? = null,
-    @SerialName("change") val change: Long? = null,
-    @SerialName("change_rate") val changeRate: Double? = null,
-    @SerialName("chart") val chart: List<ChartPoint>? = null,
-    @SerialName("net_income") val netIncome: NetIncome? = null
+    // 3. 기타
+    @SerializedName("profile") val profile: ProfileData? = null,
+    @SerializedName("asOf") val asOf: String? = null // 기준일
 )
 
-@Serializable
-data class PriceFinancialInfoDto(
-    // pandas.Series가 { "YYYY-MM-DD": 70100, ... } 형태로 올 때 수용
-    @SerialName("price") val price: Map<String, Double>? = null
+
+data class CurrentData(
+    @SerializedName("price") val price: Long? = null,
+    @SerializedName("change") val change: Long? = null,
+    @SerializedName("change_rate") val changeRate: Double? = null,
+    @SerializedName("market_cap") val marketCap: Long? = null,
+    //@SerialName("shares_outstanding") val sharesOutstanding: Long? = null,
+    @SerializedName("date") val date: String? = null // "2025-11-12 00:00:00"
 )
 
-@Serializable
-data class Valuation(
-    @SerialName("pe_annual") val peAnnual: String? = null,
-    @SerialName("pe_ttm")    val peTtm: String? = null,
-    @SerialName("forward_pe") val forwardPe: String? = null,
-    @SerialName("ps_ttm")    val psTtm: String? = null,
-    @SerialName("pb")        val priceToBook: String? = null,   // ← JSON의 pb
-    @SerialName("pcf_ttm")   val pcfTtm: String? = null,
-    @SerialName("pfcf_ttm")  val pfcfTtm: String? = null
+data class ValuationData(
+    @SerializedName("pe_ttm") val peTtm: Double? = null,
+    @SerializedName("pb") val priceToBook: Double? = null, // pbr
+    @SerializedName("bps") val bps: Long? = null
 )
 
-@Serializable
-data class Solvency(
-    @SerialName("current_ratio") val currentRatio: String? = null,
-    @SerialName("quick_ratio")   val quickRatio: String? = null,
-    @SerialName("de_ratio")      val debtToEquity: String? = null // ← JSON의 de_ratio
+data class DividendData(
+    @SerializedName("yield") val `yield`: Double? = null // div
 )
 
-@Serializable
-data class Dividend(
-    @SerialName("payout_ratio")  val payoutRatio: String? = null,
-    @SerialName("yield")         val `yield`: String? = null,
-    @SerialName("latest_exdate") val latestExDate: String? = null // ← JSON의 latest_exdate
+data class FinancialsData(
+    @SerializedName("eps") val eps: Long? = null,
+    @SerializedName("dps") val dps: Long? = null,
+    @SerializedName("roe") val roe: Double? = null
 )
 
-@Serializable
-data class ChartPoint(
-    @SerialName("t") val t: Long,
-    @SerialName("v") val v: Double
+data class HistoryItem(
+    @SerializedName("date") val date: String,
+    @SerializedName("close") val close: Double,
+    @SerializedName("market_cap") val marketCap: Long? = null,
+    @SerializedName("PER") val per: Double? = null,
+    @SerializedName("PBR") val pbr: Double? = null,
+    @SerializedName("EPS") val eps: Long? = null,
+    @SerializedName("BPS") val bps: Long? = null,
+    @SerializedName("DIV") val divYield: Double? = null,
+    @SerializedName("DPS") val dps: Long? = null,
+    @SerializedName("ROE") val roe: Double? = null
 )
 
-@Serializable
-data class NetIncome(
-    @SerialName("annual")  val annual: List<PeriodValue>? = null,
-    @SerialName("quarter") val quarter: List<PeriodValue>? = null
-)
-
-@Serializable
-data class PeriodValue(
-    @SerialName("period") val period: String,
-    @SerialName("value")  val value: String
+data class ProfileData(
+    @SerializedName("explanation") val explanation: String? = null
 )
