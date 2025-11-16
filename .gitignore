@@ -4,3 +4,18 @@
 MnA_BE/.venv
 MnA_BE/.env
 MnA_BE/utils/.gitkeep
+
+__pycache__/
+
+### MarketIndex
+stockindex/MnA_FE/.idea/
+
+.vscode/
+# Coverage reports
+.coverage
+.coverage.*
+htmlcov/
+*.cover
+
+.idea
+.vscode

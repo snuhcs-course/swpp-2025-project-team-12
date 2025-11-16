@@ -1,61 +1,45 @@
-import boto3
+# MnA_BE/S3/__init__.py  (통합본)
+
 import os
-import pandas
+import io
+import base64
+import traceback
+import mimetypes
+from io import BytesIO
+from typing import Optional
+import pandas as pd
 
-class S3Client:
-	"""
-	you can use S3 service with this class.
-	"""
-	__client = None
-	__s3_resource = None
+import boto3
 
-	def __init__(self):
-		__client = boto3.client(
-		's3',
-			aws_access_key_id=os.environ['IAM_ACCESS_KEY_ID'],
-			aws_secret_access_key=os.environ['IAM_SECRET_KEY']
-		)
-		__s3_resource = __client.resource('s3')
+# debug_print 폴백
+try:
+    from utils.debug_print import debug_print
+except Exception:  # util이 없으면 print로 대체
+    def debug_print(msg):
+        print(msg)
 
-	def get(self, bucket_name, key):
-		"""
-        Gets the object.
-
-        :param bucket_name: target Bucket name.
-        :param key: The object key.
-
-        :return: The object data in bytes.
-        """
-		try:
-			obj = self.__s3_resource.Object(bucket_name, key)
-			body = obj.get()["Body"]
-		except:
-			raise Exception(
-				"Couldn't get object '%s' from bucket '%s'.",
-				key, bucket_name)
-
-		return body
-
-	def put_file(self, bucket_name, key, path_name):
-		"""
-        Upload data to the object.
+def _get_env(*keys: str, default: Optional[str] = None) -> Optional[str]:
+    """
+    환경변수 키 후보를 순서대로 조회. (IAM_* | AWS_* 모두 지원)
+    """
+    for k in keys:
+        v = os.getenv(k)
+        if v:
+            return v
+    return default
 
 
-        :param bucket_name: target Bucket name.
-        :param key: The object key.
-        :param path_name: the file's path that we want to upload.
-        """
-		try:
-			bucket = self.__s3_resource.Bucket(bucket_name)
-			if os.path.exists(path_name):
-				bucket.upload_file(path_name, key)
-		except:
-			raise Exception(
-				"Couldn't put object '%s' to bucket '%s'.",
-				key, bucket_name)
+# 모듈 수준의 간단 클라이언트도 제공(기존 코드 호환용)
+def get_boto3_client():
+    access_key = _get_env("IAM_ACCESS_KEY_ID", "AWS_ACCESS_KEY_ID")
+    secret_key = _get_env("IAM_SECRET_KEY", "AWS_SECRET_ACCESS_KEY")
+    region = _get_env("AWS_REGION")
 
-	def get_dataframe(self, bucket, key) -> pandas.DataFrame:
-		pass
+    kwargs = {}
+    if region:
+        kwargs["region_name"] = region
+    if access_key and secret_key:
+        kwargs["aws_access_key_id"] = access_key
+        kwargs["aws_secret_access_key"] = secret_key
 
-	def put_dataframe(self, bucket, key, dataframe: pandas.DataFrame):
-		pass
+    return boto3.client("s3", **kwargs)

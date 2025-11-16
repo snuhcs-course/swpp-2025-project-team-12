@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="utf-8"?>
+<navigation xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/mobile_navigation"
+    app:startDestination="@id/navigation_stock">
+
+    <fragment
+        android:id="@+id/navigation_stock"
+        android:name="com.example.dailyinsight.ui.stock.StockFragment"
+        android:label="@string/title_stock_briefing"
+        tools:layout="@layout/fragment_stock">
+        <action
+            android:id="@+id/action_stock_to_stock_detail"
+            app:destination="@id/stock_detail_fragment" />
+    </fragment>
+
+    <fragment
+        android:id="@+id/navigation_market_index"
+        android:name="com.example.dailyinsight.ui.marketindex.MarketIndexFragment"
+        android:label="@string/title_market_briefing"
+        tools:layout="@layout/fragment_market_index" >
+        <action
+            android:id="@+id/action_navigation_market_index_to_stockIndexDetailFragment"
+            app:destination="@id/stockIndexDetailFragment" />
+    </fragment>
+    <fragment
+        android:id="@+id/stockIndexDetailFragment"
+        android:name="com.example.dailyinsight.ui.marketindex.StockIndexDetailFragment"
+        android:label="{stockIndexType}"
+        tools:layout="@layout/fragment_stock_index_detail">
+        <argument
+            android:name="stockIndexType"
+            app:argType="string" />
+    </fragment>
+    <fragment
+        android:id="@+id/stock_detail_fragment"
+        android:name="com.example.dailyinsight.ui.detail.StockDetailFragment"
+        android:label="@string/title_stock_detail">
+        <argument
+            android:name="item"
+            app:argType="com.example.dailyinsight.data.dto.RecommendationDto" />
+    </fragment>
+
+    <fragment
+        android:id="@+id/navigation_profile"
+        android:name="com.example.dailyinsight.ui.profile.ProfileFragment"
+        android:label="@string/title_profile"
+        tools:layout="@layout/fragment_profile">
+    </fragment>
+
+</navigation>

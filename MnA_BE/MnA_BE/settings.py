@@ -29,7 +29,7 @@ SECRET_KEY = "django-insecure-9*#xm@jz&k9%1dpl$nq0d1_&wd0n9qua=krj(ucab+(+xtil+!
 DEBUG = (True if os.environ['DEBUG'] == 'True' else False)
 
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['*']
 
 # Application definition
 
@@ -42,17 +42,23 @@ INSTALLED_APPS = [
     "django.contrib.messages",
     "django.contrib.staticfiles",
 
+    # optional
+    "drf_yasg",
+
     # custom apps
     "corsheaders",
     "apps.user",
-    "apps.DailyInsight",
+    "apps.MarketIndex",
+    "apps.articles",
+    "apps.api",
 ]
 
 MIDDLEWARE = [
+    "corsheaders.middleware.CorsMiddleware",
     "django.middleware.security.SecurityMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
-    "django.middleware.csrf.CsrfViewMiddleware",
+#    "django.middleware.csrf.CsrfViewMiddleware",
     "django.contrib.auth.middleware.AuthenticationMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
@@ -154,3 +160,34 @@ STATIC_URL = "static/"
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
+
+
+# ============================================================================
+# AWS S3 Configuration (추가!)
+# ============================================================================
+# 크롤러와 동일한 S3 버킷 및 자격 증명 사용
+AWS_ACCESS_KEY_ID = os.environ.get('AWS_ACCESS_KEY_ID')
+AWS_SECRET_ACCESS_KEY = os.environ.get('AWS_SECRET_ACCESS_KEY')
+AWS_STORAGE_BUCKET_NAME = 'swpp-12-bucket'  # 크롤러와 동일
+AWS_S3_REGION_NAME = 'ap-northeast-2'  # 크롤러와 동일
+
+# S3 설정 (선택사항)
+AWS_S3_CUSTOM_DOMAIN = f'{AWS_STORAGE_BUCKET_NAME}.s3.{AWS_S3_REGION_NAME}.amazonaws.com'
+AWS_DEFAULT_ACL = None
+AWS_S3_OBJECT_PARAMETERS = {
+    'CacheControl': 'max-age=86400',
+}
+
+# ============================================================================
+# Django Cache Configuration
+# ============================================================================
+# 로컬 메모리 캐시 사용 (instant_df, profile_df 저장용)
+CACHES = {
+    'default': {
+        'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
+        'LOCATION': 'finance-data-cache',
+        'OPTIONS': {
+            'MAX_ENTRIES': 10,  # 캐시 항목 최대 개수
+        }
+    }
+}

@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="utf-8"?>
+<com.google.android.material.card.MaterialCardView
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:clickable="true"
+    android:focusable="true"
+    app:cardCornerRadius="12dp"
+    app:cardUseCompatPadding="false"
+    app:cardElevation="0dp"
+    app:cardBackgroundColor="@android:color/white"
+    app:strokeColor="@android:color/black"
+    app:strokeWidth="1dp">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:padding="12dp">
+
+        <TextView
+            android:id="@+id/name"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            tools:text="KOSPI"
+            android:textStyle="bold"
+            android:textSize="20sp"
+            android:textColor="#111111"
+            android:paddingStart="0dp"
+            android:paddingEnd="8dp"
+            android:paddingTop="4dp"
+            android:paddingBottom="4dp"
+            android:includeFontPadding="false"/>
+
+        <!-- 설명(요약) -->
+        <TextView
+            android:id="@+id/description"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="6dp"
+            android:text="지수 요약 텍스트가 들어갑니다."
+            android:textSize="18sp"
+            android:textColor="#111111"
+            android:lineSpacingExtra="2dp"/>
+
+        <!-- 가격/변동 한 줄 -->
+        <LinearLayout
+            android:id="@+id/rowPrice"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:layout_marginTop="8dp">
+
+            <TextView
+                android:id="@+id/price"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textSize="12sp"
+                android:textColor="#111111"
+                android:paddingEnd="4dp"
+                android:text=""/>
+
+            <TextView
+                android:id="@+id/price_change"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textSize="12sp"
+                android:textStyle="bold"
+                android:text="-12.45 (-0.45%)"/>
+        </LinearLayout>
+    </LinearLayout>
+</com.google.android.material.card.MaterialCardView>

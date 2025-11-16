@@ -1,0 +1,477 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.core.widget.NestedScrollView
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:fillViewport="true"
+    android:clipToPadding="false"
+    app:layout_behavior="@string/appbar_scrolling_view_behavior">
+
+    <LinearLayout
+        android:orientation="vertical"
+        android:padding="16dp"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content">
+
+        <!-- Header -->
+        <TextView
+            android:id="@+id/tvName"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textStyle="bold"
+            android:textSize="22sp"/>
+
+        <TextView
+            android:id="@+id/tvticker"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="4dp"
+            android:textSize="12sp"
+            android:textColor="?attr/colorOutline"/>
+
+        <TextView
+            android:id="@+id/tvPrice"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="12dp"
+            android:textStyle="bold"
+            android:textSize="28sp"
+            android:textColor="?attr/colorOnSurface"/>
+
+        <!-- Change (한 줄: -5 (-0,72%)) -->
+        <TextView
+            android:id="@+id/tvChange"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="4dp"
+            android:textSize="14sp"
+            android:textStyle="bold" />
+
+        <!-- 등락률(%) 안 보이게 설정 -->
+        <TextView
+            android:id="@+id/tvChangeRate"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="6dp"
+            android:textSize="14sp"
+            android:visibility="gone"/>
+
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="1dp"
+            android:layout_marginVertical="16dp"
+            android:background="?attr/colorSurfaceVariant"
+            android:visibility="gone"/>
+
+        <TextView
+            android:id="@+id/tvHeadline"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:textSize="15sp"
+            android:visibility="gone"/>
+
+        <com.google.android.material.card.MaterialCardView
+            android:id="@+id/cardChart"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="12dp"
+            app:cardUseCompatPadding="true"
+            app:cardCornerRadius="16dp">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:padding="16dp">
+
+                <!-- 차트 -->
+                <com.github.mikephil.charting.charts.LineChart
+                    android:id="@+id/lineChart"
+                    android:layout_width="match_parent"
+                    android:layout_height="180dp"
+                    android:layout_marginTop="16dp" />
+
+                <HorizontalScrollView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:scrollbars="none"
+                    android:paddingTop="8dp">
+
+                <!-- Segmented pill -->
+                <com.google.android.material.button.MaterialButtonToggleGroup
+                    android:id="@+id/btnGroupRange"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:paddingTop="8dp"
+                    app:singleSelection="true"
+                    app:selectionRequired="true"
+                    app:checkedButton="@id/btn6M">
+
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/btn1W"
+                        style="@style/Widget.DI.SegButton"
+                        android:layout_width="wrap_content"
+                        android:layout_height="48dp"
+                        android:minWidth="67dp"
+                        android:text="@string/_1W"/>
+
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/btn1M"
+                        style="@style/Widget.DI.SegButton"
+                        android:layout_width="wrap_content"
+                        android:layout_height="48dp"
+                        android:minWidth="67dp"
+                        android:text="@string/_1M"/>
+
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/btn3M"
+                        style="@style/Widget.DI.SegButton"
+                        android:layout_width="wrap_content"
+                        android:layout_height="48dp"
+                        android:minWidth="67dp"
+                        android:text="@string/_3M"/>
+
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/btn6M"
+                        style="@style/Widget.DI.SegButton"
+                        android:layout_width="wrap_content"
+                        android:layout_height="48dp"
+                        android:minWidth="67dp"
+                        android:text="@string/_6M"/>
+
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/btnYTD"
+                        style="@style/Widget.DI.SegButton"
+                        android:layout_width="wrap_content"
+                        android:layout_height="48dp"
+                        android:minWidth="67dp"
+                        android:text="@string/_YTD"/>
+
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/btn1Y"
+                        style="@style/Widget.DI.SegButton"
+                        android:layout_width="wrap_content"
+                        android:layout_height="48dp"
+                        android:minWidth="67dp"
+                        android:text="@string/_1Y"/>
+
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/btn3Y"
+                        style="@style/Widget.DI.SegButton"
+                        android:layout_width="wrap_content"
+                        android:layout_height="48dp"
+                        android:minWidth="67dp"
+                        android:text="@string/_3Y"/>
+
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/btn5Y"
+                        style="@style/Widget.DI.SegButton"
+                        android:layout_width="wrap_content"
+                        android:layout_height="48dp"
+                        android:minWidth="67dp"
+                        android:text="@string/_5Y"/>
+
+                </com.google.android.material.button.MaterialButtonToggleGroup>
+                </HorizontalScrollView>
+            </LinearLayout>
+        </com.google.android.material.card.MaterialCardView>
+
+        <TextView
+            android:id="@+id/tvDate"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            android:layout_marginEnd="8dp"
+            android:layout_gravity="end"
+            android:textSize="20sp"
+            android:textAppearance="?attr/textAppearanceLabelSmall"
+            android:textColor="?attr/colorOnSurfaceVariant"/>
+
+        <com.google.android.material.card.MaterialCardView
+            android:id="@+id/cardSummary"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="12dp"
+            android:visibility="gone"
+            app:cardUseCompatPadding="true"
+            app:cardCornerRadius="16dp">
+            <LinearLayout
+                android:orientation="vertical"
+                android:padding="16dp"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content">
+                <TextView
+                    style="@style/TextAppearance.Material3.TitleMedium"
+                    android:text="요약"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content" />
+                <TextView
+                    android:id="@+id/tvSummary"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="8dp"
+                    android:lineSpacingExtra="4dp"
+                    android:textAppearance="?attr/textAppearanceBodyMedium"
+                    tools:text="요약 텍스트가 여기에 표시됩니다..."/>
+            </LinearLayout>
+        </com.google.android.material.card.MaterialCardView>
+
+        <com.google.android.material.card.MaterialCardView
+            android:id="@+id/cardFundamental"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="12dp"
+            android:visibility="gone"
+            app:cardUseCompatPadding="true"
+            app:cardCornerRadius="16dp">
+            <LinearLayout
+                android:orientation="vertical"
+                android:padding="16dp"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content">
+                <TextView
+                    style="@style/TextAppearance.Material3.TitleMedium"
+                    android:text="기본적 분석"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content" />
+                <TextView
+                    android:id="@+id/tvFundamental"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="8dp"
+                    android:lineSpacingExtra="4dp"
+                    android:textAppearance="?attr/textAppearanceBodyMedium"
+                    tools:text="기본적 분석 텍스트..."/>
+            </LinearLayout>
+        </com.google.android.material.card.MaterialCardView>
+
+        <com.google.android.material.card.MaterialCardView
+            android:id="@+id/cardTechnical"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="12dp"
+            android:visibility="gone"
+            app:cardUseCompatPadding="true"
+            app:cardCornerRadius="16dp">
+            <LinearLayout
+                android:orientation="vertical"
+                android:padding="16dp"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content">
+                <TextView
+                    style="@style/TextAppearance.Material3.TitleMedium"
+                    android:text="기술적 분석"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content" />
+                <TextView
+                    android:id="@+id/tvTechnical"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="8dp"
+                    android:lineSpacingExtra="4dp"
+                    android:textAppearance="?attr/textAppearanceBodyMedium"
+                    tools:text="기술적 분석 텍스트..."/>
+            </LinearLayout>
+        </com.google.android.material.card.MaterialCardView>
+
+        <com.google.android.material.card.MaterialCardView
+            android:id="@+id/cardNews"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="12dp"
+            android:visibility="gone"
+            app:cardUseCompatPadding="true"
+            app:cardCornerRadius="16dp">
+            <LinearLayout
+                android:orientation="vertical"
+                android:padding="16dp"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content">
+                <TextView
+                    style="@style/TextAppearance.Material3.TitleMedium"
+                    android:text="관련 뉴스"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content" />
+                <TextView
+                    android:id="@+id/tvNews"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="8dp"
+                    android:lineSpacingExtra="4dp"
+                    android:textAppearance="?attr/textAppearanceBodyMedium"
+                    tools:text="• 뉴스 1...\n• 뉴스 2..."/>
+            </LinearLayout>
+        </com.google.android.material.card.MaterialCardView>
+
+        <com.google.android.material.card.MaterialCardView
+            android:id="@+id/cardExplanation"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="12dp"
+            android:visibility="gone"
+            app:cardUseCompatPadding="true"
+            app:cardCornerRadius="16dp">
+            <LinearLayout
+                android:orientation="vertical"
+                android:padding="16dp"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content">
+                <TextView
+                    style="@style/TextAppearance.Material3.TitleMedium"
+                    android:text="기업 개요"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content" />
+                <TextView
+                    android:id="@+id/tvExplanation"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="8dp"
+                    android:lineSpacingExtra="4dp"
+                    android:textAppearance="?attr/textAppearanceBodyMedium"
+                    tools:text="동사는 1969년 설립된..."/>
+            </LinearLayout>
+        </com.google.android.material.card.MaterialCardView>
+
+        <!-- size -->
+        <com.google.android.material.card.MaterialCardView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="12dp"
+            android:clipToPadding="false">
+
+            <LinearLayout
+                android:orientation="vertical"
+                android:padding="16dp"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content">
+
+                <TextView
+                    style="@style/TextAppearance.Material3.TitleMedium"
+                    android:text="@string/size"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content" />
+
+                <!-- 표 -->
+                <TableLayout
+                    android:id="@+id/tblSize"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="12dp"
+                    android:stretchColumns="1,2,3"/>
+            </LinearLayout>
+        </com.google.android.material.card.MaterialCardView>
+
+        <!-- value -->
+        <com.google.android.material.card.MaterialCardView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="12dp"
+            android:clipToPadding="false">
+
+            <LinearLayout
+                android:orientation="vertical"
+                android:padding="16dp"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content">
+
+                <TextView
+                    style="@style/TextAppearance.Material3.TitleMedium"
+                    android:text="@string/value"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content" />
+
+                <!-- 표 -->
+                <TableLayout
+                    android:id="@+id/tblValue"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="12dp"
+                    android:stretchColumns="1,2,3"/>
+            </LinearLayout>
+        </com.google.android.material.card.MaterialCardView>
+
+        <!-- profitability -->
+        <com.google.android.material.card.MaterialCardView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="12dp"
+            android:clipToPadding="false">
+
+            <LinearLayout
+                android:orientation="vertical"
+                android:padding="16dp"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content">
+
+                <TextView
+                    style="@style/TextAppearance.Material3.TitleMedium"
+                    android:text="@string/profitability"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content" />
+
+                <!-- 표 -->
+                <TableLayout
+                    android:id="@+id/tblProfitability"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="12dp"
+                    android:stretchColumns="1,2,3"/>
+            </LinearLayout>
+        </com.google.android.material.card.MaterialCardView>
+
+        <!-- dividend -->
+        <com.google.android.material.card.MaterialCardView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="12dp"
+            android:clipToPadding="false">
+
+            <LinearLayout
+                android:orientation="vertical"
+                android:padding="16dp"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content">
+
+                <TextView
+                    style="@style/TextAppearance.Material3.TitleMedium"
+                    android:text="@string/dividend"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content" />
+
+                <!-- 표 -->
+                <TableLayout
+                    android:id="@+id/tblDividend"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="12dp"
+                    android:stretchColumns="1,2,3"/>
+            </LinearLayout>
+        </com.google.android.material.card.MaterialCardView>
+
+        <ProgressBar
+            android:id="@+id/progress"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:visibility="gone"
+            android:layout_gravity="center"/>
+
+        <TextView
+            android:id="@+id/tvError"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/error_generic"
+            android:textAppearance="?attr/textAppearanceBody2"
+            android:textColor="@color/error"
+            android:gravity="center"
+            android:padding="12dp"
+            android:visibility="gone"/>
+
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="80dp" />
+
+    </LinearLayout>
+
+</androidx.core.widget.NestedScrollView>

@@ -1,0 +1,118 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/main"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    tools:context=".sign.SignUp">
+
+    <com.google.android.material.appbar.AppBarLayout
+        android:id="@+id/appBar"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:fitsSystemWindows="true"
+        app:layout_constraintTop_toTopOf="parent" >
+
+        <com.google.android.material.appbar.CollapsingToolbarLayout
+            style="?attr/collapsingToolbarLayoutMediumStyle"
+            android:layout_width="match_parent"
+            android:layout_height="?attr/collapsingToolbarLayoutMediumSize"
+            >
+
+            <com.google.android.material.appbar.MaterialToolbar
+                android:id="@+id/topAppBar"
+                android:layout_width="match_parent"
+                android:layout_height="?attr/actionBarSize"
+                android:elevation="0dp"
+                app:titleCentered="true"
+                app:title="회원가입"
+                app:navigationIcon="@drawable/arrow_back_24dp">
+
+            </com.google.android.material.appbar.MaterialToolbar>
+
+
+        </com.google.android.material.appbar.CollapsingToolbarLayout>
+    </com.google.android.material.appbar.AppBarLayout>
+
+    <com.google.android.material.textfield.TextInputLayout
+        android:id="@+id/IDText"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent" >
+
+        <com.google.android.material.textfield.TextInputEditText
+            android:id="@+id/IDTextField"
+            android:layout_width="344dp"
+            android:layout_height="wrap_content"
+            android:singleLine="true"
+            android:imeOptions="actionNext"
+            android:nextFocusDown="@id/PWTextField"
+            android:hint="아이디"
+            app:counterEnabled="true"
+            app:counterMaxLength="20" />
+
+    </com.google.android.material.textfield.TextInputLayout>
+
+    <com.google.android.material.textfield.TextInputLayout
+        android:id="@+id/PWText"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        app:layout_constraintTop_toBottomOf="@+id/IDText"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:endIconMode="password_toggle" >
+
+        <com.google.android.material.textfield.TextInputEditText
+            android:id="@+id/PWTextField"
+            android:layout_width="344dp"
+            android:layout_height="wrap_content"
+            android:singleLine="true"
+            android:inputType="textPassword"
+            android:imeOptions="actionNext"
+            android:nextFocusDown="@id/verifyPWField"
+            android:hint="비밀번호" />
+
+    </com.google.android.material.textfield.TextInputLayout>
+
+    <com.google.android.material.textfield.TextInputLayout
+        android:id="@+id/verifyPW"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        app:layout_constraintTop_toBottomOf="@+id/PWText"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:endIconMode="password_toggle" >
+
+        <com.google.android.material.textfield.TextInputEditText
+            android:id="@+id/verifyPWField"
+            android:layout_width="344dp"
+            android:layout_height="wrap_content"
+            android:singleLine="true"
+            android:inputType="textPassword"
+            android:imeOptions="actionDone"
+            android:hint="비밀번호 재확인" />
+
+    </com.google.android.material.textfield.TextInputLayout>
+
+    <com.google.android.material.button.MaterialButton
+        android:id="@+id/signUpButton"
+        android:layout_width="344dp"
+        android:layout_height="wrap_content"
+        app:layout_constraintTop_toBottomOf="@id/verifyPW"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        android:text="회원가입" />
+    <!--    -->
+    <!--    <com.google.android.material.divider.MaterialDivider-->
+    <!--        android:id="@+id/signInUpDivider"-->
+    <!--        android:layout_width="match_parent"-->
+    <!--        android:layout_height="wrap_content"-->
+    <!--        app:dividerInsetStart="16dp"-->
+    <!--        app:dividerInsetEnd="16dp"-->
+    <!--        app:layout_constraintTop_toBottomOf="@id/findPWButton" />-->
+
+</androidx.constraintlayout.widget.ConstraintLayout>

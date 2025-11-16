@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <item
+        android:id="@+id/navigation_stock"
+        android:icon="@drawable/ic_dashboard_black_24dp"
+        android:title="@string/title_stock" /> <!-- 종목 -->
+    <item
+        android:id="@+id/navigation_market_index"
+        android:icon="@drawable/ic_baseline_candlestick_chart_24"
+        android:title="@string/title_market_index" /> <!-- 시장 -->
+
+    <item
+        android:id="@+id/navigation_profile"
+        android:icon="@drawable/ic_account_circle"
+        android:title="@string/title_profile" /> <!--프로필-->
+
+</menu>

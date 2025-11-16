@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="purple_200">#FFBB86FC</color>
+    <color name="purple_500">#FF6200EE</color>
+    <color name="purple_700">#FF3700B3</color>
+    <color name="teal_200">#FF03DAC5</color>
+    <color name="teal_700">#FF018786</color>
+    <color name="black">#FF000000</color>
+    <color name="white">#FFFFFFFF</color>
+    <color name="positive_red">#E0144C</color>
+    <color name="negative_blue">#2563EB</color>
+    <color name="index_up">#D32F2F</color>     <!-- 빨강  -->
+    <color name="index_down">#1976D2</color>   <!-- 파랑  -->
+    <color name="price_up">#D32F2F</color>     <!-- 상승: 빨강 -->
+    <color name="price_down">#1976D2</color>   <!-- 하락: 파랑 -->
+    <color name="price_flat">#9E9E9E</color>   <!-- 보합: 회색 -->
+    <color name="error">#B3261E</color>
+    <color name="gray">#9E9E9E</color>   <!--회색 -->
+    <color name="di_negative">#D32F2F</color>
+    <color name="di_positive">#2E7D32</color>
+    <color name="di_gray">#9AA1A9</color>
+    <color name="table_border">#33000000</color> <!-- 불투명에 가까운 진한 회색 -->
+
+</resources>

@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="utf-8"?>
+<com.google.android.material.card.MaterialCardView
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:clickable="false"
+    android:focusable="false"
+    app:cardCornerRadius="12dp"
+    app:cardUseCompatPadding="false"
+    app:cardElevation="0dp"
+    app:cardBackgroundColor="@android:color/white"
+    app:strokeColor="@android:color/black"
+    app:strokeWidth="1dp">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:padding="12dp">
+
+        <!-- 요약 본문-->
+
+        <TextView
+            android:id="@+id/MarketTitle"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:paddingStart="0dp"
+            android:paddingTop="4dp"
+            android:paddingEnd="8dp"
+            android:paddingBottom="4dp"
+            android:text="전반"
+            android:textColor="#111111"
+            android:textSize="20sp"
+            android:textStyle="bold" />
+
+        <TextView
+            android:id="@+id/MarketSummary"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="6dp"
+            android:textColor="#111111"
+            android:textSize="18sp"
+            android:lineSpacingExtra="2dp"
+            android:text="시장 요약 텍스트가 들어갑니다."/>
+    </LinearLayout>
+</com.google.android.material.card.MaterialCardView>

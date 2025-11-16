@@ -1,29 +1,66 @@
 # Welcome M&A's Backend Server!!
 
 ### Description
-TODO
+public address:
+ec2-3-34-197-82.ap-northeast-2.compute.amazonaws.com
 
-### Helpful commands
+## Helpful commands
+
+### Server Managements
 * activate and deactivate virtual environment
-```
+``` 
+    (windows)
     .venv/scripts/activate
+```
+``` 
+    (linux)
+    source .venv/bin/activate
+```
+```
     deactivate
+```
+
+* python package installation
+```
+    pip install -r requirements.txt
+```
+
+* update python packages
+```
+    pip freeze > requirements.txt
 ```
 
 * run server
 ```
-    python manage.py runserver
+    python manage.py runserver 0.0.0.0:8000
 ```
 
 * DB management
 ```
-    python manage.py makemigrations DailyInsight --pythonpath="apps"
+    python manage.py makemigrations api --pythonpath="apps"
 ```
 ```
     python manage.py makemigrations user --pythonpath="apps"
 ```
 ```
     python manage.py migrate
+```
+
+### Testing
+* run tests
+```
+    coverage run --source='.' manage.py test
+```
+* check coverage
+```
+    coverage report
+```
+
+### Crawling
+
+* crawl articles
+```
+    python manage.py crawler_articles --top 50
 ```
 
 ## Our Stacks:

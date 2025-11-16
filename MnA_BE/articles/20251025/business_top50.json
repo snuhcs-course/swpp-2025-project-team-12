@@ -1,0 +1,14 @@
+{
+  "metadata": {
+    "start_time": "2025-10-25T23:54:37.894522+09:00",
+    "end_time": "2025-10-25T23:57:11.859329+09:00",
+    "elapsed_seconds": 153.96,
+    "elapsed_minutes": 2.57,
+    "target_count": 50,
+    "success_count": 0,
+    "failed_count": 70,
+    "filtered_count": 0,
+    "total_articles": 0
+  },
+  "articles": []
+}
