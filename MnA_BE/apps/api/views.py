@@ -8,6 +8,7 @@ from Mocks.mock_data import MOCK_INDICES, MOCK_ARTICLES
 from decorators import default_error_handler
 from utils.debug_print import debug_print
 from utils.pagination import get_pagination
+from utils.get_llm_overview import get_latest_overview
 from utils.for_api import *
 from utils.store import store
 from utils import instant_data
@@ -214,8 +215,14 @@ class APIView(viewsets.ViewSet):
             total = len(df_latest)
             page_df = df_latest.iloc[offset:offset + limit]
 
+            company_overview = get_latest_overview("company-overview")
+
             items = [
-                {"ticker": row["ticker"], "name": str(row["name"])}
+                {
+                    "ticker": row["ticker"],
+                    "name": str(row["name"]),
+                    "overview": company_overview.get(row["ticker"], None)
+                }
                 for idx, row in page_df.iterrows()
             ]
 
@@ -316,23 +323,12 @@ class APIView(viewsets.ViewSet):
         """
         GET /api/overview/{ticker}
         """
-        source = FinanceS3Client().check_source(
-            bucket=FINANCE_BUCKET,
-            prefix="llm_output/company-overview"
-        )
-        if not source["ok"]: return JsonResponse({"message": "No LLM output found"}, status=404)
-        year, month, day = source["latest"].split("-")
-
         try:
-            llm_output = FinanceS3Client().get_json(
-                bucket=FINANCE_BUCKET,
-                key=f"llm_output/company-overview/year={year}/month={month}/{year}-{month}-{day}"
-            )
-            company_overview = llm_output.get(ticker, None)
+            company_overview = get_latest_overview("company-overview")
         except Exception as e:
             return JsonResponse({ "message": "Unexpected Server Error" }, status=500)
 
-        return JsonResponse(company_overview, status=200, safe=False)
+        return JsonResponse(company_overview.get(ticker, {}), status=200, safe=False)
 
 
     @action(detail=False, methods=['get'])

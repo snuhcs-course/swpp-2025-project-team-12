@@ -5,8 +5,7 @@ from rest_framework.decorators import action
 
 from decorators import default_error_handler
 from .stockindex_manager import StockindexManager
-from S3.finance import FinanceS3Client
-from utils.for_api import get_path_with_date
+from utils.get_llm_overview import get_latest_overview
 
 class MarketLLMview(viewsets.ViewSet):
     """
@@ -19,23 +18,8 @@ class MarketLLMview(viewsets.ViewSet):
     @default_error_handler
     def get_market_overview(self, request, year = None, month = None, day = None):
         """Get the latest LLM output for market analysis from S3 JSON data."""
-        bucket_name = os.environ.get('FINANCE_BUCKET_NAME')
-
-        # if no date provided, get the latest
-        if year is None and month is None and day is None:
-            source = FinanceS3Client().check_source(
-                bucket=bucket_name,
-                prefix="llm_output/market-index-overview"
-            )
-            if not source["ok"]: return JsonResponse({ "message": "No LLM output found" }, status=404)
-            year, month, day = source["latest"].split("-")
-
-        path = f"llm_output/market-index-overview/year={year}/month={month}/{year}-{month}-{day}"
         try:
-            llm_output = FinanceS3Client().get_json(
-                bucket=bucket_name,
-                key=path
-            )
+            llm_output = get_latest_overview("market-index-overview")
         except Exception as e:
             return JsonResponse({"message": "Unexpected Server Error"}, status=500)
 
