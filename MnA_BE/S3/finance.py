@@ -117,3 +117,6 @@ class FinanceS3Client(S3Client):
         except Exception:
             debug_print(traceback.format_exc())
             raise Exception(f"S3 ERROR: Couldn't write DataFrame to s3://{bucket}/{key}")
+
+    def get_list_v2(self, bucket: str, prefix: str):
+        return self._client.list_objects_v2(Bucket=bucket, Prefix=prefix)

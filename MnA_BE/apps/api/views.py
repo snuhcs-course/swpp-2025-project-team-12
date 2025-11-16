@@ -1,5 +1,6 @@
 # apps/api/views.py
-import json
+import json, time
+from datetime import datetime
 
 from django.http import HttpRequest
 from django.core.cache import cache
@@ -101,18 +102,10 @@ class APIView(viewsets.ViewSet):
                 import os
 
                 # S3 클라이언트 생성
-                s3_client = boto3.client(
-                    's3',
-                    aws_access_key_id=os.getenv('FINANCE_AWS_ACCESS_KEY_ID'),
-                    aws_secret_access_key=os.getenv('FINANCE_AWS_SECRET_ACCESS_KEY'),
-                    region_name=os.getenv('AWS_REGION')
-                )
+                s3 = FinanceS3Client()
 
                 # 최신 날짜의 지수 파일 찾기
-                response = s3_client.list_objects_v2(
-                    Bucket=FINANCE_BUCKET,
-                    Prefix=S3_PREFIX_INDICES
-                )
+                response = s3.get_list_v2(FINANCE_BUCKET, S3_PREFIX_INDICES)
 
                 if 'Contents' not in response:
                     return degraded(
@@ -143,8 +136,7 @@ class APIView(viewsets.ViewSet):
                 as_of = None
 
                 if kospi_file:
-                    obj = s3_client.get_object(Bucket=FINANCE_BUCKET, Key=kospi_file['Key'])
-                    data = json.loads(obj['Body'].read())
+                    data = s3.get_json(FINANCE_BUCKET, kospi_file['Key'])
                     kospi_data = {
                         "value": round(data.get('close', 0), 2),
                         "changePct": round(data.get('change_percent', 0), 2)
@@ -152,8 +144,7 @@ class APIView(viewsets.ViewSet):
                     as_of = data.get('fetched_at') or str(kospi_file['LastModified'])
 
                 if kosdaq_file:
-                    obj = s3_client.get_object(Bucket=FINANCE_BUCKET, Key=kosdaq_file['Key'])
-                    data = json.loads(obj['Body'].read())
+                    data = s3.get_json(FINANCE_BUCKET, kosdaq_file['Key'])
                     kosdaq_data = {
                         "value": round(data.get('close', 0), 2),
                         "changePct": round(data.get('change_percent', 0), 2)
@@ -458,22 +449,8 @@ class APIView(viewsets.ViewSet):
             indices_snippet = None
             if INDICES_SOURCE == "s3":
                 try:
-                    import boto3
-                    import json
-                    import os
-
-                    s3_client = boto3.client(
-                        's3',
-                        aws_access_key_id=os.getenv('FINANCE_AWS_ACCESS_KEY_ID'),
-                        aws_secret_access_key=os.getenv('FINANCE_AWS_SECRET_ACCESS_KEY'),
-                        region_name=os.getenv('AWS_REGION')
-                    )
-
-                    # 최신 지수 파일 찾기
-                    response = s3_client.list_objects_v2(
-                        Bucket=FINANCE_BUCKET,
-                        Prefix=S3_PREFIX_INDICES
-                    )
+                    s3 = FinanceS3Client()
+                    response = s3.get_list_v2(FINANCE_BUCKET, S3_PREFIX_INDICES)
 
                     if 'Contents' in response:
                         files = sorted(response['Contents'], key=lambda x: x['LastModified'], reverse=True)
@@ -492,16 +469,14 @@ class APIView(viewsets.ViewSet):
                         indices_snippet = {}
 
                         if kospi_file:
-                            obj = s3_client.get_object(Bucket=FINANCE_BUCKET, Key=kospi_file['Key'])
-                            data = json.loads(obj['Body'].read())
+                            data = s3.get_json(FINANCE_BUCKET, kospi_file['Key'])
                             indices_snippet['kospi'] = {
                                 "value": round(data.get('close', 0), 2),
                                 "changePct": round(data.get('change_percent', 0), 2)
                             }
 
                         if kosdaq_file:
-                            obj = s3_client.get_object(Bucket=FINANCE_BUCKET, Key=kosdaq_file['Key'])
-                            data = json.loads(obj['Body'].read())
+                            data = s3.get_json(FINANCE_BUCKET, kosdaq_file['Key'])
                             indices_snippet['kosdaq'] = {
                                 "value": round(data.get('close', 0), 2),
                                 "changePct": round(data.get('change_percent', 0), 2)
@@ -584,12 +559,6 @@ class APIView(viewsets.ViewSet):
         서버 재시작 없이 최신 데이터로 업데이트
         """
         try:
-            from S3.finance import FinanceS3Client
-            from datetime import datetime
-            import time
-            import boto3
-            import os
-            import io
 
             debug_print("=" * 50)
             debug_print("Manual data reload triggered...")
@@ -620,16 +589,8 @@ class APIView(viewsets.ViewSet):
             # 2) Profile 데이터 로드 (market별 자동 검색)
             profile_start = time.time()
 
-            s3_client = boto3.client(
-                's3',
-                aws_access_key_id=os.getenv('FINANCE_AWS_ACCESS_KEY_ID'),
-                aws_secret_access_key=os.getenv('FINANCE_AWS_SECRET_ACCESS_KEY'),
-                region_name=os.getenv('AWS_REGION')
-            )
-
-            response = s3_client.list_objects_v2(
-                Bucket=FINANCE_BUCKET,
-                Prefix='company-profile/'
+            response = s3.get_list_v2(
+                FINANCE_BUCKET, 'company-profile/'
             )
 
             if 'Contents' in response:
@@ -649,13 +610,8 @@ class APIView(viewsets.ViewSet):
                 profile_kospi = None
                 profile_kosdaq = None
 
-                if kospi_file:
-                    obj = s3_client.get_object(Bucket=FINANCE_BUCKET, Key=kospi_file)
-                    profile_kospi = pd.read_parquet(io.BytesIO(obj['Body'].read()))
-
-                if kosdaq_file:
-                    obj = s3_client.get_object(Bucket=FINANCE_BUCKET, Key=kosdaq_file)
-                    profile_kosdaq = pd.read_parquet(io.BytesIO(obj['Body'].read()))
+                if kospi_file: profile_kospi = s3.get_dataframe(FINANCE_BUCKET, kospi_file)
+                if kosdaq_file: profile_kosdaq = s3.get_dataframe(FINANCE_BUCKET, kosdaq_file)
 
                 if profile_kosdaq is not None and profile_kospi is not None:
                     profile_df = pd.concat([profile_kosdaq, profile_kospi])
