@@ -8,8 +8,8 @@ from django.test import SimpleTestCase
 from unittest.mock import patch, Mock, MagicMock
 import io
 from botocore.exceptions import ClientError, NoCredentialsError, PartialCredentialsError
-from S3.base import S3Client
-from S3.finance import FinanceS3Client
+from S3.base import BaseBucket
+from S3.finance import FinanceBucket
 import pandas as pd
 
 
@@ -23,7 +23,7 @@ class S3ClientTimeoutTests(SimpleTestCase):
         mock_client.get_object.side_effect = Exception("Request timed out")
         mock_boto_client.return_value = mock_client
         
-        s3 = S3Client()
+        s3 = BaseBucket()
         
         with self.assertRaises(Exception) as context:
             s3.get("test-bucket", "test-key")
@@ -37,7 +37,7 @@ class S3ClientTimeoutTests(SimpleTestCase):
         mock_client.delete_object.side_effect = Exception("Connection timeout")
         mock_boto_client.return_value = mock_client
         
-        s3 = S3Client()
+        s3 = BaseBucket()
         
         with self.assertRaises(Exception) as context:
             s3.delete("test-bucket", "test-key")
@@ -51,7 +51,7 @@ class S3ClientTimeoutTests(SimpleTestCase):
         mock_client.put_object.side_effect = Exception("Upload timeout")
         mock_boto_client.return_value = mock_client
         
-        s3 = S3Client()
+        s3 = BaseBucket()
         
         with patch('builtins.open', create=True) as mock_open:
             mock_file = MagicMock()
@@ -76,7 +76,7 @@ class S3ClientPermissionTests(SimpleTestCase):
         )
         mock_boto_client.return_value = mock_client
         
-        s3 = S3Client()
+        s3 = BaseBucket()
         
         with self.assertRaises(Exception) as context:
             s3.get("test-bucket", "test-key")
@@ -93,7 +93,7 @@ class S3ClientPermissionTests(SimpleTestCase):
         )
         mock_boto_client.return_value = mock_client
         
-        s3 = S3Client()
+        s3 = BaseBucket()
         
         with patch('builtins.open', create=True):
             with self.assertRaises(Exception):
@@ -109,7 +109,7 @@ class S3ClientPermissionTests(SimpleTestCase):
         )
         mock_boto_client.return_value = mock_client
         
-        s3 = S3Client()
+        s3 = BaseBucket()
         
         with self.assertRaises(Exception):
             s3.delete("test-bucket", "test-key")
@@ -125,7 +125,7 @@ class S3ClientNetworkTests(SimpleTestCase):
         mock_client.get_object.side_effect = ConnectionError("Network unreachable")
         mock_boto_client.return_value = mock_client
         
-        s3 = S3Client()
+        s3 = BaseBucket()
         
         with self.assertRaises(Exception):
             s3.get("test-bucket", "test-key")
@@ -136,7 +136,7 @@ class S3ClientNetworkTests(SimpleTestCase):
         mock_boto_client.side_effect = NoCredentialsError()
         
         with self.assertRaises(NoCredentialsError):
-            S3Client()
+            BaseBucket()
     
     @patch('S3.base.boto3.client')
     def test_init_partial_credentials(self, mock_boto_client):
@@ -147,7 +147,7 @@ class S3ClientNetworkTests(SimpleTestCase):
         )
         
         with self.assertRaises(Exception):
-            S3Client()
+            BaseBucket()
 
 
 class S3ClientNotFoundTests(SimpleTestCase):
@@ -163,7 +163,7 @@ class S3ClientNotFoundTests(SimpleTestCase):
         )
         mock_boto_client.return_value = mock_client
         
-        s3 = S3Client()
+        s3 = BaseBucket()
         
         with self.assertRaises(Exception):
             s3.get("test-bucket", "nonexistent-key")
@@ -178,7 +178,7 @@ class S3ClientNotFoundTests(SimpleTestCase):
         )
         mock_boto_client.return_value = mock_client
         
-        s3 = S3Client()
+        s3 = BaseBucket()
         
         with self.assertRaises(Exception):
             s3.get("nonexistent-bucket", "test-key")
@@ -196,7 +196,7 @@ class S3UtilMethodsTests(SimpleTestCase):
         mock_client.get_paginator.return_value = mock_paginator
         mock_boto_client.return_value = mock_client
         
-        s3 = S3Client()
+        s3 = BaseBucket()
         result = s3.get_latest_object("test-bucket", "prefix/")
         
         self.assertIsNone(result)
@@ -207,7 +207,7 @@ class S3UtilMethodsTests(SimpleTestCase):
         mock_client = Mock()
         mock_boto_client.return_value = mock_client
         
-        s3 = S3Client()
+        s3 = BaseBucket()
         
         with patch.object(s3, 'get_latest_object', return_value=None):
             result = s3.check_source("test-bucket", "prefix/")
@@ -224,7 +224,7 @@ class S3UtilMethodsTests(SimpleTestCase):
         mock_client.get_object.return_value = mock_response
         mock_boto_client.return_value = mock_client
         
-        s3 = S3Client()
+        s3 = BaseBucket()
         
         with self.assertRaises(Exception):
             s3.get_json("test-bucket", "test-key")
@@ -235,7 +235,7 @@ class S3UtilMethodsTests(SimpleTestCase):
         mock_client = Mock()
         mock_boto_client.return_value = mock_client
         
-        s3 = S3Client()
+        s3 = BaseBucket()
         
         fake_obj = {
             "Key": "test.txt",  # .json이 아님
@@ -262,7 +262,7 @@ class S3ImageMethodsTests(SimpleTestCase):
         )
         mock_boto_client.return_value = mock_client
         
-        s3 = S3Client()
+        s3 = BaseBucket()
         
         with self.assertRaises(Exception):
             s3.get_image_url("test-bucket", "nonexistent.png")
@@ -273,7 +273,7 @@ class S3ImageMethodsTests(SimpleTestCase):
         mock_client = Mock()
         mock_boto_client.return_value = mock_client
         
-        s3 = S3Client()
+        s3 = BaseBucket()
         
         with self.assertRaises(Exception) as context:
             s3.put_image("test-bucket", "test.png", "invalid_data_url")
@@ -287,7 +287,7 @@ class S3ImageMethodsTests(SimpleTestCase):
         mock_client = Mock()
         mock_boto_client.return_value = mock_client
         
-        s3 = S3Client()
+        s3 = BaseBucket()
         
         with self.assertRaises(Exception) as context:
             s3.put_image("test-bucket", "test.png", "data:image/png;base64,invalid!!!")
@@ -308,7 +308,7 @@ class FinanceS3ClientTests(SimpleTestCase):
         mock_client.get_object.return_value = mock_response
         mock_boto_client.return_value = mock_client
         
-        s3 = FinanceS3Client()
+        s3 = FinanceBucket()
         
         with self.assertRaises(Exception) as context:
             s3.get_dataframe("test-bucket", "test.parquet")
@@ -325,7 +325,7 @@ class FinanceS3ClientTests(SimpleTestCase):
         mock_client.get_object.return_value = mock_response
         mock_boto_client.return_value = mock_client
         
-        s3 = FinanceS3Client()
+        s3 = FinanceBucket()
         
         # CSV 파싱 오류 발생
         with self.assertRaises(Exception):
@@ -338,7 +338,7 @@ class FinanceS3ClientTests(SimpleTestCase):
         mock_client.put_object.side_effect = Exception("Upload failed")
         mock_boto_client.return_value = mock_client
         
-        s3 = FinanceS3Client()
+        s3 = FinanceBucket()
         df = pd.DataFrame({"col1": [1, 2, 3]})
         
         with self.assertRaises(Exception) as context:
@@ -352,7 +352,7 @@ class FinanceS3ClientTests(SimpleTestCase):
         mock_client = Mock()
         mock_boto_client.return_value = mock_client
         
-        s3 = FinanceS3Client()
+        s3 = FinanceBucket()
         
         with patch.object(s3, 'get_latest_object', return_value=None):
             df, ts = s3.get_latest_parquet_df("test-bucket", "prefix/")
@@ -366,7 +366,7 @@ class FinanceS3ClientTests(SimpleTestCase):
         mock_client = Mock()
         mock_boto_client.return_value = mock_client
         
-        s3 = FinanceS3Client()
+        s3 = FinanceBucket()
         df = pd.DataFrame({"col1": [1, 2, 3]})
         
         with patch('pandas.DataFrame.to_parquet'):
@@ -387,7 +387,7 @@ class S3FileOperationTests(SimpleTestCase):
         mock_client = Mock()
         mock_boto_client.return_value = mock_client
         
-        s3 = S3Client()
+        s3 = BaseBucket()
         
         with patch('builtins.open', side_effect=FileNotFoundError()):
             with self.assertRaises(Exception):
@@ -399,7 +399,7 @@ class S3FileOperationTests(SimpleTestCase):
         mock_client = Mock()
         mock_boto_client.return_value = mock_client
         
-        s3 = S3Client()
+        s3 = BaseBucket()
         
         with patch('builtins.open', create=True):
             with patch('mimetypes.guess_type', return_value=(None, None)):
@@ -425,7 +425,7 @@ class S3RetryTests(SimpleTestCase):
         )
         mock_boto_client.return_value = mock_client
         
-        s3 = S3Client()
+        s3 = BaseBucket()
         
         with self.assertRaises(Exception):
             s3.get("test-bucket", "test-key")
@@ -440,7 +440,7 @@ class S3RetryTests(SimpleTestCase):
         )
         mock_boto_client.return_value = mock_client
         
-        s3 = S3Client()
+        s3 = BaseBucket()
         
         with self.assertRaises(Exception):
             s3.get("test-bucket", "test-key")
@@ -460,7 +460,7 @@ class S3LargeFileTests(SimpleTestCase):
         mock_client.get_object.return_value = mock_response
         mock_boto_client.return_value = mock_client
         
-        s3 = S3Client()
+        s3 = BaseBucket()
         result = s3.get("test-bucket", "large-file.bin")
         
         self.assertEqual(len(result), len(large_data))
@@ -471,7 +471,7 @@ class S3LargeFileTests(SimpleTestCase):
         mock_client = Mock()
         mock_boto_client.return_value = mock_client
         
-        s3 = FinanceS3Client()
+        s3 = FinanceBucket()
         
         # 큰 DataFrame 생성
         large_df = pd.DataFrame({

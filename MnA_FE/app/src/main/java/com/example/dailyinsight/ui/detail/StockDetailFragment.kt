@@ -20,10 +20,14 @@ import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
 import androidx.navigation.fragment.navArgs
 import com.example.dailyinsight.R
-import com.example.dailyinsight.data.dto.NetIncome
+import com.example.dailyinsight.data.dto.CurrentData
+import com.example.dailyinsight.data.dto.DividendData
+import com.example.dailyinsight.data.dto.FinancialsData
 import com.example.dailyinsight.data.dto.RecommendationDto
 import com.example.dailyinsight.data.dto.StockDetailDto
-import com.example.dailyinsight.data.dto.ChartPoint
+import com.example.dailyinsight.data.dto.StockOverviewDto
+import com.example.dailyinsight.data.dto.HistoryItem
+import com.example.dailyinsight.data.dto.ValuationData
 import com.example.dailyinsight.databinding.FragmentStockDetailBinding
 import com.example.dailyinsight.ui.common.LoadResult
 import com.github.mikephil.charting.data.Entry
@@ -35,15 +39,15 @@ import java.text.DecimalFormat
 import kotlin.math.abs
 import kotlin.math.roundToInt
 import android.util.TypedValue
-import com.example.dailyinsight.ui.common.chart.ChartConfigurator
-import com.example.dailyinsight.ui.common.chart.ChartUi
-import kotlin.collections.isNotEmpty
 import com.github.mikephil.charting.formatter.IndexAxisValueFormatter
 import com.github.mikephil.charting.formatter.ValueFormatter
 import com.github.mikephil.charting.components.XAxis
 import com.github.mikephil.charting.formatter.IFillFormatter
 import com.github.mikephil.charting.components.AxisBase
-import android.widget.LinearLayout
+import java.util.Calendar
+import java.util.Date
+import java.text.SimpleDateFormat
+import java.util.Locale
 import android.text.TextUtils
 
 
@@ -56,14 +60,9 @@ class StockDetailFragment : Fragment(R.layout.fragment_stock_detail) {
     private val viewModel: StockDetailViewModel by viewModels()
 
     private val xSdf = java.text.SimpleDateFormat("MM/dd", java.util.Locale.KOREA)
-
+    private var currentXAxisFormat = "MM/dd" // 선택된 X축 날짜 포맷
     // 차트 기간
-    private enum class Range { W1, M3, M6, M9, Y1 }
-
-    // 최신 차트 데이터 보관
-
-    private val chartConfigurator = ChartConfigurator()
-    private val labelFmt = java.text.SimpleDateFormat("MM/dd", java.util.Locale.US)
+    private enum class Range { W1, M1, M3, M6, YTD, Y1, Y3, Y5 }
 
     // ---------- format helpers ----------
     private val dfPrice = DecimalFormat("#,##0")
@@ -71,7 +70,29 @@ class StockDetailFragment : Fragment(R.layout.fragment_stock_detail) {
     private val dfRate = DecimalFormat("#0.##")
     private fun rateWithComma(r: Double): String = dfRate.format(kotlin.math.abs(r)).replace('.', ',')
 
+    // DTO의 숫자 문자열을 파싱하고 포맷팅하는 헬퍼
+    private fun TextView.setNumberOrDash(number: Long?, unit: String, isFraction: Boolean = false) {
+        setNumberOrDash(number?.toDouble(), unit, isFraction)
+    }
+    private fun TextView.setNumberOrDash(number: Double?, unit: String, isFraction: Boolean = false) {
+        if (number == null) {
+            text = "–"
+            return
+        }
+
+        val value = if (isFraction) number * 100 else number
+        val format = if (value == value.toLong().toDouble() && !isFraction) {
+            DecimalFormat("#,##0")
+        } else {
+            DecimalFormat("#,##0.0")
+        }
+
+        // 음수도 그대로 표시
+        text = "${format.format(value)}$unit"
+    }
+
     private fun TextView.setOrDash(v: String?) { text = v?.takeIf { it.isNotBlank() } ?: "–" }
+
     private fun TextView.setOrDash(v: Long?)   { text = v?.let { dfPrice.format(it) } ?: "–" }
     private fun TextView.setOrDash(v: Double?) { text = v?.let { dfRate.format(it) } ?: "–" }
     private fun TextView.setPercentOrDash(v: Double?) { text = v?.let { "${dfRate.format(it)}%" } ?: "–" }
@@ -84,36 +105,39 @@ class StockDetailFragment : Fragment(R.layout.fragment_stock_detail) {
     }
 
     // "123456789000" -> "123.46억", "1.23조"
-    private fun formatKrwShort(raw: String?): String {
-        if (raw.isNullOrBlank()) return "–"
-        val cleaned = raw.replace(",", "").trim()
-        val v = cleaned.toLongOrNull() ?: return raw
+    private fun formatKrwShort(v: Long?, isShare: Boolean = false): String {
+        if (v == null) return "–"
+
+        if (isShare) {
+            val hundredMillion = 100_000_000L
+            return String.format("%.2f억 주", v / hundredMillion.toDouble())
+        }
+
         val trillion = 1_000_000_000_000L
         val hundredMillion = 100_000_000L
         return when {
-            kotlin.math.abs(v) >= trillion -> String.format("%.2f조", v / trillion.toDouble())
-            kotlin.math.abs(v) >= hundredMillion -> String.format("%.2f억", v / hundredMillion.toDouble())
+            kotlin.math.abs(v) >= trillion -> String.format("%.1f조 원", v / trillion.toDouble())
+            kotlin.math.abs(v) >= hundredMillion -> String.format("%.1f억 원", v / hundredMillion.toDouble())
             else -> DecimalFormat("#,##0").format(v) + "원"
         }
     }
 
-    // 프로퍼티
-    private var chartData: List<ChartPoint> = emptyList()
-
-    // Map<String, Double> -> List<ChartPoint>
-    private fun mapToChartPoints(price: Map<String, Double>?): List<ChartPoint> {
-        if (price.isNullOrEmpty()) return emptyList()
-        val sdf = java.text.SimpleDateFormat("yyyy-MM-dd", java.util.Locale.US).apply {
-            timeZone = java.util.TimeZone.getTimeZone("UTC"); isLenient = false
-        }
-        val sorted: List<Map.Entry<String, Double>> = price.entries.toList().sortedBy { it.key }
-        return sorted.mapIndexed { idx, e ->
-            val t = try { sdf.parse(e.key)?.time ?: (idx * 86_400_000L) }
-            catch (_: Throwable) { idx * 86_400_000L }
-            ChartPoint(t = t, v = e.value)
+    // DTO의 날짜("2025-11-13")를 "2025년 11월 13일"로 변환
+    private val dateParser = SimpleDateFormat("yyyy-MM-dd", Locale.KOREA)
+    private val dateFormatter = SimpleDateFormat("yyyy년 MM월 dd일", Locale.KOREA)
+    private fun formatDisplayDate(rawDate: String?): String {
+        if (rawDate.isNullOrBlank()) return "–"
+        return try {
+            val date = dateParser.parse(rawDate)
+            dateFormatter.format(date!!)
+        } catch (e: Exception) {
+            rawDate // 파싱 실패 시 원본 반환
         }
     }
-    // ------------------------------------
+
+    // 프로퍼티
+    private var chartData: List<Entry> = emptyList() // Entry 리스트로 변경
+    private var chartLabels: List<String> = emptyList()
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
@@ -142,9 +166,42 @@ class StockDetailFragment : Fragment(R.layout.fragment_stock_detail) {
                         is LoadResult.Success -> {
                             binding.progress.isVisible = false
                             binding.tvError.isVisible = false
-                            bindDetail(st.data)
+                            bindDetail(st.data) // DTO 데이터 바인딩
                         }
                         else -> Unit
+                    }
+                }
+            }
+        }
+        // --- 2. 👈 (신규) '요약' 상태 수집 ---
+        viewLifecycleOwner.lifecycleScope.launch {
+            viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
+                viewModel.overviewState.collect { st ->
+                    when (st) {
+                        is LoadResult.Success -> {
+                            bindOverview(st.data) // 텍스트 바인딩 함수 호출
+                        }
+                        // 로딩/에러는 _state가 이미 처리하므로 여기선 생략 가능
+                        else -> Unit
+                    }
+                }
+            }
+        }
+
+        // 상태 수집 (차트)
+        viewLifecycleOwner.lifecycleScope.launch {
+            viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
+                viewModel.priceState.collect { st ->
+                    if (st is LoadResult.Success) {
+                        //  차트 데이터(Entry)와 라벨(String)을 프래그먼트에 저장
+                        chartData = (st.data.chart.lineData.dataSets[0] as LineDataSet).values
+                        chartLabels = st.data.chart.xLabels
+                        binding.btnGroupRange.isEnabled = true
+                        renderChart(Range.M6) // 기본 6개월 선택
+                    } else if (st is LoadResult.Error) {
+                        binding.lineChart.clear()
+                        binding.lineChart.setNoDataText(getString(R.string.no_chart_data))
+                        binding.btnGroupRange.isEnabled = false
                     }
                 }
             }
@@ -153,12 +210,37 @@ class StockDetailFragment : Fragment(R.layout.fragment_stock_detail) {
         // 하단 여백 보정
         ViewCompat.setOnApplyWindowInsetsListener(binding.root) { v, insets ->
             val navInsets = insets.getInsets(WindowInsetsCompat.Type.systemBars())
-            v.updatePadding(bottom = navInsets.bottom + dp(24))
+            v.updatePadding(bottom = navInsets.bottom + dp(80))
             insets
         }
 
         setupChart()
-        setupRangeButtons()
+        setupRangeButtons() // 버튼 연결
+    }
+
+    // --- 3. 요약/분석/뉴스 바인딩 함수 ---
+    private fun bindOverview(overview: StockOverviewDto) = with(binding) {
+        // 1. 요약
+        overview.summary?.takeIf { it.isNotBlank() }?.let {
+            cardSummary.isVisible = true
+            tvSummary.text = it
+        }
+        // 2. 기본적 분석
+        overview.fundamental?.takeIf { it.isNotBlank() }?.let {
+            cardFundamental.isVisible = true
+            tvFundamental.text = it
+        }
+        // 3. 기술적 분석
+        overview.technical?.takeIf { it.isNotBlank() }?.let {
+            cardTechnical.isVisible = true
+            tvTechnical.text = it
+        }
+        // 4. 관련 뉴스
+        overview.news?.takeIf { it.isNotEmpty() }?.let { newsList ->
+            cardNews.isVisible = true
+            // 뉴스를 "• 항목 1\n• 항목 2" 형태로 변환
+            tvNews.text = newsList.joinToString("\n") { "• $it" }
+        }
     }
 
     /** 상단 헤더(요약) */
@@ -169,7 +251,6 @@ class StockDetailFragment : Fragment(R.layout.fragment_stock_detail) {
 
         tvPrice.text = dfPrice.format(item.price)
         tvChange.text = "${sign}${dfChange.format(abs(item.change))} (${sign}${rateWithComma(item.changeRate)}%)"
-        tvHeadline.setOrDash(item.headline ?: getString(R.string.no_headline))
 
         applyChangeColors(item.change >= 0)
     }
@@ -187,9 +268,6 @@ class StockDetailFragment : Fragment(R.layout.fragment_stock_detail) {
         setDrawGridBackground(false)
         setMinOffset(12f)
         setExtraOffsets(8f, 6f, 12f, 16f)
-        // ※ 그래도 잘리면 아래 고정 오프셋을 사용(위 두 줄 대신):
-        // setViewPortOffsets(32f, 12f, 24f, 36f)
-
         axisRight.isEnabled = false
 
         // Y축(왼쪽)
@@ -232,7 +310,7 @@ class StockDetailFragment : Fragment(R.layout.fragment_stock_detail) {
             btn.elevation = 0f
         }
 
-        val all = listOf(btn1W, btn3M, btn6M, btn9M, btn1Y)
+        val all = listOf(btn1W, btn1M, btn3M, btn6M, btnYTD, btn1Y, btn3Y, btn5Y)
         all.forEach { style(it, it.isChecked) }
 
         btnGroupRange.addOnButtonCheckedListener { _, checkedId, isChecked ->
@@ -240,20 +318,24 @@ class StockDetailFragment : Fragment(R.layout.fragment_stock_detail) {
             all.forEach { style(it, it.id == checkedId) }
             when (checkedId) {
                 btn1W.id -> renderChart(Range.W1)
+                btn1M.id -> renderChart(Range.M1)
                 btn3M.id -> renderChart(Range.M3)
                 btn6M.id -> renderChart(Range.M6)
-                btn9M.id -> renderChart(Range.M9)
+                btnYTD.id -> renderChart(Range.YTD)
                 btn1Y.id -> renderChart(Range.Y1)
+                btn3Y.id -> renderChart(Range.Y3)
+                btn5Y.id -> renderChart(Range.Y5)
             }
         }
     }
 
     /** 실제 데이터로 차트 렌더 */
     private fun renderChart(range: Range) = with(binding.lineChart) {
-        val pts = filterByRange(chartData, range)
+        // 프래그먼트에 저장된 chartData 사용
+        val (pts, labels) = filterByRange(chartData, chartLabels, range)
         if (pts.isEmpty()) { data = null; invalidate(); return@with }
 
-        val entries = pts.mapIndexed { i, p -> Entry(i.toFloat(), p.v.toFloat()) }
+        val entries = pts.mapIndexed { i, p -> Entry(i.toFloat(), p.y, p.data) }
         val minY = entries.minOf { it.y }
         val maxY = entries.maxOf { it.y }
         val span = maxY - minY
@@ -266,18 +348,17 @@ class StockDetailFragment : Fragment(R.layout.fragment_stock_detail) {
         axisLeft.axisMaximum = maxY + pad
 
         // X 라벨(시작/중간/끝만)
-        val labels = pts.map { p ->
-            java.text.SimpleDateFormat("MM/dd", java.util.Locale.KOREA)
-                .format(java.util.Date(p.t))
-        }
         xAxis.valueFormatter = object : IndexAxisValueFormatter(labels) {
             override fun getAxisLabel(value: Float, axis: AxisBase?): String {
                 val i = value.toInt()
                 val n = labels.lastIndex
-                return if (i in labels.indices && (i == 0 || i == n || i == n/2)) labels[i] else ""
+                //  yyyy/MM 포맷 적용
+                val sdf = SimpleDateFormat(currentXAxisFormat, Locale.KOREA)
+                val labelDate = sdf.format(Date(pts[i].data as Long))
+
+                return if (i in labels.indices && (i == 0 || i == n || i == n/2)) labelDate else ""
             }
         }
-
         val set = LineDataSet(entries, "").apply {
             mode = if (fewPoints || almostFlat) LineDataSet.Mode.LINEAR
             else LineDataSet.Mode.CUBIC_BEZIER
@@ -303,214 +384,153 @@ class StockDetailFragment : Fragment(R.layout.fragment_stock_detail) {
     }
 
 
-    /** 범위 필터 — 마지막 N개 단순 슬라이스(균등 간격 가정) */
+    /** 범위 필터 —범위 필터 — 실제 날짜(타임스탬프) 기준 */
     private fun filterByRange(
-        raw: List<com.example.dailyinsight.data.dto.ChartPoint>,
+        rawEntries: List<Entry>,
+        rawLabels: List<String>,
         range: Range
-    ): List<com.example.dailyinsight.data.dto.ChartPoint> {
-        val n = when (range) {
-            Range.W1 -> 20
-            Range.M3 -> 60
-            Range.M6 -> 120
-            Range.M9 -> 180
-            Range.Y1 -> 240
+    ): Pair<List<Entry>, List<String>> {
+        if (rawEntries.isEmpty()) return Pair(emptyList(), emptyList())
+        val now = Calendar.getInstance() // KST (디바이스 기본값)
+        val cal = Calendar.getInstance()
+
+        // YTD (연중) 기준일 계산
+        cal.time = now.time
+        cal.set(Calendar.MONTH, Calendar.JANUARY)
+        cal.set(Calendar.DAY_OF_MONTH, 1)
+        cal.set(Calendar.HOUR_OF_DAY, 0)
+        cal.set(Calendar.MINUTE, 0)
+        cal.set(Calendar.SECOND, 0)
+        val ytdStartTimestamp = cal.timeInMillis
+
+        // 기간별 시작 타임스탬프 계산
+        val startTimestamp = when (range) {
+            Range.W1 -> Calendar.getInstance().apply { add(Calendar.DAY_OF_YEAR, -7) }.timeInMillis
+            Range.M1 -> Calendar.getInstance().apply { add(Calendar.MONTH, -1) }.timeInMillis
+            Range.M3 -> Calendar.getInstance().apply { add(Calendar.MONTH, -3) }.timeInMillis
+            Range.M6 -> Calendar.getInstance().apply { add(Calendar.MONTH, -6) }.timeInMillis
+            Range.YTD -> ytdStartTimestamp
+            Range.Y1 -> Calendar.getInstance().apply { add(Calendar.YEAR, -1) }.timeInMillis
+            Range.Y3 -> Calendar.getInstance().apply { add(Calendar.YEAR, -3) }.timeInMillis
+            Range.Y5 -> Calendar.getInstance().apply { add(Calendar.YEAR, -5) }.timeInMillis
         }
-        return if (raw.size <= n) raw else raw.takeLast(n)
-    }
+        currentXAxisFormat = if (range == Range.Y3 || range == Range.Y5) "yyyy/MM" else "MM/dd"
+        val filteredEntries = mutableListOf<Entry>()
+        val filteredLabels = mutableListOf<String>()
 
-    // ───── Net Income 표 (동일) ─────
-
-    private fun parseQuarterPeriod(raw: String, fallbackYear: Int?): Pair<Int?, String?> {
-        val year = Regex("""\b(20\d{2})\b""").find(raw)?.value?.toIntOrNull() ?: fallbackYear
-        val q = Regex("""\bQ[1-4]\b""", RegexOption.IGNORE_CASE).find(raw)?.value?.uppercase()
-        if (raw.contains("TTM", ignoreCase = true)) return year to null
-        return year to q
-    }
-
-    private fun normalizeValue(v: String?): String = v?.takeIf { it.isNotBlank() } ?: "–"
-
-    private fun renderNetIncomeTable(net: NetIncome?) = with(binding) {
-        val annual  = net?.annual.orEmpty()
-        val quarter = net?.quarter.orEmpty()
-        val ttmItem = (annual + quarter).firstOrNull { it.period.contains("TTM", ignoreCase = true) }
-
-        tblNetIncome.removeAllViews()
-
-        val years = annual.mapNotNull { it.period.toIntOrNull() }.sortedDescending().take(4)
-        tblNetIncome.isVisible = years.isNotEmpty() || quarter.isNotEmpty()
-        if (!tblNetIncome.isVisible) return@with
-
-        tblNetIncome.addView(rowHeader(listOf("PERIOD") + years.map { it.toString() }))
-
-        val latestYear = years.firstOrNull()
-        val qMap = mutableMapOf<Int, MutableMap<String, String>>()
-        quarter.forEach { pv ->
-            val (yr, qLabel) = parseQuarterPeriod(pv.period, latestYear)
-            if (yr != null && qLabel != null) {
-                qMap.getOrPut(yr) { mutableMapOf() }[qLabel] = normalizeValue(pv.value)
+        rawEntries.forEachIndexed { index, entry ->
+            if ((entry.data as Long) >= startTimestamp) {
+                filteredEntries.add(entry)
+                filteredLabels.add(rawLabels[index])
             }
         }
 
-        listOf("Q1","Q2","Q3","Q4").forEach { q ->
-            val row = mutableListOf(q)
-            years.forEach { y -> row += (qMap[y]?.get(q) ?: "–") }
-            tblNetIncome.addView(rowBody(row, emphasizeFirst = false))
-        }
-
-        val aMap = annual.associate { it.period to normalizeValue(it.value) }
-        val annualRow = mutableListOf("Annual") + years.map { y -> aMap[y.toString()] ?: "–" }
-        tblNetIncome.addView(rowBody(annualRow, emphasizeFirst = true))
-
-        val serverLabelAndValue: Pair<String, String?>? = ttmItem?.let {
-            val qInTtm = Regex("""Q[1-4]""", RegexOption.IGNORE_CASE).find(it.period)?.value?.uppercase()
-            val label = if (qInTtm != null) "TTM ($qInTtm)" else "TTM"
-            label to normalizeValue(it.value)
-        }.takeIf { it?.second?.trim().isNullOrEmpty().not() }
-
-        val computedTtm = computeLatestTTM(qMap)?.let { (label, sum) -> label to (sum?.let { formatB(it) }) }
-        val computedYtd = computeYTD(qMap)?.let { (label, sum) -> label to (sum?.let { formatB(it) }) }
-
-        val (finalLabel, finalValue) = serverLabelAndValue ?: computedTtm ?: computedYtd ?: ("TTM" to null)
-        tblNetIncome.addView(
-            rowTTM(
-                label = finalLabel,
-                value = finalValue,
-                yearCount = years.size   // 2024~2022 개수만큼 병합
-            )
-        )
+        return Pair(filteredEntries, filteredLabels)
     }
 
-    // 세로 구분선(표의 outline 12% 알파와 동일 톤)
-    private fun vDivider(): View = View(requireContext()).apply {
-        val base  = MaterialColors.getColor(this, com.google.android.material.R.attr.colorOutline)
-        val alpha = (0.12f * 255).roundToInt()
-        setBackgroundColor(ColorUtils.setAlphaComponent(base, alpha))
-        layoutParams = LinearLayout.LayoutParams(dp(1), ViewGroup.LayoutParams.MATCH_PARENT)
+    // ───── 표 ─────
+
+    /** "규모" 테이블 렌더링 */
+    private fun renderSizeTable(
+        table: TableLayout,
+        header: List<String>,
+        today: HistoryItem?,
+        yLast: HistoryItem?,
+        yBefore: HistoryItem?,
+        calculatedShares: Long?
+    ) {
+        table.removeAllViews()
+        table.addView(rowHeader(header))
+        val rowMarketCap = rowBody(listOf("시가총액", "–", "–", "–"), false)
+        (rowMarketCap.getChildAt(1) as? TextView)?.text = formatKrwShort(today?.marketCap)
+        (rowMarketCap.getChildAt(2) as? TextView)?.text = formatKrwShort(yLast?.marketCap)
+        (rowMarketCap.getChildAt(3) as? TextView)?.text = formatKrwShort(yBefore?.marketCap)
+        table.addView(rowMarketCap)
+
+        val rowShares = rowBody(listOf("상장 주식수", "–", "–", "–"), false)
+        // TO의 sharesOutstanding 대신 계산된 값(calculatedShares)을 사용
+        (rowShares.getChildAt(1) as? TextView)?.text = formatKrwShort(calculatedShares, true)
+        (rowShares.getChildAt(2) as? TextView)?.text = formatKrwShort(calculatedShares, true)
+        (rowShares.getChildAt(3) as? TextView)?.text = formatKrwShort(calculatedShares, true)
+        table.addView(rowShares)
     }
 
-    private fun rowTTM(label: String, value: String?, yearCount: Int): TableRow {
-        val row = TableRow(requireContext())
+    /** "가치" 테이블 렌더링 */
+    private fun renderValueTable(
+        table: TableLayout,
+        header: List<String>,
+        today: HistoryItem?,
+        yLast: HistoryItem?,
+        yBefore: HistoryItem?
+    ) {
+        table.removeAllViews()
+        table.addView(rowHeader(header))
 
-        val container = LinearLayout(requireContext()).apply {
-            orientation = LinearLayout.HORIZONTAL
-            setBackgroundColor(android.graphics.Color.TRANSPARENT) // 이중선 방지
-            layoutParams = TableRow.LayoutParams(
-                ViewGroup.LayoutParams.MATCH_PARENT,
-                ViewGroup.LayoutParams.WRAP_CONTENT
-            ).apply { column = 0; span = 1 + yearCount }
-        }
+        val rowBps = rowBody(listOf("주당순자산가치", "–", "–", "–"), false)
+        (rowBps.getChildAt(1) as? TextView)?.setNumberOrDash(today?.bps, " 원")
+        (rowBps.getChildAt(2) as? TextView)?.setNumberOrDash(yLast?.bps, " 원")
+        (rowBps.getChildAt(3) as? TextView)?.setNumberOrDash(yBefore?.bps, " 원")
+        table.addView(rowBps)
 
-        val minH = resources.getDimensionPixelSize(R.dimen.table_row_min_height)
+        val rowPer = rowBody(listOf("주가수익률", "–", "–", "–"), false)
+        (rowPer.getChildAt(1) as? TextView)?.setNumberOrDash(today?.per, " 배")
+        (rowPer.getChildAt(2) as? TextView)?.setNumberOrDash(yLast?.per, " 배")
+        (rowPer.getChildAt(3) as? TextView)?.setNumberOrDash(yBefore?.per, " 배")
+        table.addView(rowPer)
 
-        val tvLabel = TextView(requireContext()).apply {
-            text = label
-            paint.isFakeBoldText = true
-            gravity = Gravity.CENTER        // 가로/세로 중앙
-            minHeight = minH                // ✅ 최소 높이 지정
-            setTextAppearance(com.google.android.material.R.style.TextAppearance_Material3_BodyMedium)
-            setPadding(dp(8), dp(6), dp(8), dp(6))
-            setBackgroundResource(R.drawable.bg_cell_left)
-            layoutParams = LinearLayout.LayoutParams(
-                0, ViewGroup.LayoutParams.MATCH_PARENT, 1f   // ✅ MATCH_PARENT로 늘림
-            )
-        }
-
-        val tvValue = TextView(requireContext()).apply {
-            text = value?.ifBlank { "–" } ?: "–"
-            paint.isFakeBoldText = true
-            gravity = Gravity.CENTER
-            minHeight = minH                // ✅ 최소 높이 지정
-            setTextAppearance(com.google.android.material.R.style.TextAppearance_Material3_BodyMedium)
-            setPadding(dp(8), dp(6), dp(8), dp(6))
-            setBackgroundResource(R.drawable.bg_cell_right)
-            layoutParams = LinearLayout.LayoutParams(
-                0, ViewGroup.LayoutParams.MATCH_PARENT, 3f   // ✅ MATCH_PARENT로 늘림
-            )
-        }
-
-        container.addView(tvLabel)
-        container.addView(tvValue)
-        row.addView(container)
-        return row
+        val rowPbr = rowBody(listOf("주가순자산비율", "–", "–", "–"), false)
+        (rowPbr.getChildAt(1) as? TextView)?.setNumberOrDash(today?.pbr, " 배")
+        (rowPbr.getChildAt(2) as? TextView)?.setNumberOrDash(yLast?.pbr, " 배")
+        (rowPbr.getChildAt(3) as? TextView)?.setNumberOrDash(yBefore?.pbr, " 배")
+        table.addView(rowPbr)
     }
 
-    private fun parseB(v: String?): Double? {
-        if (v.isNullOrBlank()) return null
-        val s = v.trim().replace(",", ".")
-        if (s == "-" || s == "–") return null
-        return s.removeSuffix("B").trim().toDoubleOrNull()
+    /** "수익성" 테이블 렌더링 */
+    private fun renderProfitabilityTable(
+        table: TableLayout,
+        header: List<String>,
+        today: HistoryItem?,
+        yLast: HistoryItem?,
+        yBefore: HistoryItem?
+    ) {
+        table.removeAllViews()
+        table.addView(rowHeader(header))
+
+        val rowEps = rowBody(listOf("주당순이익", "–", "–", "–"), false)
+        (rowEps.getChildAt(1) as? TextView)?.setNumberOrDash(today?.eps, " 원")
+        (rowEps.getChildAt(2) as? TextView)?.setNumberOrDash(yLast?.eps, " 원")
+        (rowEps.getChildAt(3) as? TextView)?.setNumberOrDash(yBefore?.eps, " 원")
+        table.addView(rowEps)
+
+        val rowRoe = rowBody(listOf("자기자본이익률", "–", "–", "–"), false)
+        (rowRoe.getChildAt(1) as? TextView)?.setNumberOrDash(today?.roe, "%", true)
+        (rowRoe.getChildAt(2) as? TextView)?.setNumberOrDash(yLast?.roe, "%", true)
+        (rowRoe.getChildAt(3) as? TextView)?.setNumberOrDash(yBefore?.roe, "%", true)
+        table.addView(rowRoe)
     }
 
-    private fun formatB(d: Double?): String =
-        if (d == null) "–" else String.format("%.3f B", d)
+    /** "배당" 테이블 렌더링 */
+    private fun renderDividendTable(
+        table: TableLayout,
+        header: List<String>,
+        today: HistoryItem?,
+        yLast: HistoryItem?,
+        yBefore: HistoryItem?
+    ) {
+        table.removeAllViews()
+        table.addView(rowHeader(header))
 
-    private fun qIndex(q: String) = when (q.uppercase()) {
-        "Q1" -> 1; "Q2" -> 2; "Q3" -> 3; "Q4" -> 4; else -> null
-    }
+        val rowDps = rowBody(listOf("주당배당금", "–", "–", "–"), false)
+        (rowDps.getChildAt(1) as? TextView)?.setNumberOrDash(today?.dps, " 원")
+        (rowDps.getChildAt(2) as? TextView)?.setNumberOrDash(yLast?.dps, " 원")
+        (rowDps.getChildAt(3) as? TextView)?.setNumberOrDash(yBefore?.dps, " 원")
+        table.addView(rowDps)
 
-    private fun computeLatestTTM(qMap: Map<Int, Map<String, String>>): Pair<String, Double?>? {
-        if (qMap.isEmpty()) return null
-        val timeline = mutableListOf<Pair<Pair<Int,Int>, Double>>()
-        qMap.toSortedMap().forEach { (year, qs) ->
-            qs.forEach { (qlabel, vStr) ->
-                val qi = qIndex(qlabel) ?: return@forEach
-                val v  = parseB(vStr) ?: return@forEach
-                timeline += (year to qi) to v
-            }
-        }
-        if (timeline.isEmpty()) return null
-        val sorted  = timeline.sortedWith(compareBy({ it.first.first }, { it.first.second }))
-        val lastKey = sorted.last().first
-        val lastNum = lastKey.first * 10 + lastKey.second
-        val window  = sorted.filter { (yq, _) ->
-            val n = yq.first * 10 + yq.second
-            n in (lastNum - 3)..lastNum
-        }
-        val label = "TTM (Q${lastKey.second})"
-        val sum   = if (window.size < 4) null else window.sumOf { it.second }
-        return label to sum
-    }
-
-    private fun computeYTD(qMap: Map<Int, Map<String, String>>): Pair<String, Double?>? {
-        if (qMap.isEmpty()) return null
-        val latestYear = qMap.keys.maxOrNull() ?: return null
-        val qs = qMap[latestYear].orEmpty()
-        val lastQ = listOf("Q4","Q3","Q2","Q1").firstOrNull { qs.containsKey(it) } ?: return null
-        val upto = when (lastQ) { "Q4"->4; "Q3"->3; "Q2"->2; "Q1"->1; else->1 }
-        val sum = (1..upto).mapNotNull { qi -> parseB(qs["Q$qi"]) }.takeIf { it.isNotEmpty() }?.sum()
-        return "YTD ($lastQ)" to sum
-    }
-
-    // ───── Key-Value 2열 표 (Valuation / Solvency / Dividend) ─────
-    private fun renderKeyValueTables(d: StockDetailDto) = with(binding) {
-        tblValuation.removeAllViews()
-        tblSolvency.removeAllViews()
-        tblDividend.removeAllViews()
-
-        addKeyValueRows(
-            tblValuation,
-            "Current PE Ratio (Annualized)" to d.valuation.peAnnual,
-            "Current PE Ratio (TTM)"        to d.valuation.peTtm,
-            "Forward PE Ratio"              to d.valuation.forwardPe,
-            "Current Price to Sales (TTM)"  to d.valuation.psTtm,
-            "Current Price to Book Value"   to d.valuation.priceToBook,
-            "Current Price to Cashflow (TTM)" to d.valuation.pcfTtm,
-            "Current Price To Free Cashflow (TTM)" to d.valuation.pfcfTtm
-        )
-
-        addKeyValueRows(
-            tblSolvency,
-            "Current Ratio (Quarter)" to d.solvency.currentRatio,
-            "Quick Ratio (Quarter)"   to d.solvency.quickRatio,
-            "Debt to Equity Ratio (Quarter)" to d.solvency.debtToEquity
-        )
-
-        addKeyValueRows(
-            tblDividend,
-            "Dividend Yield"             to d.dividend.`yield`,
-            "Payout Ratio"               to d.dividend.payoutRatio,
-            "Latest Dividend Ex-Date"    to d.dividend.latestExDate
-        )
+        val rowDiv = rowBody(listOf("배당 수익률", "–", "–", "–"), false)
+        (rowDiv.getChildAt(1) as? TextView)?.setNumberOrDash(today?.divYield, "%")
+        (rowDiv.getChildAt(2) as? TextView)?.setNumberOrDash(yLast?.divYield, "%")
+        (rowDiv.getChildAt(3) as? TextView)?.setNumberOrDash(yBefore?.divYield, "%")
+        table.addView(rowDiv)
     }
 
     // 공용 빌더들 ─────────────────────────────────────────────────────────
@@ -518,7 +538,7 @@ class StockDetailFragment : Fragment(R.layout.fragment_stock_detail) {
         layoutParams = TableLayout.LayoutParams(
             ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT
         )
-        texts.forEachIndexed { i, t -> addView(cell(t, header = true, alignEnd = i > 0)) }
+        texts.forEachIndexed { i, t -> addView(cell(t, index = i, header = true, center = true)) }
     }
 
     private fun rowBody(texts: List<String>, emphasizeFirst: Boolean): TableRow =
@@ -527,16 +547,15 @@ class StockDetailFragment : Fragment(R.layout.fragment_stock_detail) {
                 ViewGroup.LayoutParams.MATCH_PARENT,
                 ViewGroup.LayoutParams.WRAP_CONTENT
             )
-
             texts.forEachIndexed { i, t ->
-                val isPeriodColumn = (i == 0)  // ✅ PERIOD (Q1, Q2...) 위치
+                val isPeriodColumn = (i == 0)
                 addView(
                     cell(
                         text = t,
-                        bold = emphasizeFirst && i == 0,      // Annual은 굵게 유지
-                        alignEnd = !isPeriodColumn,           // 나머지는 오른쪽 정렬
-                        emphasizeValue = !isPeriodColumn,
-                        center = isPeriodColumn               // ✅ 추가: 중앙 정렬 플래그
+                        index = i,
+                        bold = isPeriodColumn,
+                        alignEnd = !isPeriodColumn,
+                        center = isPeriodColumn
                     )
                 )
             }
@@ -544,112 +563,93 @@ class StockDetailFragment : Fragment(R.layout.fragment_stock_detail) {
 
     private fun cell(
         text: String?,
+        index: Int,
         header: Boolean = false,
         bold: Boolean = false,
-        alignEnd: Boolean = false,     // 값 셀에서 오른쪽 정렬 여부
-        emphasizeValue: Boolean = false,
-        center: Boolean = false,       // 사용 안 함(남겨두기만)
-        isLabel: Boolean = false,      // PERIOD / Q1~Q4 / Annual / TTM 라벨
-        withFrame: Boolean = true
+        alignEnd: Boolean = false,
+        center: Boolean = false
     ) = TextView(requireContext()).apply {
         this.text = text ?: "–"
-
-        if (withFrame) setBackgroundResource(R.drawable.bg_table_cell)
-        else setBackgroundColor(android.graphics.Color.TRANSPARENT)
-
-        val hPad = if (isLabel) dp(6) else dp(8)
-        setPadding(hPad, dp(6), dp(8), dp(6))
+        setBackgroundResource(R.drawable.bg_table_cell)
+        setPadding(
+            dp(8),  // left
+            dp(6),  // top
+            dp(8),  // right
+            dp(6)   // bottom
+        )
+        minHeight = dp(40)
 
         if (header) {
             setTextAppearance(com.google.android.material.R.style.TextAppearance_Material3_LabelLarge)
             paint.isFakeBoldText = true
         } else {
             setTextAppearance(com.google.android.material.R.style.TextAppearance_Material3_BodyMedium)
+            setTextSize(TypedValue.COMPLEX_UNIT_SP, 11f)
         }
 
-        // ✅ 원래대로: 라벨은 왼쪽, 값은 alignEnd면 오른쪽
         gravity = when {
-            center     -> Gravity.CENTER      // PERIOD, Annual, TTM 같은 라벨 열
-            alignEnd   -> Gravity.END         // 숫자 값들은 오른쪽 정렬
-            else       -> Gravity.START
+            center -> Gravity.CENTER
+            alignEnd -> Gravity.END or Gravity.CENTER_VERTICAL
+            else -> Gravity.START or Gravity.CENTER_VERTICAL
         }
 
         if (bold) paint.isFakeBoldText = true
 
-        // 폭 가중치도 원래대로
-        if (isLabel) {
-            setTextSize(TypedValue.COMPLEX_UNIT_SP, 13f)
-            isSingleLine = true
-            ellipsize = TextUtils.TruncateAt.END   // ✅ 한 줄 + 말줄임 표시
-            layoutParams = TableRow.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 2.4f)
-            gravity = Gravity.START
-        } else {
-            layoutParams = TableRow.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f)
-            gravity = if (alignEnd) Gravity.END else Gravity.START
-        }
+        // 가중치를 index(컬럼) 기준으로 통일
+        val weight =  1.0f
+        layoutParams = TableRow.LayoutParams(0, ViewGroup.LayoutParams.MATCH_PARENT, weight)
+        maxLines = 1 //  모든 셀은 1줄
     }
-
-    // 디바이더 (colorOutline 12% 알파)
-    private fun makeDivider(): View = View(requireContext()).apply {
-        layoutParams = TableLayout.LayoutParams(
-            ViewGroup.LayoutParams.MATCH_PARENT, dp(1)
-        ).also { it.setMargins(0, dp(6), 0, 0) }
-        val base  = MaterialColors.getColor(this, com.google.android.material.R.attr.colorOutline)
-        val alpha = (0.12f * 255).roundToInt()
-        setBackgroundColor(ColorUtils.setAlphaComponent(base, alpha))
-    }
-
-    // Key-Value 표 빌더
-    private fun addKeyValueRows(table: TableLayout, vararg pairs: Pair<String, String?>) {
-        pairs.forEachIndexed { index, (k, v) ->
-            table.addView(
-                TableRow(requireContext()).apply {
-                    layoutParams = TableLayout.LayoutParams(
-                        ViewGroup.LayoutParams.MATCH_PARENT,
-                        ViewGroup.LayoutParams.WRAP_CONTENT
-                    )
-                    addView(cell(k, isLabel = true, withFrame = false))
-                    addView(cell(v?.ifBlank { "–" }, alignEnd = true, emphasizeValue = true, withFrame = false))
-                }
-            )
-            if (index != pairs.lastIndex) table.addView(makeDivider())
-        }
-    }
-
     private fun dp(v: Int): Int = (v * resources.displayMetrics.density).toInt()
 
     /** 상세 데이터 바인딩 */
     private fun bindDetail(d: StockDetailDto) = with(binding) {
-        d.ticker?.let { tvticker.setOrDash(it) }
-        d.name?.let { tvName.setOrDash(it) }
-        d.price?.let { tvPrice.setOrDash(it) }
-
-        if (d.change != null && d.changeRate != null) {
-            val sign = if (d.change >= 0) "+" else "-"
-            tvChange.text = "${sign}${dfChange.format(abs(d.change))} (${sign}${rateWithComma(d.changeRate)}%)"
-            applyChangeColors(d.change >= 0)
+        // === 1. 헤더 바인딩 ===
+        tvticker.setOrDash(d.ticker)
+        tvName.setOrDash(d.name)
+        d.current?.let {
+            tvPrice.text = dfPrice.format(it.price)
+            val sign = if (it.change ?: 0L >= 0) "+" else "-"
+            tvChange.text = "${sign}${dfChange.format(abs(it.change ?: 0L))} (${sign}${rateWithComma(it.changeRate ?: 0.0)}%)"
+            applyChangeColors(it.change ?: 0L >= 0)
         }
 
-        tvMarketCap.text = formatKrwShort(d.marketCap)
-        tvSharesOutstanding.text = formatKrwShort(d.sharesOutstanding)
+        tvDate.text = formatDisplayDate(d.current?.date) // 날짜
+        // === 2. 테이블 데이터 준비 ===
+        val financials = d.history.orEmpty()
 
-        // 표/메타
-        renderNetIncomeTable(d.netIncome)
-        renderKeyValueTables(d)
+        val currentYear = Calendar.getInstance().get(Calendar.YEAR) // 예: 2025
+        val lastYearStr = (currentYear - 1).toString() // "2024"
+        val twoYearsAgoStr = (currentYear - 2).toString() // "2023"
 
-        // 1) 맵 → 포인트 우선, 2) 비어있으면 배열형(chart)로 대체
-        chartData = mapToChartPoints(d.priceFinancialInfo?.price)
-            .takeIf { it.isNotEmpty() }
-            ?: d.chart.orEmpty()
-
-        if (chartData.isEmpty()) {
-            binding.lineChart.clear()
-            binding.lineChart.setNoDataText(getString(R.string.no_chart_data))
-            binding.btnGroupRange.isEnabled = false
+        val yToday = financials.lastOrNull() // "오늘" 데이터
+        // 작년(2024년) 12월 31일(또는 마지막 거래일) 데이터 찾기
+        val yLast = financials.filter { it.date.startsWith(lastYearStr) }.lastOrNull()
+        // 재작년(2023년) 12월 31일(또는 마지막 거래일) 데이터 찾기
+        val yBefore = financials.filter { it.date.startsWith(twoYearsAgoStr) }.lastOrNull()
+        val dynamicHeader = listOf("연도", currentYear.toString(), lastYearStr, twoYearsAgoStr)
+        // === 3. [수정] 상장 주식수 계산 ===
+        val marketCapLong = d.current?.marketCap
+        val currentPrice = d.current?.price
+        val calculatedShares: Long? = if (marketCapLong != null && currentPrice != null && currentPrice > 0) {
+            (marketCapLong / currentPrice)
         } else {
-            binding.btnGroupRange.isEnabled = true
-            renderChart(Range.M6)
+            null // 계산 불가 시 null
         }
+
+        // === 4. 테이블 렌더링 ===
+        renderSizeTable(tblSize, dynamicHeader, yToday, yLast, yBefore, calculatedShares)
+        renderValueTable(tblValue, dynamicHeader, yToday, yLast, yBefore)
+        renderProfitabilityTable(tblProfitability, dynamicHeader, yToday, yLast, yBefore)
+        renderDividendTable(tblDividend, dynamicHeader, yToday, yLast, yBefore)
+
+        // === 5. "기업 overview" 바인딩 ===
+        d.profile?.explanation?.takeIf { it.isNotBlank() }?.let {
+            cardExplanation.isVisible = true
+            tvExplanation.text = it
+        }
+
+
     }
 
     override fun onDestroyView() {

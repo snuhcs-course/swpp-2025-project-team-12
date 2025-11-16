@@ -11,18 +11,21 @@ import boto3
 from S3 import _get_env, debug_print
 
 
-class S3Client:
+class BaseBucket:
     """
     Boto3 S3 래퍼: 기존 HEAD의 메서드들을 유지/보강.
     - ENV 키 지원: IAM_ACCESS_KEY_ID / AWS_ACCESS_KEY_ID
                    IAM_SECRET_KEY   / AWS_SECRET_ACCESS_KEY
                    AWS_REGION (선택)
     """
+    _client = None
+    _bucket = None
 
     def __init__(
         self,
         access_key = _get_env("IAM_ACCESS_KEY_ID", "AWS_ACCESS_KEY_ID"),
-        secret_key = _get_env("IAM_SECRET_KEY", "AWS_SECRET_ACCESS_KEY")
+        secret_key = _get_env("IAM_SECRET_KEY", "AWS_SECRET_ACCESS_KEY"),
+        bucket_name = _get_env("BUCKET_NAME")
     ):
         region = _get_env("AWS_REGION")
 
@@ -35,29 +38,30 @@ class S3Client:
 
         try:
             self._client = boto3.client("s3", **kwargs)
+            self._bucket = bucket_name
         except Exception:
             debug_print(traceback.format_exc())
             raise
 
     # --- basic objects ---
 
-    def get(self, bucket: str, key: str) -> bytes:
+    def get(self, key: str) -> bytes:
         """S3 object body bytes"""
         try:
-            obj = self._client.get_object(Bucket=bucket, Key=key)
+            obj = self._client.get_object(Bucket=self._bucket, Key=key)
             return obj["Body"].read()
         except Exception as e:
             debug_print(traceback.format_exc())
-            raise Exception(f"S3 ERROR: Couldn't get object '{key}' from bucket '{bucket}'.")
+            raise Exception(f"S3 ERROR: Couldn't get object '{key}' from bucket '{self._bucket}'.")
 
-    def delete(self, bucket: str, key: str) -> None:
+    def delete(self, key: str) -> None:
         try:
-            self._client.delete_object(Bucket=bucket, Key=key)
+            self._client.delete_object(Bucket=self._bucket, Key=key)
         except Exception:
             debug_print(traceback.format_exc())
-            raise Exception(f"S3 ERROR: Couldn't delete object '{key}' from bucket '{bucket}'.")
+            raise Exception(f"S3 ERROR: Couldn't delete object '{key}' from bucket '{self._bucket}'.")
 
-    def put_file(self, bucket: str, key: str, path: str) -> None:
+    def put_file(self, key: str, path: str) -> None:
         """
         로컬 파일을 업로드. ContentType은 확장자로 추정.
         """
@@ -65,18 +69,21 @@ class S3Client:
             ctype, _ = mimetypes.guess_type(path)
             extra = {"ContentType": ctype} if ctype else {}
             with open(path, "rb") as f:
-                self._client.put_object(Bucket=bucket, Key=key, Body=f, **extra)
+                self._client.put_object(Bucket=self._bucket, Key=key, Body=f, **extra)
         except Exception:
             debug_print(traceback.format_exc())
-            raise Exception(f"S3 ERROR: Couldn't put object to bucket '{bucket}' from '{path}'.")
+            raise Exception(f"S3 ERROR: Couldn't put object to bucket '{self._bucket}' from '{path}'.")
 
 
     # --- utils  ---
-    def get_latest_object(self, bucket, prefix):
+    def get_list_v2(self, prefix: str):
+        return self._client.list_objects_v2(Bucket=self._bucket, Prefix=prefix)
+
+    def get_latest_object(self, prefix):
         paginator = self._client.get_paginator("list_objects_v2")
         latest = None
         pages = paginator.paginate(
-            Bucket=bucket,
+            Bucket=self._bucket,
             Prefix=prefix
         )
 
@@ -89,8 +96,8 @@ class S3Client:
 
         return latest
 
-    def check_source(self, bucket, prefix):
-        obj = self.get_latest_object(bucket, prefix)
+    def check_source(self, prefix: str):
+        obj = self.get_latest_object(prefix)
 
         if not obj: return { "ok": False, "latest": None }
 
@@ -108,38 +115,39 @@ class S3Client:
         }
 
     # --- json ---
-    def get_json(self, bucket, key):
-        data = self.get(bucket, f"{key}.json").decode("utf-8")
+    def get_json(self, key):
+        if not key.lower().endswith(".json"): return None
+        data = self.get(key).decode("utf-8")
         return json.loads(data)
 
-    def get_latest_json(self, bucket, prefix):
-        latest = self.get_latest_object(bucket, prefix)
+    def get_latest_json(self, prefix):
+        latest = self.get_latest_object(prefix)
 
         if not latest: return None, None
 
         if not latest["Key"].lower().endswith(".json"): return None, None
 
-        data = self.get(bucket, latest["Key"]).decode("utf-8")
-        time = latest["LastModified"].astimezone(timezone.utc).isoformat
+        data = self.get(latest["Key"]).decode("utf-8")
+        time = latest["LastModified"].astimezone(timezone.utc).isoformat()
         return json.loads(data), time
 
     # --- images ---
 
-    def get_image_url(self, bucket: str, key: str) -> str:
+    def get_image_url(self, key: str) -> str:
         """
         이미지 바이트를 data:URL(base64)로 반환.
         """
         try:
-            obj = self._client.get_object(Bucket=bucket, Key=key)
+            obj = self._client.get_object(Bucket=self._bucket, Key=key)
             content_type = obj.get("ContentType") or "application/octet-stream"
             b = obj["Body"].read()
             b64 = base64.b64encode(b).decode("utf-8")
             return f"data:{content_type};base64,{b64}"
         except Exception:
             debug_print(traceback.format_exc())
-            raise Exception(f"S3 ERROR: Couldn't get image from bucket '{bucket}' (key='{key}').")
+            raise Exception(f"S3 ERROR: Couldn't get image from bucket '{self._bucket}' (key='{key}').")
 
-    def put_image(self, bucket: str, key: str, image_url: str) -> None:
+    def put_image(self, key: str, image_url: str) -> None:
         """
         data:URL(base64) 포맷을 받아 업로드.
         """
@@ -155,11 +163,11 @@ class S3Client:
                 raise Exception("S3 ERROR: Invalid base64 data.")
 
             self._client.put_object(
-                Bucket=bucket,
+                Bucket=self._bucket,
                 Key=key,
                 Body=io.BytesIO(data),
                 ContentType=content_type,
             )
         except Exception:
             debug_print(traceback.format_exc())
-            raise Exception(f"S3 ERROR: Couldn't put image bytes to bucket '{bucket}'.")
+            raise Exception(f"S3 ERROR: Couldn't put image bytes to bucket '{self._bucket}'.")

@@ -61,28 +61,9 @@ class MarketIndexFragment : Fragment() {
             }
         }
 
-        // Observe LLM summary data
-        /*
-        marketIndexViewModel.llmSummary.observe(viewLifecycleOwner) { summaryData ->
-            // 전반 박스
-            val combined = buildString {
-                if (!summaryData.basicOverview.isNullOrBlank()) append(summaryData.basicOverview)
-                if (!summaryData.newsOverview.isNullOrBlank()) {
-                    if (isNotEmpty()) append("\n\n")
-                    append(summaryData.newsOverview)
-                }
-            }
-            binding.overviewBlock.MarketTitle.text = getString(R.string.label_overview) // "전반"
-            binding.overviewBlock.MarketSummary.text =
-                if (combined.isBlank()) getString(R.string.placeholder_loading) else combined
-
-            // 지수 설명(LLM 요약) – 있으면 우선 적용
-            summaryData.kospi?.summary?.let { binding.kospiBlock.description.text = it }
-            summaryData.kosdaq?.summary?.let { binding.kosdaqBlock.description.text = it }
-        }*/
         // "전반", "KOSPI", "KOSDAQ"의 모든 LLM 요약 텍스트를 업데이트
         // 로딩 중일 때 표시할 텍스트
-        val loadingText = getString(R.string.placeholder_loading) // "불러오는 중..."
+        val loadingText = getString(R.string.placeholder_loading)
         // "전반" 텍스트 업데이트 (로딩/실패/성공)
         marketIndexViewModel.llmOverviewText.observe(viewLifecycleOwner) { overviewText ->
             binding.overviewBlock.MarketTitle.text = getString(R.string.label_overview)

@@ -4,6 +4,14 @@ import com.example.dailyinsight.data.dto.*
 import retrofit2.Call
 import retrofit2.Response
 import retrofit2.http.*
+import okhttp3.ResponseBody
+
+import com.example.dailyinsight.data.dto.StockDetailDto
+import com.example.dailyinsight.data.dto.StockOverviewDto
+import retrofit2.http.GET
+import retrofit2.http.Path
+
+
 /**
  * Unified API Service for all endpoints
  * Base URL: http://10.0.2.2:8000/ (no /api suffix)
@@ -21,17 +29,25 @@ interface ApiService {
     @GET("api/recommendations/history/")
     suspend fun getStockRecommendations(): ApiResponse<Map<String, List<RecommendationDto>>>
 
-    @GET("api/recommendations/personalized/")
-    suspend fun getPersonalizedRecommendations(
-        @Query("userId") userId: String
-    ): ApiResponse<List<RecommendationDto>>
+    // ============ Stock Briefing & Stock Details ============
 
-    // ============ Stock Details ============
-    @GET("api/stocks/{ticker}/")
-    suspend fun getStockDetail(
+    @GET("marketindex/api/overview/{ticker}")
+    suspend fun getStockBriefing(): LLMSummaryResponse
+
+    // 텍스트 개요(요약/기본적/기술적/뉴스/날짜)
+    @GET("api/overview/{ticker}")
+    suspend fun getStockOverview(
         @Path("ticker") ticker: String
-    ): ApiResponse<StockDetailDto>
-    
+    ): StockOverviewDto
+
+    // 수치(히스토리/표/프로필)
+    @GET("api/reports/{ticker}")
+    suspend fun getStockReport(
+        @Path("ticker") ticker: String
+    ): StockDetailDto
+
+    // ======================================
+
     @GET("api/company-list")
     suspend fun getCompanyList(
         @Query("limit") limit: Int,
@@ -48,8 +64,8 @@ interface ApiService {
         @Query("days") days: Int
     ): StockIndexHistoryResponse
 
-    @GET("marketindex/llm_summary")
-    suspend fun getLLMSummary(): LLMSummaryResponse
+    @GET("marketindex/overview")
+    suspend fun getLLMSummaryLatest(): ResponseBody
 
     // ============ Authentication ============
     @GET("user/csrf")

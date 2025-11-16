@@ -2,7 +2,7 @@ from django.http import JsonResponse
 from rest_framework import viewsets
 from rest_framework.decorators import action
 from decorators import *
-from S3.base import S3Client
+from S3.base import BaseBucket
 import json
 import os
 
@@ -20,7 +20,7 @@ class ProfileView(viewsets.ViewSet):
         """
 
         try:
-            image_url = S3Client().get_image_url(os.environ.get("BUCKET_NAME"), str(user.id))
+            image_url = BaseBucket().get_image_url(str(user.id))
         except Exception as e:
             return JsonResponse({"message": "S3 GET FAILED, maybe NOT FOUND"}, status=500)
 
@@ -42,7 +42,7 @@ class ProfileView(viewsets.ViewSet):
             return JsonResponse({"message": "IMAGE REQUIRED"}, status=400)
 
         try:
-            S3Client().put_image(os.environ.get("BUCKET_NAME"), str(user.id), image_url)
+            BaseBucket().put_image(str(user.id), image_url)
         except Exception as e:
             return JsonResponse({"message": "S3 PUT FAILED"}, status=500)
 
@@ -57,6 +57,6 @@ class ProfileView(viewsets.ViewSet):
         delete user's profile on storage.
         """
 
-        S3Client().delete(os.environ.get("BUCKET_NAME"), str(user.id))
+        BaseBucket().delete(str(user.id))
 
         return JsonResponse({"message": "PROFILE DELETE SUCCESS"}, status=200)

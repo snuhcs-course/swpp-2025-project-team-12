@@ -2,6 +2,7 @@ package com.example.dailyinsight.ui.sign
 
 import android.content.Intent
 import android.os.Bundle
+import android.view.inputmethod.EditorInfo
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.datastore.preferences.core.edit
@@ -35,6 +36,16 @@ class SignInActivity : AppCompatActivity() {
 
         val IDTextField = findViewById<TextInputEditText>(R.id.IDTextField)
         val PWTextField = findViewById<TextInputEditText>(R.id.PWTextField)
+        val loginButton = findViewById<MaterialButton>(R.id.loginButton)
+
+        PWTextField.setOnEditorActionListener { v, actionId, _ ->
+            if (actionId == EditorInfo.IME_ACTION_DONE) {
+                loginButton.performClick()
+                true
+            } else {
+                false
+            }
+        }
 
         val findPWButton = findViewById<MaterialButton>(R.id.findPWButton)
         findPWButton.setOnClickListener {
@@ -42,7 +53,6 @@ class SignInActivity : AppCompatActivity() {
             Toast.makeText(this, "find PW feature not implemented yet", Toast.LENGTH_SHORT).show()
         }
 
-        val loginButton = findViewById<MaterialButton>(R.id.loginButton)
         loginButton.setOnClickListener {
             val id = IDTextField.text.toString().trim()
             val password = PWTextField.text.toString().trim()

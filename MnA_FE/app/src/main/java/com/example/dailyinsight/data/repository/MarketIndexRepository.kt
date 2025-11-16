@@ -17,6 +17,8 @@ import java.time.LocalDate
 import java.time.LocalTime
 import java.time.ZoneId
 import java.time.ZonedDateTime
+import com.google.gson.JsonElement
+import com.google.gson.JsonParser
 
 /**
  * - ServiceLocator를 사용하도록 생성자 복구 (ViewModel과 호환)
@@ -27,6 +29,7 @@ class MarketIndexRepository {
 
     // ServiceLocator에서 의존성 주입
     private val apiService: ApiService = ServiceLocator.api
+    private val gson = Gson()
     private val historyCacheDao: HistoryCacheDao = ServiceLocator.historyCacheDao
 
     private val KST: ZoneId = ZoneId.of("Asia/Seoul")
@@ -40,9 +43,46 @@ class MarketIndexRepository {
         return responseMap
     }
 
-    suspend fun getLLMSummary(): LLMSummaryData {
-        val response = apiService.getLLMSummary()
-        return Gson().fromJson(response.llmOutput, LLMSummaryData::class.java)
+    // 1) 문자열로 받고 2) 한 번 디코딩한 뒤 3) 최종 DTO로 파싱
+    suspend fun getLLMSummaryLatest(): LLMSummaryData {
+        val raw = apiService.getLLMSummaryLatest().string()
+        // 서버가 "{"asof_date":"...","basic_overview":"..."}" 를 문자열로 감싸 보내는 형태
+        val innerJson = gson.fromJson(raw, String::class.java)   // 1차 디코딩(따옴표/이스케이프 제거)
+        return gson.fromJson(innerJson, LLMSummaryData::class.java)
+    }
+
+    /**
+     * 서버가 날짜/저장소에 따라 응답을
+     * 1) JSON 객체 그대로  혹은
+     * 2) "문자열로 감싼 JSON"(예: " { ... } ")  혹은
+     * 3) ( " { ... } " ) 처럼 괄호까지 감싸는 경우
+     * 중 하나로 주는 상황을 모두 흡수.
+     */
+    private fun normalizeOverviewPayload(raw: String): String {
+        var s = raw.trim()
+
+        // ( ... ) 로 감싸진 경우 제거
+        if (s.startsWith("(") && s.endsWith(")")) {
+            s = s.substring(1, s.length - 1).trim()
+        }
+
+        // 이제 s가 JSON 객체이거나 "문자열"일 수 있음
+        return try {
+            val el: JsonElement = JsonParser.parseString(s)
+            when {
+                el.isJsonObject -> s                              // { ... } 그대로
+                el.isJsonPrimitive && el.asJsonPrimitive.isString ->
+                    el.asJsonPrimitive.asString                   // " { ... } " → 내부 문자열 꺼내기
+                else -> s
+            }
+        } catch (_: Exception) {
+            // 파서가 실패하면 마지막 방어: 양끝 따옴표만 제거 시도
+            if (s.length >= 2 && s.first() == '"' && s.last() == '"') {
+                s.substring(1, s.length - 1)
+                    .replace("\\\"", "\"")
+                    .replace("\\n", "\n")
+            } else s
+        }
     }
 
     fun getHistoryCacheFlow(indexType: String): Flow<CachedHistory?> {
