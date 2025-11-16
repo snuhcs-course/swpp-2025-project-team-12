@@ -1,7 +1,6 @@
 import io
 import traceback
 
-import boto3
 import pandas as pd
 
 from datetime import timezone
@@ -22,7 +21,6 @@ class FinanceS3Client(S3Client):
         self,
         access_key = _get_env("FINANCE_IAM_ACCESS_KEY_ID", "FINANCE_AWS_ACCESS_KEY_ID"),
         secret_key = _get_env("FINANCE_IAM_SECRET_KEY", "FINANCE_AWS_SECRET_ACCESS_KEY")
-
     ):
         super().__init__(access_key, secret_key)
 
@@ -59,24 +57,6 @@ class FinanceS3Client(S3Client):
         ts = latest["LastModified"].astimezone(timezone.utc).isoformat()
 
         return df, ts
-    
-    def get_latest_json(self, bucket, prefix):
-        """
-        prefix 내에서 최신 JSON 파일을 찾아서 파싱하여 반환
-        Returns: (dict, timestamp) 또는 (None, None)
-        """
-        import json
-        
-        latest = self.get_latest_object(bucket, prefix)
-        
-        if not latest:
-            return None, None
-        
-        data = self.get(bucket, latest["Key"])
-        json_data = json.loads(data.decode('utf-8'))
-        ts = latest["LastModified"].astimezone(timezone.utc).isoformat()
-        
-        return json_data, ts
 
 
     def put_dataframe(self, bucket: str, key: str, df: pd.DataFrame) -> None:
@@ -117,6 +97,3 @@ class FinanceS3Client(S3Client):
         except Exception:
             debug_print(traceback.format_exc())
             raise Exception(f"S3 ERROR: Couldn't write DataFrame to s3://{bucket}/{key}")
-
-    def get_list_v2(self, bucket: str, prefix: str):
-        return self._client.list_objects_v2(Bucket=bucket, Prefix=prefix)

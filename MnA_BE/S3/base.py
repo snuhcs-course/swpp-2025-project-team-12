@@ -72,6 +72,9 @@ class S3Client:
 
 
     # --- utils  ---
+    def get_list_v2(self, bucket: str, prefix: str):
+        return self._client.list_objects_v2(Bucket=bucket, Prefix=prefix)
+
     def get_latest_object(self, bucket, prefix):
         paginator = self._client.get_paginator("list_objects_v2")
         latest = None
@@ -120,7 +123,7 @@ class S3Client:
         if not latest["Key"].lower().endswith(".json"): return None, None
 
         data = self.get(bucket, latest["Key"]).decode("utf-8")
-        time = latest["LastModified"].astimezone(timezone.utc).isoformat
+        time = latest["LastModified"].astimezone(timezone.utc).isoformat()
         return json.loads(data), time
 
     # --- images ---

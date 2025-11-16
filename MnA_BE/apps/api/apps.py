@@ -3,6 +3,7 @@ from django.apps import AppConfig
 from django.core.cache import cache
 import pandas as pd
 from utils.debug_print import debug_print
+from utils.store import store
 
 
 class ApiConfig(AppConfig):
@@ -51,8 +52,8 @@ class ApiConfig(AppConfig):
                 ).drop(columns=['market_cap_numeric'])
                 sort_elapsed = time.time() - sort_start
 
-                # Django 캐시에 저장 (영구)
-                cache.set('instant_df', instant_df, timeout=None)
+                # Store in Shared memory
+                store.set_data('instant_df', instant_df)
 
                 debug_print(f"✓ Instant data loaded to cache: {instant_df.shape}")
                 debug_print(f"  - S3 download time: {instant_elapsed:.2f}s")
@@ -64,20 +65,7 @@ class ApiConfig(AppConfig):
             # 2) Company Profile 데이터 로드 (KOSPI + KOSDAQ 자동 검색)
             profile_start = time.time()
 
-            import boto3
-            import io
-
-            s3_client = boto3.client(
-                's3',
-                aws_access_key_id=os.getenv('FINANCE_AWS_ACCESS_KEY_ID'),
-                aws_secret_access_key=os.getenv('FINANCE_AWS_SECRET_ACCESS_KEY'),
-                region_name=os.getenv('AWS_REGION')
-            )
-
-            response = s3_client.list_objects_v2(
-                Bucket=FINANCE_BUCKET,
-                Prefix='company-profile/'
-            )
+            response = s3.get_list_v2(FINANCE_BUCKET, 'company-profile/')
             
             if 'Contents' in response:
                 files = sorted(response['Contents'], key=lambda x: x['LastModified'], reverse=True)
@@ -97,20 +85,18 @@ class ApiConfig(AppConfig):
                 profile_kosdaq = None
 
                 if kospi_file:
-                    obj = s3_client.get_object(Bucket=FINANCE_BUCKET, Key=kospi_file)
-                    profile_kospi = pd.read_parquet(io.BytesIO(obj['Body'].read()))
+                    profile_kospi = s3.get_dataframe(FINANCE_BUCKET, kospi_file)
                     debug_print(f"  - KOSPI profile from: {kospi_file}")
 
                 if kosdaq_file:
-                    obj = s3_client.get_object(Bucket=FINANCE_BUCKET, Key=kosdaq_file)
-                    profile_kosdaq = pd.read_parquet(io.BytesIO(obj['Body'].read()))
+                    profile_kosdaq = s3.get_dataframe(FINANCE_BUCKET, kosdaq_file)
                     debug_print(f"  - KOSDAQ profile from: {kosdaq_file}")
 
                 if profile_kosdaq is not None and profile_kospi is not None:
                     profile_df = pd.concat([profile_kosdaq, profile_kospi])
 
-                    # Django 캐시에 저장 (영구)
-                    cache.set('profile_df', profile_df, timeout=None)
+                    # Store in Shared Memory
+                    store.set_data('profile_df', profile_df)
 
                     debug_print(f"✓ Profile data loaded to cache: {profile_df.shape}")
                     debug_print(f"  - KOSDAQ: {len(profile_kosdaq)} 종목")

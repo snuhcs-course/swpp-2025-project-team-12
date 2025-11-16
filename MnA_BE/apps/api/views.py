@@ -12,6 +12,7 @@ from decorators import default_error_handler
 from utils.debug_print import debug_print
 from utils.pagination import get_pagination
 from utils.for_api import *
+from utils.store import store
 from apps.api.constants import *
 import pandas as pd
 
@@ -69,8 +70,8 @@ class APIView(viewsets.ViewSet):
         db_status = {"ok": True}
         
         # 캐시 상태 확인
-        instant_df = cache.get('instant_df')
-        profile_df = cache.get('profile_df')
+        instant_df = store.get_data('instant_df')
+        profile_df = store.get_data('profile_df')
         last_loaded = cache.get('data_last_loaded')
 
         cache_status = {
@@ -188,14 +189,14 @@ class APIView(viewsets.ViewSet):
 
         try:
             # 캐시에서 instant 데이터 가져오기
-            df = cache.get('instant_df')
+            df = store.get_data('instant_df')
             if df is None:
                 return degraded("Data not loaded in cache", source="cache", total=0, limit=limit, offset=offset)
-            
-            # 최신 날짜만 필터링
+
+            # # 최신 날짜만 필터링
             latest_date = df['date'].max()
             df_latest = df[df['date'] == latest_date]
-            
+
             # 시장 필터링 (market은 이미 대문자로 변환됨)
             if market and 'market' in df_latest.columns:
                 df_latest = df_latest[df_latest['market'] == market]
@@ -215,7 +216,7 @@ class APIView(viewsets.ViewSet):
                 "limit": limit,
                 "offset": offset,
                 "source": "cache",
-                "asOf": str(latest_date) if latest_date else iso_now()
+                # "asOf": str(latest_date) if latest_date else iso_now()
             })
 
         except Exception as e:
@@ -235,7 +236,7 @@ class APIView(viewsets.ViewSet):
 
         try:
             # 캐시에서 profile 데이터 가져오기
-            df = cache.get('profile_df')
+            df = store.get_data('profile_df')
             if df is None:
                 return degraded("Profile data not loaded in cache", source="cache", total=0, limit=limit, offset=offset)
 
@@ -270,20 +271,22 @@ class APIView(viewsets.ViewSet):
             page_df = df.iloc[offset:offset + limit]
 
             # instant에서 name 가져오기
-            instant_df = cache.get('instant_df')
+            instant_df = store.get_data('instant_df')
             items = []
             for idx, row in page_df.iterrows():
-                name = None
-                if instant_df is not None and 'ticker' in instant_df.columns:
-                    ticker_data = instant_df[instant_df['ticker'] == idx]
-                    if len(ticker_data) > 0:
-                        name = str(ticker_data.iloc[0]['name'])
-                
+                # comment getting name part (speed issue)
+                # name = None
+                # if instant_df is not None and 'ticker' in instant_df.columns:
+                #     ticker_data = instant_df[instant_df['ticker'] == idx]
+                #     if len(ticker_data) > 0:
+                #         name = str(ticker_data.iloc[0]['name'])
+
                 items.append({
                     "ticker": idx,
-                    "name": name,
-                    "explanation": str(row["explanation"])
+                    "name": "hello",
+                    # "explanation": str(row["explanation"])
                 })
+
 
             return ok({
                 "items": items,
@@ -303,11 +306,10 @@ class APIView(viewsets.ViewSet):
     def get_company_overview(self, request, ticker:str):
         """
         GET /api/overview/{ticker}
-
         """
         source = FinanceS3Client().check_source(
             bucket=FINANCE_BUCKET,
-            prefix="llm_output/market-index-overview"
+            prefix="llm_output/company-overview"
         )
         if not source["ok"]: return JsonResponse({"message": "No LLM output found"}, status=404)
         year, month, day = source["latest"].split("-")
@@ -317,7 +319,7 @@ class APIView(viewsets.ViewSet):
                 bucket=FINANCE_BUCKET,
                 key=f"llm_output/company-overview/year={year}/month={month}/{year}-{month}-{day}"
             )
-            company_overview = json.loads(llm_output.get(ticker, {}))
+            company_overview = llm_output.get(ticker, None)
         except Exception as e:
             return JsonResponse({ "message": "Unexpected Server Error" }, status=500)
 
@@ -335,14 +337,14 @@ class APIView(viewsets.ViewSet):
         """
         try:
             # 1) 캐시에서 회사 프로필 가져오기
-            profile_df = cache.get('profile_df')
+            profile_df = store.get_data('profile_df')
             explanation = None
             if profile_df is not None and symbol in profile_df.index:
                 prow = profile_df.loc[symbol]
                 explanation = str(prow.get("explanation", None)) if "explanation" in prow else None
 
             # 2) 캐시에서 instant 데이터 가져오기
-            instant_df = cache.get('instant_df')
+            instant_df = store.get_data('instant_df')
             if instant_df is None:
                 return degraded("Instant data not loaded in cache", source="cache")
 
@@ -583,7 +585,7 @@ class APIView(viewsets.ViewSet):
                 ).drop(columns=['market_cap_numeric'])
 
                 # Django 캐시에 저장
-                cache.set('instant_df', instant_df, timeout=None)
+                store.set_data('instant_df', instant_df)
                 debug_print(f"✓ Instant data reloaded to cache: {instant_df.shape}")
 
             # 2) Profile 데이터 로드 (market별 자동 검색)
@@ -623,7 +625,7 @@ class APIView(viewsets.ViewSet):
 
             total_elapsed = time.time() - total_start
             # 로드 시각 저장
-            cache.set('data_last_loaded', datetime.now(), timeout=None)
+            store.set_data('data_last_loaded', datetime.now(), timeout=None)
 
             debug_print(f"✓ Total reload time: {total_elapsed:.2f}s")
             debug_print(f"✓ Data reloaded at: {datetime.now()}")
