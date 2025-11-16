@@ -1,7 +1,7 @@
 from django.http import HttpRequest
 from rest_framework import viewsets
 from rest_framework.decorators import action
-from S3.finance import FinanceS3Client
+from S3.finance import FinanceBucket
 from decorators import default_error_handler
 from utils.pagination import get_pagination
 from apps.api.constants import *
@@ -23,10 +23,7 @@ class TopArticleView(viewsets.ViewSet):
 
         if ARTICLES_SOURCE == "s3":
             try:
-                data, ts = FinanceS3Client().get_latest_json(
-                    FINANCE_BUCKET,
-                    S3_PREFIX_ARTICLE
-                )
+                data, ts = FinanceBucket().get_latest_json(S3_PREFIX_ARTICLE)
 
                 if data:
                     # 11월부터 데이터 구조 변경: items → articles

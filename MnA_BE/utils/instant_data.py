@@ -1,8 +1,7 @@
 from django.core.cache import cache
 from utils.debug_print import debug_print
 from utils.store import store
-from S3.finance import FinanceS3Client
-from apps.api.constants import FINANCE_BUCKET
+from S3.finance import FinanceBucket
 from datetime import datetime
 from utils.for_api import ok
 import pandas as pd
@@ -17,14 +16,11 @@ def init():
     debug_print("Loading instant data into Django cache...")
 
     total_start = time.time()
-    s3 = FinanceS3Client()
+    s3 = FinanceBucket()
 
     # 1) Instant 데이터 로드
     instant_start = time.time()
-    instant_df, ts = s3.get_latest_parquet_df(
-        FINANCE_BUCKET,
-        'price-financial-info-instant/'
-    )
+    instant_df, ts = s3.get_latest_parquet_df('price-financial-info-instant/')
     instant_elapsed = time.time() - instant_start
 
     if instant_df is not None:
@@ -50,7 +46,7 @@ def init():
     # 2) Company Profile 데이터 로드 (KOSPI + KOSDAQ 자동 검색)
     profile_start = time.time()
 
-    response = s3.get_list_v2(FINANCE_BUCKET, 'company-profile/')
+    response = s3.get_list_v2('company-profile/')
 
     if 'Contents' in response:
         files = sorted(response['Contents'], key=lambda x: x['LastModified'], reverse=True)
@@ -70,11 +66,11 @@ def init():
         profile_kosdaq = None
 
         if kospi_file:
-            profile_kospi = s3.get_dataframe(FINANCE_BUCKET, kospi_file)
+            profile_kospi = s3.get_dataframe(kospi_file)
             debug_print(f"  - KOSPI profile from: {kospi_file}")
 
         if kosdaq_file:
-            profile_kosdaq = s3.get_dataframe(FINANCE_BUCKET, kosdaq_file)
+            profile_kosdaq = s3.get_dataframe(kosdaq_file)
             debug_print(f"  - KOSDAQ profile from: {kosdaq_file}")
 
         if profile_kosdaq is not None and profile_kospi is not None:
@@ -111,14 +107,11 @@ def reload():
     debug_print("Manual data reload triggered...")
 
     total_start = time.time()
-    s3 = FinanceS3Client()
+    s3 = FinanceBucket()
 
     # 1) Instant 데이터 로드
     instant_start = time.time()
-    instant_df, ts = s3.get_latest_parquet_df(
-        FINANCE_BUCKET,
-        'price-financial-info-instant/'
-    )
+    instant_df, ts = s3.get_latest_parquet_df('price-financial-info-instant/')
     instant_elapsed = time.time() - instant_start
 
     if instant_df is not None:
@@ -136,9 +129,7 @@ def reload():
     # 2) Profile 데이터 로드 (market별 자동 검색)
     profile_start = time.time()
 
-    response = s3.get_list_v2(
-        FINANCE_BUCKET, 'company-profile/'
-    )
+    response = s3.get_list_v2('company-profile/')
 
     if 'Contents' in response:
         files = sorted(response['Contents'], key=lambda x: x['LastModified'], reverse=True)
@@ -157,8 +148,8 @@ def reload():
         profile_kospi = None
         profile_kosdaq = None
 
-        if kospi_file: profile_kospi = s3.get_dataframe(FINANCE_BUCKET, kospi_file)
-        if kosdaq_file: profile_kosdaq = s3.get_dataframe(FINANCE_BUCKET, kosdaq_file)
+        if kospi_file: profile_kospi = s3.get_dataframe(kospi_file)
+        if kosdaq_file: profile_kosdaq = s3.get_dataframe(kosdaq_file)
 
         if profile_kosdaq is not None and profile_kospi is not None:
             profile_df = pd.concat([profile_kosdaq, profile_kospi])
