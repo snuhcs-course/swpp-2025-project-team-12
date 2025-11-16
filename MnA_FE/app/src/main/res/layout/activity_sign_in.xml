@@ -48,6 +48,9 @@
             android:id="@+id/IDTextField"
             android:layout_width="344dp"
             android:layout_height="wrap_content"
+            android:singleLine="true"
+            android:imeOptions="actionNext"
+            android:nextFocusDown="@id/PWTextField"
             android:hint="아이디"
             app:counterEnabled="true"
             app:counterMaxLength="20" />
@@ -62,12 +65,15 @@
         app:layout_constraintTop_toBottomOf="@+id/IDText"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
-        app:endIconMode="password_toggle" >
+        app:endIconMode="password_toggle">
 
         <com.google.android.material.textfield.TextInputEditText
             android:id="@+id/PWTextField"
             android:layout_width="344dp"
             android:layout_height="wrap_content"
+            android:inputType="textPassword"
+            android:singleLine="true"
+            android:imeOptions="actionDone"
             android:hint="비밀번호" />
 
     </com.google.android.material.textfield.TextInputLayout>

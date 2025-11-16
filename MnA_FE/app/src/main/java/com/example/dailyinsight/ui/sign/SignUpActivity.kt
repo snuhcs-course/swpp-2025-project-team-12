@@ -2,6 +2,7 @@ package com.example.dailyinsight.ui.sign
 
 import android.content.Intent
 import android.os.Bundle
+import android.view.inputmethod.EditorInfo
 import android.widget.Toast
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
@@ -41,8 +42,17 @@ class SignUpActivity : AppCompatActivity() {
         val IDTextField = findViewById<TextInputEditText>(R.id.IDTextField)
         val PWTextField = findViewById<TextInputEditText>(R.id.PWTextField)
         val verifyPWField = findViewById<TextInputEditText>(R.id.verifyPWField)
-
         val signUpButton = findViewById<MaterialButton>(R.id.signUpButton)
+
+        verifyPWField.setOnEditorActionListener { v, actionId, _ ->
+            if (actionId == EditorInfo.IME_ACTION_DONE) {
+                signUpButton.performClick()
+                true
+            } else {
+                false
+            }
+        }
+
         signUpButton.setOnClickListener {
             val id = IDTextField.text.toString().trim()
             val password = PWTextField.text.toString().trim()
