@@ -17,16 +17,16 @@ class FinanceS3ClientTests(TestCase):
     @patch('S3.base.boto3.client')
     def test_init_with_finance_credentials(self, mock_boto_client):
         """FINANCE_ 접두사 환경변수로 초기화"""
-        from S3.finance import FinanceS3Client
+        from S3.finance import FinanceBucket
         
-        client = FinanceS3Client()
+        client = FinanceBucket()
         
         self.assertTrue(mock_boto_client.called)
     
     @patch('S3.base.boto3.client')
     def test_get_dataframe_parquet(self, mock_boto_client):
         """Parquet DataFrame 가져오기"""
-        from S3.finance import FinanceS3Client
+        from S3.finance import FinanceBucket
         
         mock_s3 = MagicMock()
         mock_boto_client.return_value = mock_s3
@@ -40,7 +40,7 @@ class FinanceS3ClientTests(TestCase):
         body_mock.read.return_value = parquet_bytes
         mock_s3.get_object.return_value = {"Body": body_mock}
         
-        client = FinanceS3Client()
+        client = FinanceBucket()
         result_df = client.get_dataframe("test-bucket", "prices.parquet")
         
         self.assertIsInstance(result_df, pd.DataFrame)
@@ -49,7 +49,7 @@ class FinanceS3ClientTests(TestCase):
     @patch('S3.base.boto3.client')
     def test_get_dataframe_csv_direct(self, mock_boto_client):
         """CSV 파일 직접 읽기"""
-        from S3.finance import FinanceS3Client
+        from S3.finance import FinanceBucket
         
         mock_s3 = MagicMock()
         mock_boto_client.return_value = mock_s3
@@ -61,7 +61,7 @@ class FinanceS3ClientTests(TestCase):
         body_mock.read.return_value = csv_bytes
         mock_s3.get_object.return_value = {"Body": body_mock}
         
-        client = FinanceS3Client()
+        client = FinanceBucket()
         result_df = client.get_dataframe("test-bucket", "data.csv")
         
         self.assertIsInstance(result_df, pd.DataFrame)
@@ -70,7 +70,7 @@ class FinanceS3ClientTests(TestCase):
     @patch('S3.base.boto3.client')
     def test_get_dataframe_auto_detect_fallback_csv(self, mock_boto_client):
         """확장자 없을 때 parquet 실패 후 csv 시도"""
-        from S3.finance import FinanceS3Client
+        from S3.finance import FinanceBucket
         
         mock_s3 = MagicMock()
         mock_boto_client.return_value = mock_s3
@@ -82,7 +82,7 @@ class FinanceS3ClientTests(TestCase):
         body_mock.read.return_value = csv_bytes
         mock_s3.get_object.return_value = {"Body": body_mock}
         
-        client = FinanceS3Client()
+        client = FinanceBucket()
         result_df = client.get_dataframe("test-bucket", "data")
         
         self.assertIsInstance(result_df, pd.DataFrame)
@@ -90,13 +90,13 @@ class FinanceS3ClientTests(TestCase):
     @patch('S3.base.boto3.client')
     def test_get_dataframe_exception(self, mock_boto_client):
         """DataFrame 로드 실패"""
-        from S3.finance import FinanceS3Client
+        from S3.finance import FinanceBucket
         
         mock_s3 = MagicMock()
         mock_boto_client.return_value = mock_s3
         mock_s3.get_object.side_effect = Exception("S3 Error")
         
-        client = FinanceS3Client()
+        client = FinanceBucket()
         
         with self.assertRaises(Exception) as context:
             client.get_dataframe("test-bucket", "data.parquet")
@@ -106,7 +106,7 @@ class FinanceS3ClientTests(TestCase):
     @patch('S3.base.boto3.client')
     def test_get_latest_parquet_df_success(self, mock_boto_client):
         """최신 Parquet DataFrame 가져오기"""
-        from S3.finance import FinanceS3Client
+        from S3.finance import FinanceBucket
         
         mock_s3 = MagicMock()
         mock_boto_client.return_value = mock_s3
@@ -129,7 +129,7 @@ class FinanceS3ClientTests(TestCase):
         body_mock.read.return_value = parquet_bytes
         mock_s3.get_object.return_value = {"Body": body_mock}
         
-        client = FinanceS3Client()
+        client = FinanceBucket()
         result_df, ts = client.get_latest_parquet_df("test-bucket", "data/")
         
         self.assertIsInstance(result_df, pd.DataFrame)
@@ -139,7 +139,7 @@ class FinanceS3ClientTests(TestCase):
     @patch('S3.base.boto3.client')
     def test_get_latest_parquet_df_no_object(self, mock_boto_client):
         """최신 Parquet 없을 때"""
-        from S3.finance import FinanceS3Client
+        from S3.finance import FinanceBucket
         
         mock_s3 = MagicMock()
         mock_boto_client.return_value = mock_s3
@@ -148,7 +148,7 @@ class FinanceS3ClientTests(TestCase):
         mock_s3.get_paginator.return_value = paginator_mock
         paginator_mock.paginate.return_value = [{"Contents": []}]
         
-        client = FinanceS3Client()
+        client = FinanceBucket()
         df, ts = client.get_latest_parquet_df("test-bucket", "data/")
         
         self.assertIsNone(df)
@@ -157,14 +157,14 @@ class FinanceS3ClientTests(TestCase):
     @patch('S3.base.boto3.client')
     def test_put_dataframe_parquet(self, mock_boto_client):
         """DataFrame을 Parquet으로 저장"""
-        from S3.finance import FinanceS3Client
+        from S3.finance import FinanceBucket
         
         mock_s3 = MagicMock()
         mock_boto_client.return_value = mock_s3
         
         df = pd.DataFrame({'col1': [1, 2, 3]})
         
-        client = FinanceS3Client()
+        client = FinanceBucket()
         client.put_dataframe("test-bucket", "data.parquet", df)
         
         mock_s3.put_object.assert_called_once()
@@ -174,14 +174,14 @@ class FinanceS3ClientTests(TestCase):
     @patch('S3.base.boto3.client')
     def test_put_dataframe_csv(self, mock_boto_client):
         """DataFrame을 CSV로 저장"""
-        from S3.finance import FinanceS3Client
+        from S3.finance import FinanceBucket
         
         mock_s3 = MagicMock()
         mock_boto_client.return_value = mock_s3
         
         df = pd.DataFrame({'stock': ['AAPL', 'GOOGL'], 'price': [150, 2800]})
         
-        client = FinanceS3Client()
+        client = FinanceBucket()
         client.put_dataframe("test-bucket", "stocks.csv", df)
         
         mock_s3.put_object.assert_called_once()
@@ -191,14 +191,14 @@ class FinanceS3ClientTests(TestCase):
     @patch('S3.base.boto3.client')
     def test_put_dataframe_default_extension(self, mock_boto_client):
         """확장자 없을 때 기본 parquet"""
-        from S3.finance import FinanceS3Client
+        from S3.finance import FinanceBucket
         
         mock_s3 = MagicMock()
         mock_boto_client.return_value = mock_s3
         
         df = pd.DataFrame({'col1': [1, 2, 3]})
         
-        client = FinanceS3Client()
+        client = FinanceBucket()
         client.put_dataframe("test-bucket", "data", df)
         
         mock_s3.put_object.assert_called_once()
@@ -208,13 +208,13 @@ class FinanceS3ClientTests(TestCase):
     @patch('S3.base.boto3.client')
     def test_put_dataframe_exception(self, mock_boto_client):
         """DataFrame 저장 실패"""
-        from S3.finance import FinanceS3Client
+        from S3.finance import FinanceBucket
         
         mock_s3 = MagicMock()
         mock_boto_client.return_value = mock_s3
         mock_s3.put_object.side_effect = Exception("Put Error")
         
-        client = FinanceS3Client()
+        client = FinanceBucket()
         df = pd.DataFrame({'col1': [1]})
         
         with self.assertRaises(Exception) as context:

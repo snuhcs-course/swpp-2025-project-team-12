@@ -3,7 +3,7 @@ from django.http import HttpRequest
 from django.core.cache import cache
 from rest_framework import viewsets
 from rest_framework.decorators import action
-from S3.finance import FinanceS3Client
+from S3.finance import FinanceBucket
 from Mocks.mock_data import MOCK_INDICES, MOCK_ARTICLES
 from decorators import default_error_handler
 from utils.debug_print import debug_print
@@ -46,16 +46,10 @@ class APIView(viewsets.ViewSet):
         각 소스별 최신 객체의 존재/시각 확인
         """
 
-        company_profile_head = (FinanceS3Client()
-        .check_source(
-            FINANCE_BUCKET,
-            S3_PREFIX_COMPANY
-        ))
-        price_financial_head = (FinanceS3Client()
-        .check_source(
-            FINANCE_BUCKET,
-            S3_PREFIX_PRICE
-        ))
+        s3 = FinanceBucket()
+
+        company_profile_head = s3.check_source( S3_PREFIX_COMPANY)
+        price_financial_head = s3.check_source(S3_PREFIX_PRICE)
 
         s3_status = {
             "ok": True,
@@ -113,10 +107,10 @@ class APIView(viewsets.ViewSet):
         if INDICES_SOURCE == "s3":
             try:
                 # S3 클라이언트 생성
-                s3 = FinanceS3Client()
+                s3 = FinanceBucket()
 
                 # 최신 날짜의 지수 파일 찾기
-                response = s3.get_list_v2(FINANCE_BUCKET, S3_PREFIX_INDICES)
+                response = s3.get_list_v2(S3_PREFIX_INDICES)
 
                 if 'Contents' not in response:
                     return degraded(
@@ -147,7 +141,7 @@ class APIView(viewsets.ViewSet):
                 as_of = None
 
                 if kospi_file:
-                    data = s3.get_json(FINANCE_BUCKET, kospi_file['Key'])
+                    data = s3.get_json(kospi_file['Key'])
                     kospi_data = {
                         "value": round(data.get('close', 0), 2),
                         "changePct": round(data.get('change_percent', 0), 2)
@@ -155,7 +149,7 @@ class APIView(viewsets.ViewSet):
                     as_of = data.get('fetched_at') or str(kospi_file['LastModified'])
 
                 if kosdaq_file:
-                    data = s3.get_json(FINANCE_BUCKET, kosdaq_file['Key'])
+                    data = s3.get_json(kosdaq_file['Key'])
                     kosdaq_data = {
                         "value": round(data.get('close', 0), 2),
                         "changePct": round(data.get('change_percent', 0), 2)
@@ -456,8 +450,8 @@ class APIView(viewsets.ViewSet):
             indices_snippet = None
             if INDICES_SOURCE == "s3":
                 try:
-                    s3 = FinanceS3Client()
-                    response = s3.get_list_v2(FINANCE_BUCKET, S3_PREFIX_INDICES)
+                    s3 = FinanceBucket()
+                    response = s3.get_list_v2(S3_PREFIX_INDICES)
 
                     if 'Contents' in response:
                         files = sorted(response['Contents'], key=lambda x: x['LastModified'], reverse=True)
@@ -476,14 +470,14 @@ class APIView(viewsets.ViewSet):
                         indices_snippet = {}
 
                         if kospi_file:
-                            data = s3.get_json(FINANCE_BUCKET, kospi_file['Key'])
+                            data = s3.get_json(kospi_file['Key'])
                             indices_snippet['kospi'] = {
                                 "value": round(data.get('close', 0), 2),
                                 "changePct": round(data.get('change_percent', 0), 2)
                             }
 
                         if kosdaq_file:
-                            data = s3.get_json(FINANCE_BUCKET, kosdaq_file['Key'])
+                            data = s3.get_json(kosdaq_file['Key'])
                             indices_snippet['kosdaq'] = {
                                 "value": round(data.get('close', 0), 2),
                                 "changePct": round(data.get('change_percent', 0), 2)
