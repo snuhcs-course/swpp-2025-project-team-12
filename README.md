@@ -94,10 +94,10 @@ The app will launch starting from the **Splash** screen → **Sign in / Sign up*
 |:--|:--|
 | **Splash Screen** | Checks token validity, redirects to Sign in if expired. |
 | **Sign in / Sign up** | User authentication linked with backend. |
-| **Home Screen** | Personal portfolio info & Mangement (Unimplemented yet). |
+| **Home Screen** | Stock Summarization (Unimplemented yet). |
 | **Detail View** | Shows financial data and LLM-generated reasoning. |
-| **Issue Tab** | Shows current and previous stocks worth watching with timestamps. |
 | **Index Information** | Displays KOSPI/KOSDAQ with trend summary. |
+| **Profile Tab** | Profile Settings |
 
 ---
 
@@ -105,6 +105,7 @@ The app will launch starting from the **Splash** screen → **Sign in / Sign up*
 
 Demo video
 https://www.youtube.com/shorts/7CM9Mn3g1Og
+
 
 
 ---
