@@ -186,7 +186,7 @@ class APIView(viewsets.ViewSet):
         캐시에서 읽기!
         """
         limit, offset = get_pagination(request, default_limit=10, max_limit=100)
-        market = request.GET.get("market", "kosdaq")
+        market = request.GET.get("market", None)
 
         # 대소문자 처리: 소문자 입력도 허용
         if market:
@@ -202,7 +202,7 @@ class APIView(viewsets.ViewSet):
             latest_date = df['date'].max()
             df_latest = df[df['date'] == latest_date]
 
-            # 시장 필터링 (market은 이미 대문자로 변환됨)
+            # if market is set, filter by market
             if market and 'market' in df_latest.columns:
                 df_latest = df_latest[df_latest['market'] == market]
 
