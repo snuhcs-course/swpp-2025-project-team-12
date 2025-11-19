@@ -216,7 +216,11 @@ class APIView(viewsets.ViewSet):
                 {
                     "ticker": row["ticker"],
                     "name": str(row["name"]),
-                    "overview": json.loads(company_overview.get(row["ticker"], "{}"))
+                    "close": row["close"],
+                    "change": row["change"],
+                    "change_rate": row["change_rate"],
+                    "summary":
+                        json.loads(company_overview.get(row["ticker"], "{}")).get("summary", None)
                 }
                 for idx, row in page_df.iterrows()
             ]
