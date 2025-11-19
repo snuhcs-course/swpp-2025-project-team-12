@@ -17,8 +17,9 @@ import org.junit.Before
 import org.robolectric.annotation.Config
 
 @RunWith(RobolectricTestRunner::class)
-@Config(sdk = [36])
+@Config(sdk = [28])  // Changed from 36 to 28 (Java 17 compatible)
 class SignInToastTest {
+
     @Before
     fun enableVectorSupport() {
         AppCompatDelegate.setCompatVectorFromResourcesEnabled(true)
@@ -29,7 +30,7 @@ class SignInToastTest {
         // given
         val controller = Robolectric.buildActivity(SignInActivity::class.java).setup()
         val activity = controller.get()
-        val button = activity.findViewById< MaterialButton>(R.id.loginButton)
+        val button = activity.findViewById<MaterialButton>(R.id.loginButton)
 
         // when
         button.performClick()
@@ -44,7 +45,7 @@ class SignInToastTest {
         // given
         val controller = Robolectric.buildActivity(SignInActivity::class.java).setup()
         val activity = controller.get()
-        val button = activity.findViewById< MaterialButton>(R.id.loginButton)
+        val button = activity.findViewById<MaterialButton>(R.id.loginButton)
         val pwField = activity.findViewById<TextInputEditText>(R.id.PWTextField)
 
         // when
@@ -61,7 +62,7 @@ class SignInToastTest {
         // given
         val controller = Robolectric.buildActivity(SignInActivity::class.java).setup()
         val activity = controller.get()
-        val button = activity.findViewById< MaterialButton>(R.id.loginButton)
+        val button = activity.findViewById<MaterialButton>(R.id.loginButton)
         val idField = activity.findViewById<TextInputEditText>(R.id.IDTextField)
 
         // when

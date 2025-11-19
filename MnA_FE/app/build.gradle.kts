@@ -5,6 +5,7 @@ plugins {
     id("kotlin-parcelize")
     id("androidx.navigation.safeargs.kotlin")
     id("kotlin-kapt")
+    id("org.jetbrains.kotlinx.kover") version "0.7.5"
 }
 
 android {
@@ -142,12 +143,9 @@ dependencies {
     implementation("com.github.PhilJay:MPAndroidChart:v3.1.0") // 그래프
 
     //  Room Database
-    val room_version = "2.8.3" // 1. 'def'를 'val'로 변경
-    // 1. Room 런타임
+    val room_version = "2.8.3"
     implementation("androidx.room:room-runtime:$room_version")
-    // 2. Room 컴파일러 (kapt로 추가)
     kapt("androidx.room:room-compiler:$room_version")
-    // 3. Kotlin 코루틴 및 Flow 지원 (필수)
     implementation("androidx.room:room-ktx:$room_version")
 
     coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.1.2")
