@@ -1,6 +1,7 @@
 package com.example.dailyinsight.data
 
 import com.example.dailyinsight.data.dto.ApiResponse
+import com.example.dailyinsight.data.dto.CurrentData
 import com.example.dailyinsight.data.dto.RecommendationDto
 import com.example.dailyinsight.data.dto.StockDetailDto
 import com.example.dailyinsight.data.network.ApiService
@@ -10,17 +11,20 @@ import org.junit.Before
 import org.junit.Test
 import org.mockito.kotlin.mock
 import org.mockito.kotlin.whenever
-import java.io.IOException
 
+/**
+ * Note: DefaultRepository has been removed. 
+ * This test file is kept for backward compatibility but tests RemoteRepository instead.
+ */
 class DefaultRepositoryTest {
 
-    private lateinit var repository: DefaultRepository
+    private lateinit var repository: RemoteRepository
     private lateinit var mockApiService: ApiService
 
     @Before
     fun setup() {
         mockApiService = mock()
-        repository = DefaultRepository(mockApiService)
+        repository = RemoteRepository(mockApiService)
     }
 
     // ===== getTodayRecommendations Tests =====
@@ -151,63 +155,56 @@ class DefaultRepositoryTest {
         assertTrue(result.isEmpty())
     }
 
-    // ===== getStockDetail Tests =====
+    // ===== getStockReport Tests (previously getStockDetail) =====
 
     @Test
-    fun getStockDetail_success_returnsDetail() = runTest {
-        // Given: API returns stock detail wrapped in ApiResponse
+    fun getStockReport_success_returnsDetail() = runTest {
+        // Given: API returns stock detail
         val mockDetail = StockDetailDto(
             ticker = "005930",
             name = "삼성전자",
-            price = 72000
+            current = CurrentData(
+                price = 72000,
+                change = -100,
+                changeRate = -0.14
+            )
         )
-        val apiResponse = ApiResponse(data = mockDetail)
-        whenever(mockApiService.getStockDetail("005930")).thenReturn(apiResponse)
+        whenever(mockApiService.getStockReport("005930")).thenReturn(mockDetail)
 
-        // When: Get stock detail
-        val result = repository.getStockDetail("005930")
+        // When: Get stock report
+        val result = repository.getStockReport("005930")
 
         // Then: Should return detail data
         assertEquals("005930", result.ticker)
         assertEquals("삼성전자", result.name)
-        assertEquals(72000L, result.price)
+        assertEquals(72000L, result.current?.price)
     }
 
     @Test
-    fun getStockDetail_nullData_throwsException() = runTest {
-        // Given: API returns null data
-        val apiResponse = ApiResponse(data = null as StockDetailDto?)
-        whenever(mockApiService.getStockDetail("005930")).thenReturn(apiResponse as ApiResponse<StockDetailDto>)
-
-        // When/Then: Should throw NoSuchElementException
-        try {
-            repository.getStockDetail("005930")
-            fail("Should throw NoSuchElementException")
-        } catch (e: NoSuchElementException) {
-            assertTrue(e.message?.contains("005930") == true)
-        }
-    }
-
-    @Test
-    fun getStockDetail_differentTickers_returnsDifferentData() = runTest {
+    fun getStockReport_differentTickers_returnsDifferentData() = runTest {
         // Given: API returns different data for different tickers
-        val detail1 = StockDetailDto(ticker = "005930", name = "삼성전자", price = 72000)
-        val detail2 = StockDetailDto(ticker = "000660", name = "SK하이닉스", price = 150000)
+        val detail1 = StockDetailDto(
+            ticker = "005930",
+            name = "삼성전자",
+            current = CurrentData(price = 72000)
+        )
+        val detail2 = StockDetailDto(
+            ticker = "000660",
+            name = "SK하이닉스",
+            current = CurrentData(price = 150000)
+        )
         
-        val apiResponse1 = ApiResponse(data = detail1)
-        val apiResponse2 = ApiResponse(data = detail2)
-        
-        whenever(mockApiService.getStockDetail("005930")).thenReturn(apiResponse1)
-        whenever(mockApiService.getStockDetail("000660")).thenReturn(apiResponse2)
+        whenever(mockApiService.getStockReport("005930")).thenReturn(detail1)
+        whenever(mockApiService.getStockReport("000660")).thenReturn(detail2)
 
-        // When: Get different stock details
-        val result1 = repository.getStockDetail("005930")
-        val result2 = repository.getStockDetail("000660")
+        // When: Get different stock reports
+        val result1 = repository.getStockReport("005930")
+        val result2 = repository.getStockReport("000660")
 
         // Then: Should return different data
         assertEquals("삼성전자", result1.name)
         assertEquals("SK하이닉스", result2.name)
-        assertEquals(72000L, result1.price)
-        assertEquals(150000L, result2.price)
+        assertEquals(72000L, result1.current?.price)
+        assertEquals(150000L, result2.current?.price)
     }
 }
