@@ -22,14 +22,17 @@ interface ApiService {
     @GET("health")
     suspend fun health(): ApiResponse<HealthResponse>
 
-    // ============ Recommendations ============
-    @GET("/api/recommendations/today/")
-    suspend fun getTodayRecommendations(): ApiResponse<List<RecommendationDto>>
-
-    @GET("api/recommendations/history/")
-    suspend fun getStockRecommendations(): ApiResponse<Map<String, List<RecommendationDto>>>
-
     // ============ Stock Briefing & Stock Details ============
+
+    @GET("api/company-list")
+    suspend fun getBriefingList(
+        @Query("limit") limit: Int,
+        @Query("offset") offset: Int,
+        @Query("sort") sort: String? = null
+    ): BriefingListResponse
+
+    @GET("api/company-list")
+    suspend fun getStockList(): ApiResponse<List<RecommendationDto>>
 
     @GET("marketindex/api/overview/{ticker}")
     suspend fun getStockBriefing(): LLMSummaryResponse

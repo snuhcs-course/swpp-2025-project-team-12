@@ -8,12 +8,13 @@ import kotlinx.coroutines.flow.Flow
 
 @Dao
 interface BriefingDao {
-    @Query("SELECT * FROM briefing_card_cache WHERE filterKey = :filterKey LIMIT 1")
-    fun observe(filterKey: String): Flow<BriefingCardCache?>
-
-    @Query("SELECT * FROM briefing_card_cache WHERE filterKey = :filterKey LIMIT 1")
-    suspend fun getOnce(filterKey: String): BriefingCardCache?
+    // 저장된 순서대로(fetchedAt) 가져오기
+    @Query("SELECT * FROM briefing_cards ORDER BY fetchedAt ASC")
+    fun getAllCards(): Flow<List<BriefingCardCache>>
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
-    suspend fun upsert(cache: BriefingCardCache)
+    suspend fun insertCards(cards: List<BriefingCardCache>)
+
+    @Query("DELETE FROM briefing_cards")
+    suspend fun clearAll()
 }

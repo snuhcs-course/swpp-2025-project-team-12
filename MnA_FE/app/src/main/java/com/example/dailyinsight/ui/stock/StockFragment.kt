@@ -6,15 +6,16 @@ import android.view.View
 import android.view.ViewGroup
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
-import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
-// RecyclerView/SwipeRefreshLayout
+import androidx.recyclerview.widget.RecyclerView
 import androidx.navigation.fragment.findNavController
 import com.example.dailyinsight.R
 import com.example.dailyinsight.databinding.FragmentStockBinding
-import com.example.dailyinsight.ui.common.LoadResult
-import kotlinx.coroutines.flow.collectLatest
+import java.text.SimpleDateFormat
+import java.util.Locale
+import java.util.Date
 import kotlinx.coroutines.launch
+import androidx.lifecycle.lifecycleScope
 
 class StockFragment : Fragment(R.layout.fragment_stock) {
 
@@ -42,56 +43,73 @@ class StockFragment : Fragment(R.layout.fragment_stock) {
             findNavController().navigate(action)
         }
 
-        binding.recycler.layoutManager = LinearLayoutManager(requireContext())
-        binding.recycler.setHasFixedSize(true)
+        val layoutManager = LinearLayoutManager(context)
+        binding.recycler.layoutManager = layoutManager
         binding.recycler.adapter = adapter
 
-        binding.swipe.setOnRefreshListener { viewModel.refresh() }
-
-        viewLifecycleOwner.lifecycleScope.launch {
-            viewModel.state.collectLatest { st ->
-                binding.swipe.isRefreshing = st is LoadResult.Loading // 로딩 상태일 때만 true
-
-                when (st) {
-                    is LoadResult.Loading -> {
-                        // 로딩 중일 때는 목록과 메시지 둘 다 숨길 수도 있음 (선택 사항)
-                        binding.recycler.visibility = View.GONE
-                        //binding.tvEmptyMessage.visibility = View.GONE
-                    }
-                    is LoadResult.Success -> {
-                        // 성공 시: 메시지 숨기고 목록 보여줌
-                        binding.tvEmptyMessage2.visibility = View.GONE
-                        binding.recycler.visibility = View.VISIBLE
-                        adapter.submitList(st.data)
-                    }
-                    is LoadResult.Empty -> {
-                        // 비었을 때: 메시지 보여주고 목록 숨김
-                        binding.tvEmptyMessage2.visibility = View.VISIBLE
-                        binding.recycler.visibility = View.GONE
-                        adapter.submitList(emptyList()) // 목록 비우기
-
-                    }
-                    is LoadResult.Error -> {
-                        binding.recycler.visibility = View.GONE
-                        binding.tvEmptyMessage2.text = "불러오기 실패"
-                        snackbar("불러오기 실패: ${st.throwable.message ?: "알 수 없는 오류"}") // Snackbar 대신 TextView 사용 가능
+        // 2. 스크롤 리스너 (무한 스크롤 핵심)
+        binding.recycler.addOnScrollListener(object : RecyclerView.OnScrollListener() {
+            override fun onScrolled(recyclerView: RecyclerView, dx: Int, dy: Int) {
+                super.onScrolled(recyclerView, dx, dy)
+                // 스크롤이 아래로 내려갔을 때만 체크 (dy > 0)
+                if (dy > 0) {
+                    val visibleItemCount = layoutManager.childCount
+                    val totalItemCount = layoutManager.itemCount
+                    val firstVisibleItemPosition = layoutManager.findFirstVisibleItemPosition()
+                    // 바닥에 거의 다다랐을 때 (여유분 2개 정도 남기고)
+                    if ((visibleItemCount + firstVisibleItemPosition) >= totalItemCount - 2
+                        && firstVisibleItemPosition >= 0
+                    ) {
+                        viewModel.loadNextPage() // 다음 페이지 요청
                     }
                 }
             }
+        })
+
+        // 3. SwipeRefreshLayout (당겨서 새로고침)
+        binding.swipe.setOnRefreshListener {
+            viewModel.refresh()
+            binding.swipe.isRefreshing = false
         }
 
+        // 4. 데이터 관찰 (DB -> UI 자동 반영)
+        viewModel.briefingList.observe(viewLifecycleOwner) { list ->
+            if (list.isEmpty()) {
+                binding.tvEmptyMessage2.visibility = View.VISIBLE
+                binding.tvEmptyMessage2.text = getString(R.string.placeholder_loading)
+                binding.recycler.visibility = View.GONE
+            } else {
+                binding.tvEmptyMessage2.visibility = View.GONE
+                binding.recycler.visibility = View.VISIBLE
+                adapter.submitList(list)
+            }
+        }
+
+        // 시간 관찰
+        viewLifecycleOwner.lifecycleScope.launch {
+            viewModel.asOfTime.collect { timeStr ->
+                if (!timeStr.isNullOrBlank()) {
+                    binding.tvTime.text = "${formatDate(timeStr)}"
+                } else {
+                    binding.tvTime.text = ""
+                }
+            }
+        }
+    }
+
+    private fun formatDate(dateStr: String): String {
+        return try {
+            val parser = SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault())
+            val formatter = SimpleDateFormat("yyyy년 M월 d일 HH:mm", Locale.KOREA)
+            val date = parser.parse(dateStr)
+            date?.let { formatter.format(it) } ?: dateStr
+        } catch (e: Exception) {
+            dateStr
+        }
     }
 
     override fun onDestroyView() {
         super.onDestroyView()
         _binding = null // 메모리 누수 방지
     }
-
-    private fun snackbar(msg: String) =
-        com.google.android.material.snackbar.Snackbar
-            .make(requireView(), msg, com.google.android.material.snackbar.Snackbar.LENGTH_SHORT)
-            .show()
-
-
-
 }

@@ -17,12 +17,13 @@ import org.junit.Test
 import org.mockito.kotlin.mock
 import org.mockito.kotlin.whenever
 import java.io.IOException
+import com.example.dailyinsight.ui.stock.StockViewModel
 
 @ExperimentalCoroutinesApi
-class TodayViewModelTest {
+class StockViewModelTest {
 
     private lateinit var repository: Repository
-    private lateinit var viewModel: TodayViewModel
+    private lateinit var viewModel: StockViewModel
     private val testDispatcher = StandardTestDispatcher()
 
     @Before
@@ -54,10 +55,10 @@ class TodayViewModelTest {
     fun init_automaticallyCallsRefresh() = runTest {
         // Given: Mock repository returns data
         val recommendations = listOf(createRecommendation())
-        whenever(repository.getTodayRecommendations()).thenReturn(recommendations)
+        whenever(repository.getStockList()).thenReturn(recommendations)
 
         // When: Create ViewModel (init calls refresh)
-        viewModel = TodayViewModel(repository)
+        viewModel = StockViewModel(repository)
         advanceUntilIdle()
 
         // Then: State should be Success
@@ -72,10 +73,10 @@ class TodayViewModelTest {
             createRecommendation(ticker = "000660", name = "SK하이닉스"),
             createRecommendation(ticker = "035420", name = "네이버")
         )
-        whenever(repository.getTodayRecommendations()).thenReturn(recommendations)
+        whenever(repository.getStockList()).thenReturn(recommendations)
 
         // When: Create ViewModel and wait for init
-        viewModel = TodayViewModel(repository)
+        viewModel = StockViewModel(repository)
         advanceUntilIdle()
 
         // Then: State should be Success with correct data
@@ -91,10 +92,10 @@ class TodayViewModelTest {
     @Test
     fun refresh_withEmptyList_returnsEmptyList() = runTest {
         // Given: Mock repository returns empty list
-        whenever(repository.getTodayRecommendations()).thenReturn(emptyList())
+        whenever(repository.getStockList()).thenReturn(emptyList())
 
         // When: Create ViewModel
-        viewModel = TodayViewModel(repository)
+        viewModel = StockViewModel(repository)
         advanceUntilIdle()
 
         // Then: State should be Success with empty list
@@ -107,10 +108,10 @@ class TodayViewModelTest {
     fun refresh_withRepositoryError_updatesStateToError() = runTest {
         // Given: Mock repository throws exception
         val exception = IOException("Network error")
-        whenever(repository.getTodayRecommendations()).thenThrow(exception)
+        whenever(repository.getStockList()).thenThrow(exception)
 
         // When: Create ViewModel
-        viewModel = TodayViewModel(repository)
+        viewModel = StockViewModel(repository)
         advanceUntilIdle()
 
         // Then: State should be Error
@@ -123,10 +124,10 @@ class TodayViewModelTest {
     fun refresh_setsLoadingStateBeforeCompletion() = runTest {
         // Given: Mock repository
         val recommendations = listOf(createRecommendation())
-        whenever(repository.getTodayRecommendations()).thenReturn(recommendations)
+        whenever(repository.getStockList()).thenReturn(recommendations)
 
         // When: Create ViewModel (don't advance idle yet)
-        viewModel = TodayViewModel(repository)
+        viewModel = StockViewModel(repository)
 
         // Then: State should be Loading
         assertTrue(viewModel.state.value is LoadResult.Loading)
@@ -144,12 +145,12 @@ class TodayViewModelTest {
         val recommendations1 = listOf(createRecommendation(name = "First"))
         val recommendations2 = listOf(createRecommendation(name = "Second"))
 
-        whenever(repository.getTodayRecommendations())
+        whenever(repository.getStockList())
             .thenReturn(recommendations1)
             .thenReturn(recommendations2)
 
         // When: Create ViewModel and call refresh twice
-        viewModel = TodayViewModel(repository)
+        viewModel = StockViewModel(repository)
         advanceUntilIdle()
 
         val firstState = viewModel.state.value
@@ -172,10 +173,10 @@ class TodayViewModelTest {
             name = "삼성전자",
             price = 70000
         )
-        whenever(repository.getTodayRecommendations()).thenReturn(listOf(recommendation))
+        whenever(repository.getStockList()).thenReturn(listOf(recommendation))
 
         // When: Create ViewModel
-        viewModel = TodayViewModel(repository)
+        viewModel = StockViewModel(repository)
         advanceUntilIdle()
 
         // Then: State should have one item
@@ -195,10 +196,10 @@ class TodayViewModelTest {
             changeRate = -0.71,
             headline = "Important news"
         )
-        whenever(repository.getTodayRecommendations()).thenReturn(listOf(recommendation))
+        whenever(repository.getStockList()).thenReturn(listOf(recommendation))
 
         // When: Create ViewModel
-        viewModel = TodayViewModel(repository)
+        viewModel = StockViewModel(repository)
         advanceUntilIdle()
 
         // Then: Data should be preserved
@@ -223,10 +224,10 @@ class TodayViewModelTest {
                 price = 50000L + (i * 1000)
             )
         }
-        whenever(repository.getTodayRecommendations()).thenReturn(recommendations)
+        whenever(repository.getStockList()).thenReturn(recommendations)
 
         // When: Create ViewModel
-        viewModel = TodayViewModel(repository)
+        viewModel = StockViewModel(repository)
         advanceUntilIdle()
 
         // Then: All 20 should be present
@@ -244,10 +245,10 @@ class TodayViewModelTest {
             createRecommendation(ticker = "A", name = "First"),
             createRecommendation(ticker = "B", name = "Second")
         )
-        whenever(repository.getTodayRecommendations()).thenReturn(recommendations)
+        whenever(repository.getStockList()).thenReturn(recommendations)
 
         // When: Create ViewModel
-        viewModel = TodayViewModel(repository)
+        viewModel = StockViewModel(repository)
         advanceUntilIdle()
 
         // Then: Order should be maintained as returned from repository
@@ -265,10 +266,10 @@ class TodayViewModelTest {
             createRecommendation(name = "Down", price = 69000).copy(change = -500, changeRate = -0.72),
             createRecommendation(name = "Flat", price = 70000).copy(change = 0, changeRate = 0.0)
         )
-        whenever(repository.getTodayRecommendations()).thenReturn(recommendations)
+        whenever(repository.getStockList()).thenReturn(recommendations)
 
         // When: Create ViewModel
-        viewModel = TodayViewModel(repository)
+        viewModel = StockViewModel(repository)
         advanceUntilIdle()
 
         // Then: All change values should be preserved
