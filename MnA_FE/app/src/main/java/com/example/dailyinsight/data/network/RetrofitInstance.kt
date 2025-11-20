@@ -51,11 +51,12 @@ object RetrofitInstance {
 
         client = OkHttpClient.Builder()
             .cookieJar(cookieJar)
-            .addInterceptor(AuthInterceptor(context.applicationContext))
-            .apply {
-                if (MOCK_MODE) addInterceptor(MockInterceptor())
-                addInterceptor(logging)
-            }
+//            .addInterceptor(AuthInterceptor(context.applicationContext))
+//            .apply {
+//                if (MOCK_MODE) addInterceptor(MockInterceptor())
+//                addInterceptor(logging)
+//            }
+            .addInterceptor(logging)
             .build()
 
         api = Retrofit.Builder()

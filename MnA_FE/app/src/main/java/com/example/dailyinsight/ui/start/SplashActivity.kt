@@ -3,6 +3,7 @@ package com.example.dailyinsight.ui.start
 import android.content.Context
 import android.content.Intent
 import android.os.Bundle
+import android.util.Log
 import android.widget.Toast
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
@@ -40,6 +41,8 @@ class SplashActivity : AppCompatActivity() {
             }
 
         } catch (e: Exception) {
+            Log.e("splash", "getName")
+            e.printStackTrace()
             Toast.makeText(this, "failed to reach server", Toast.LENGTH_SHORT).show()
             navigateToLogin()
         }
