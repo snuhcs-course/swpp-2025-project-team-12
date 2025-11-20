@@ -40,9 +40,7 @@ class ProfileViewModel(private val context: Context) : ViewModel() {
                 ) {
                     if(response.isSuccessful) {
                         Toast.makeText(context, "로그아웃 되었습니다", Toast.LENGTH_SHORT).show()
-                        viewModelScope.launch {
-                            context.cookieDataStore.edit { it.clear() }
-                        }
+                        RetrofitInstance.cookieJar.clear()
                         val intent = Intent(context, StartActivity::class.java)
                         context.startActivity(intent)
                         if(context is Activity) {

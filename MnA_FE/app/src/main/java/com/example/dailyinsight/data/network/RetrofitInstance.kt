@@ -18,6 +18,7 @@ import java.net.CookieManager
 import java.net.CookiePolicy
 import java.net.HttpURLConnection
 import com.example.dailyinsight.data.datastore.cookieDataStore
+import java.net.Proxy
 
 /**
  * Unified Retrofit Instance for all API calls
@@ -37,9 +38,19 @@ object RetrofitInstance {
     private lateinit var client : OkHttpClient
     lateinit var api : ApiService
 
+    lateinit var cookieJar: ProxyCookieJar
+        private set
+
     fun init(context: Context) {
+        val realCookieJar = MyCookieJar()
+
+        cookieJar = ProxyCookieJar(
+            real = realCookieJar,
+            dataStore = context.cookieDataStore
+        )
+
         client = OkHttpClient.Builder()
-            .cookieJar(MyCookieJar(context.applicationContext))
+            .cookieJar(cookieJar)
             .addInterceptor(AuthInterceptor(context.applicationContext))
             .apply {
                 if (MOCK_MODE) addInterceptor(MockInterceptor())
