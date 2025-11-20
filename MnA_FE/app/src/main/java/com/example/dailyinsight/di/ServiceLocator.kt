@@ -1,6 +1,5 @@
 package com.example.dailyinsight.di
 
-import com.example.dailyinsight.data.MockRepository
 import com.example.dailyinsight.data.Repository
 import com.example.dailyinsight.data.RemoteRepository
 import com.example.dailyinsight.data.network.ApiService
@@ -29,12 +28,12 @@ object ServiceLocator {
     // 네트워크
     val api: ApiService by lazy { RetrofitInstance.api }
 
-    // 토글: 지금은 MocK으로 고정 (BE 붙이면 false 로)
-    private val useMock = true
-
     // Repository 제공
     val repository: Repository by lazy {
-        if (useMock) MockRepository(appContext)   //  컨텍스트 전달
-        else RemoteRepository(api)
+        RemoteRepository(
+            api,
+            database.briefingDao(),
+            database.stockDetailDao()
+        )
     }
 }

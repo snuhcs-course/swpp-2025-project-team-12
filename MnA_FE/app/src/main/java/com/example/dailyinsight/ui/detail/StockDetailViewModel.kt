@@ -12,17 +12,23 @@ import com.example.dailyinsight.ui.common.LoadResult
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
-import com.example.dailyinsight.ui.common.chart.ChartUi
 import com.github.mikephil.charting.data.Entry
 import com.github.mikephil.charting.data.LineData
 import com.github.mikephil.charting.data.LineDataSet
 import java.text.SimpleDateFormat
 import java.util.Locale
+import kotlinx.coroutines.withContext
+import kotlinx.coroutines.Dispatchers
+
+data class ChartUi(
+    val data: LineData,
+    val xLabels: List<String>
+)
 
 data class PriceChartUi(val chart: ChartUi)
 
 class StockDetailViewModel(
-    private val repo: Repository = RemoteRepository(ServiceLocator.api)
+    private val repo: Repository = ServiceLocator.repository
 ) : ViewModel() {
 
     // 1) 종목 상세 원본 상태
@@ -45,14 +51,18 @@ class StockDetailViewModel(
             _state.value = LoadResult.Loading
             _priceState.value = LoadResult.Loading
 
-            runCatching { repo.getStockReport(ticker) } // getStockReport 호출
+            runCatching { repo.getStockReport(ticker) }
                 .onSuccess { detail ->
                     _state.value = LoadResult.Success(detail)
-                    _priceState.value = runCatching { buildPriceChart(detail.history.orEmpty()) }
-                        .fold(
-                            onSuccess = { LoadResult.Success(it) },
-                            onFailure = { LoadResult.Error(it) }
-                        )
+                    // 백그라운드에서 차트 데이터 가공
+                    val chartResult = withContext(Dispatchers.Default) {
+                        runCatching { buildPriceChart(detail.history.orEmpty()) }
+                    }
+
+                    chartResult.fold(
+                        onSuccess = { _priceState.value = LoadResult.Success(it) },
+                        onFailure = { _priceState.value = LoadResult.Error(it) }
+                    )
                 }
                 .onFailure { e ->
                     _state.value = LoadResult.Error(e)
@@ -76,7 +86,10 @@ class StockDetailViewModel(
 
     /** StockDetailDto → 차트 UI 모델 생성 */
     private fun buildPriceChart(history: List<HistoryItem>): PriceChartUi {
-        require(history.isNotEmpty()) { "주가 데이터(history)가 비어 있습니다." }
+        // 🚨 3. 빈 데이터 방어 코드 (listOf 사용)
+        if (history.isEmpty()) {
+            return PriceChartUi(ChartUi(LineData(), listOf()))
+        }
 
         val sdf = java.text.SimpleDateFormat("MM/dd", java.util.Locale.KOREA)
         val xLabels = mutableListOf<String>()
@@ -94,8 +107,17 @@ class StockDetailViewModel(
         val dataSet = LineDataSet(entries, "Close Price").apply {
             setDrawCircles(false)
             setDrawValues(false)
-            lineWidth = 2f
+            color = android.graphics.Color.RED
+            lineWidth = 1.5f
+            setDrawFilled(true)
+            fillColor = android.graphics.Color.RED
+            fillAlpha = 30
+            setDrawHorizontalHighlightIndicator(false)
+            setDrawVerticalHighlightIndicator(true)
+            highLightColor = android.graphics.Color.GRAY
         }
-        return PriceChartUi(ChartUi(xLabels, LineData(dataSet)))
+
+        val lineData = LineData(dataSet)
+        return PriceChartUi(ChartUi(lineData, xLabels))
     }
 }
