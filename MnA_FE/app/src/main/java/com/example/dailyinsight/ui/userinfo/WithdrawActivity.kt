@@ -84,9 +84,7 @@ class WithdrawActivity : AppCompatActivity() {
                                 if (response.isSuccessful) {
                                     Toast.makeText(this@WithdrawActivity, "successfully deleted", Toast.LENGTH_SHORT).show()
                                     // if successful
-                                    lifecycleScope.launch(Dispatchers.IO) {
-                                        applicationContext.cookieDataStore.edit { prefs -> prefs.clear() }
-                                    }
+                                    RetrofitInstance.cookieJar.clear()
                                     val intent = Intent(this@WithdrawActivity, StartActivity::class.java)
                                     finishAffinity()
                                     startActivity(intent)

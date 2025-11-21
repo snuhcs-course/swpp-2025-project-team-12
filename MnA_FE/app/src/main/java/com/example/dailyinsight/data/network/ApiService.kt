@@ -93,7 +93,7 @@ interface ApiService {
 
     // ============ Auto Login ============
     @GET("user/info/name")
-    fun getName(): Call<UserNameResponse>
+    suspend fun getName(): Response<UserNameResponse>
 
     // ============ User Info ============
     @POST("user/logout")

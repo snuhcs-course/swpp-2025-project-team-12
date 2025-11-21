@@ -339,7 +339,7 @@ class APIView(viewsets.ViewSet):
     @default_error_handler
     def get_company_list(self, request):
         limit, offset = get_pagination(request, default_limit=10, max_limit=100)
-        market = request.GET.get("market", "kosdaq")
+        market = request.GET.get("market", None)
 
         if market:
             market = market.upper()
@@ -352,6 +352,7 @@ class APIView(viewsets.ViewSet):
             latest_date = df['date'].max()
             df_latest = df[df['date'] == latest_date]
 
+            # if market is set, filter by market
             if market and 'market' in df_latest.columns:
                 df_latest = df_latest[df_latest['market'] == market]
 
@@ -364,7 +365,11 @@ class APIView(viewsets.ViewSet):
                 {
                     "ticker": row["ticker"],
                     "name": str(row["name"]),
-                    "overview": json.loads(company_overview.get(row["ticker"], "{}"))
+                    "close": row["close"],
+                    "change": row["change"],
+                    "change_rate": row["change_rate"],
+                    "summary":
+                        json.loads(company_overview.get(row["ticker"], "{}")).get("summary", None)
                 }
                 for idx, row in page_df.iterrows()
             ]
