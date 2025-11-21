@@ -1,9 +1,11 @@
-# apps/user/views.py  (merged)
+# apps/user/views.py
 
 from django.http import JsonResponse
 from django.views.decorators.http import require_POST
-from rest_framework import viewsets
+from rest_framework import viewsets, serializers
 from rest_framework.decorators import action
+from drf_yasg.utils import swagger_auto_schema
+from drf_yasg import openapi
 
 from .models import User
 import bcrypt
@@ -15,25 +17,63 @@ from django.views.decorators.csrf import csrf_exempt
 import os
 import json
 
+
+# ============================================================================
+# Serializers
+# ============================================================================
+
+class LoginRequestSerializer(serializers.Serializer):
+    id = serializers.CharField(help_text="Username")
+    password = serializers.CharField(help_text="User password")
+
+class LoginResponseSerializer(serializers.Serializer):
+    message = serializers.CharField()
+
+class SignupRequestSerializer(serializers.Serializer):
+    id = serializers.CharField(help_text="Username (must be unique)")
+    password = serializers.CharField(help_text="Password (must meet validation requirements)")
+
+class SignupResponseSerializer(serializers.Serializer):
+    message = serializers.CharField()
+
+class LogoutResponseSerializer(serializers.Serializer):
+    message = serializers.CharField()
+
+class WithdrawResponseSerializer(serializers.Serializer):
+    message = serializers.CharField()
+
+class UserErrorResponseSerializer(serializers.Serializer):
+    message = serializers.CharField()
+
+
+# ============================================================================
+# Views
+# ============================================================================
+
 class UserView(viewsets.ModelViewSet):
     """
-    user/ views
-    ---
-    Welcome MnA_BE !!!
+    User Views - Authentication and account management
     """
 
+    @swagger_auto_schema(
+        operation_description="Authenticate user and issue JWT tokens (stored in HttpOnly cookies)",
+        request_body=LoginRequestSerializer,
+        responses={
+            200: LoginResponseSerializer(),
+            400: UserErrorResponseSerializer(),
+            401: UserErrorResponseSerializer(),
+            500: UserErrorResponseSerializer()
+        }
+    )
     @action(detail=False, methods=['post'])
     @default_error_handler
     def login(self, request):
-        """
-        POST: login
-        """
         try:
             body = json.loads(request.body.decode("utf-8"))
         except Exception:
             return JsonResponse({"message": "INVALID JSON"}, status=400)
 
-        user_id = body.get("id")  # 기존 클라이언트 호환: 'id'를 username으로 사용
+        user_id = body.get("id")
         password = body.get("password")
 
         if not user_id:
@@ -42,7 +82,6 @@ class UserView(viewsets.ModelViewSet):
             return JsonResponse({"message": "PASSWORD REQUIRED"}, status=400)
 
         try:
-            # PK가 AutoField이므로 name으로 조회
             user = User.objects.get(name=user_id)
         except User.DoesNotExist:
             return JsonResponse({"message": "USER NOT FOUND"}, status=401)
@@ -62,25 +101,34 @@ class UserView(viewsets.ModelViewSet):
         set_cookie(response, "access_token", make_access_token(str(user.id)))
         return response
 
+    @swagger_auto_schema(
+        operation_description="Logout user and clear authentication cookies",
+        responses={
+            200: LogoutResponseSerializer(),
+            401: openapi.Response(description="Unauthorized (invalid or missing token)")
+        }
+    )
     @action(detail=False, methods=['post'])
     @default_error_handler
     @require_auth
     def logout(self, request, user):
-        """
-        POST: logout user
-        """
         response = JsonResponse({"message": "LOGOUT SUCCESS"}, status=200)
         delete_cookie(response)
         return response
 
+    @swagger_auto_schema(
+        operation_description="Create new user account and automatically login with JWT tokens",
+        request_body=SignupRequestSerializer,
+        responses={
+            201: SignupResponseSerializer(),
+            400: UserErrorResponseSerializer(),
+            409: UserErrorResponseSerializer(),
+            500: UserErrorResponseSerializer()
+        }
+    )
     @action(detail=False, methods=['post'])
     @default_error_handler
     def signup(self, request):
-        """
-        POST: create account. require 'id'(username) and 'password'
-        - PK는 AutoField, 'id'는 User.name으로 저장
-        """
-
         try:
             body = json.loads(request.body.decode("utf-8"))
         except Exception:
@@ -106,11 +154,10 @@ class UserView(viewsets.ModelViewSet):
         hashed = bcrypt.hashpw(password.encode("utf-8"), bcrypt.gensalt()).decode("utf-8")
 
         try:
-            # 새 유저 생성 (PK는 자동)
             user = User.objects.create(
                 name=user_id,
                 password=hashed,
-                refresh_token="",  # 아래에서 발급 후 업데이트
+                refresh_token="",
             )
             refresh_token = make_refresh_token(str(user.id))
             user.refresh_token = refresh_token
@@ -124,18 +171,22 @@ class UserView(viewsets.ModelViewSet):
             print(e)
             return JsonResponse({"message": "USER CREATE FAILED"}, status=500)
 
+    @swagger_auto_schema(
+        operation_description="Permanently delete user account and all associated data (profile image, preferences, style history)",
+        responses={
+            200: WithdrawResponseSerializer(),
+            401: openapi.Response(description="Unauthorized (invalid or missing token)"),
+            500: UserErrorResponseSerializer()
+        }
+    )
     @action(detail=False, methods=['delete'])
     @default_error_handler
     @require_auth
     def withdraw(self, request, user):
-        """
-        DELETE: delete user account
-        """
-
         response = JsonResponse({"message": "WITHDRAWAL SUCCESS"}, status=200)
         delete_cookie(response)
 
-        # remove profile from S3 (키는 문자열로)
+        # Remove profile from S3
         try:
             BaseBucket().get(str(user.id))
 
@@ -143,13 +194,14 @@ class UserView(viewsets.ModelViewSet):
                 BaseBucket().delete(str(user.id))
             except Exception:
                 return JsonResponse({"message": "PROFILE DELETE FAILED"}, status=500)
-        except:  # File Not exists
+        except:  # File doesn't exist
             pass
 
-        # remove user from SQL table
+        # Remove user from database
         try:
             user.delete()
         except Exception:
             return JsonResponse({"message": "USER DELETE FAILED"}, status=500)
 
         return response
+    

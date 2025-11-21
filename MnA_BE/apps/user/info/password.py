@@ -1,21 +1,47 @@
 from django.http import JsonResponse
-from rest_framework import viewsets
+from rest_framework import viewsets, serializers
 from rest_framework.decorators import action
+from drf_yasg.utils import swagger_auto_schema
+from drf_yasg import openapi
 from decorators import *
 from utils.validation import validate_password
 import bcrypt
 import json
 
-class PasswordView(viewsets.ViewSet):
 
+# ============================================================================
+# Serializers
+# ============================================================================
+
+class PasswordRequestSerializer(serializers.Serializer):
+    password = serializers.CharField(help_text="New password")
+
+class PasswordMessageResponseSerializer(serializers.Serializer):
+    message = serializers.CharField()
+
+
+# ============================================================================
+# Views
+# ============================================================================
+
+class PasswordView(viewsets.ViewSet):
+    """
+    User Password Views - Update password
+    """
+
+    @swagger_auto_schema(
+        operation_description="Change user password (requires authentication)",
+        request_body=PasswordRequestSerializer,
+        responses={
+            200: PasswordMessageResponseSerializer(),
+            400: openapi.Response(description="Invalid password format or missing"),
+            500: openapi.Response(description="Save failed")
+        }
+    )
     @action(detail=False, methods=['put'])
     @default_error_handler
     @require_auth
     def put(self, request, user):
-        """
-        change user's password
-        """
-
         body = json.loads(request.body.decode('utf-8'))
         password = body.get("password")
 
