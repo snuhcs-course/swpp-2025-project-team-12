@@ -6,6 +6,7 @@ import android.util.Log
 import android.view.inputmethod.EditorInfo
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.widget.addTextChangedListener
 import androidx.datastore.preferences.core.edit
 import androidx.lifecycle.lifecycleScope
 import com.example.dailyinsight.MainActivity
@@ -19,6 +20,7 @@ import com.example.dailyinsight.ui.start.StartActivity
 import com.google.android.material.appbar.MaterialToolbar
 import com.google.android.material.button.MaterialButton
 import com.google.android.material.textfield.TextInputEditText
+import com.google.android.material.textfield.TextInputLayout
 import kotlinx.coroutines.launch
 import retrofit2.Call
 import com.google.gson.Gson
@@ -35,9 +37,14 @@ class SignInActivity : AppCompatActivity() {
             finish()
         }
 
+        val IDText = findViewById<TextInputLayout>(R.id.IDText)
+        val PWText = findViewById<TextInputLayout>(R.id.PWText)
         val IDTextField = findViewById<TextInputEditText>(R.id.IDTextField)
         val PWTextField = findViewById<TextInputEditText>(R.id.PWTextField)
         val loginButton = findViewById<MaterialButton>(R.id.loginButton)
+
+        IDText.error = null
+        PWText.error = null
 
         PWTextField.setOnEditorActionListener { v, actionId, _ ->
             if (actionId == EditorInfo.IME_ACTION_DONE) {
@@ -46,6 +53,13 @@ class SignInActivity : AppCompatActivity() {
             } else {
                 false
             }
+        }
+
+        IDTextField.addTextChangedListener {
+            IDText.error = null
+        }
+        PWTextField.addTextChangedListener {
+            PWText.error = null
         }
 
         val findPWButton = findViewById<MaterialButton>(R.id.findPWButton)
@@ -59,11 +73,13 @@ class SignInActivity : AppCompatActivity() {
             val password = PWTextField.text.toString().trim()
             // check if all fields are provided
             if(id.isEmpty()) {
-                Toast.makeText(this, R.string.id_required, Toast.LENGTH_SHORT).show()
+//                Toast.makeText(this, R.string.id_required, Toast.LENGTH_SHORT).show()
+                IDText.error = getString(R.string.id_required)
                 return@setOnClickListener
             }
             if(password.isEmpty()) {
-                Toast.makeText(this, R.string.password_required, Toast.LENGTH_SHORT).show()
+//                Toast.makeText(this, R.string.password_required, Toast.LENGTH_SHORT).show()
+                PWText.error = getString(R.string.password_required)
                 return@setOnClickListener
             }
             // send login request to the server

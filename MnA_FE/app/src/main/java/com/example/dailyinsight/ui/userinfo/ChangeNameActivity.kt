@@ -11,6 +11,7 @@ import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
+import androidx.core.widget.addTextChangedListener
 import com.example.dailyinsight.R
 import com.example.dailyinsight.data.dto.ChangeNameRequest
 import com.example.dailyinsight.data.dto.LogInResponse
@@ -21,6 +22,7 @@ import com.example.dailyinsight.ui.sign.SetPortfolioActivity
 import com.google.android.material.appbar.MaterialToolbar
 import com.google.android.material.button.MaterialButton
 import com.google.android.material.textfield.TextInputEditText
+import com.google.android.material.textfield.TextInputLayout
 import com.google.gson.Gson
 import retrofit2.Call
 
@@ -40,6 +42,7 @@ class ChangeNameActivity : AppCompatActivity() {
             finish()
         }
 
+        val IDText = findViewById<TextInputLayout>(R.id.IDText)
         val IDTextField = findViewById<TextInputEditText>(R.id.IDTextField)
         val changeButton = findViewById<MaterialButton>(R.id.changeButton)
 
@@ -54,14 +57,28 @@ class ChangeNameActivity : AppCompatActivity() {
             }
         }
 
+        IDText.error = null
+
+        IDTextField.addTextChangedListener {
+            IDText.error = null
+        }
+
         changeButton.setOnClickListener {
             val id = IDTextField.text.toString().trim()
             if(id.isEmpty()) {
-                Toast.makeText(this, R.string.id_required, Toast.LENGTH_SHORT).show()
+//                Toast.makeText(this, R.string.id_required, Toast.LENGTH_SHORT).show()
+                IDText.error = getString(R.string.id_required)
                 return@setOnClickListener
             }
 
             // TODO - check id format here
+            if(id.length > 20) {
+                IDText.error = "20자를 넘을 수 없습니다"
+                return@setOnClickListener
+            }
+            else {
+                IDText.error = null
+            }
 
             val request = ChangeNameRequest(id)
             RetrofitInstance.api.changeName(request)
