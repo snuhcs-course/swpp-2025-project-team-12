@@ -2,6 +2,7 @@ package com.example.dailyinsight.ui.sign
 
 import android.content.Intent
 import android.os.Bundle
+import android.util.Log
 import android.view.inputmethod.EditorInfo
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
@@ -50,7 +51,7 @@ class SignInActivity : AppCompatActivity() {
         val findPWButton = findViewById<MaterialButton>(R.id.findPWButton)
         findPWButton.setOnClickListener {
             // TODO - find PW (is implemented on server?)
-            Toast.makeText(this, "find PW feature not implemented yet", Toast.LENGTH_SHORT).show()
+            Toast.makeText(this, R.string.not_implemented, Toast.LENGTH_SHORT).show()
         }
 
         loginButton.setOnClickListener {
@@ -58,11 +59,11 @@ class SignInActivity : AppCompatActivity() {
             val password = PWTextField.text.toString().trim()
             // check if all fields are provided
             if(id.isEmpty()) {
-                Toast.makeText(this, "please enter id", Toast.LENGTH_SHORT).show()
+                Toast.makeText(this, R.string.id_required, Toast.LENGTH_SHORT).show()
                 return@setOnClickListener
             }
             if(password.isEmpty()) {
-                Toast.makeText(this, "please enter password", Toast.LENGTH_SHORT).show()
+                Toast.makeText(this, R.string.password_required, Toast.LENGTH_SHORT).show()
                 return@setOnClickListener
             }
             // send login request to the server
@@ -103,13 +104,13 @@ class SignInActivity : AppCompatActivity() {
                     } else {
                         val result = response.errorBody()?.string()
                         val message = Gson().fromJson(result, LogInResponse::class.java).message
-                        Toast.makeText(this@SignInActivity, message, Toast.LENGTH_SHORT).show()
+                        Log.e("Sign In", "response with ${response.code()}: $message")
+                        Toast.makeText(this@SignInActivity, R.string.on_login_unsuccessful, Toast.LENGTH_SHORT).show()
                     }
                 }
 
                 override fun onFailure(call: Call<LogInResponse>, t: Throwable) {
-                    Toast.makeText(this@SignInActivity, "failed to login", Toast.LENGTH_SHORT)
-                        .show()
+                    Toast.makeText(this@SignInActivity, R.string.on_api_failure, Toast.LENGTH_SHORT).show()
                 }
             })
     }

@@ -3,9 +3,11 @@ package com.example.dailyinsight.ui.profile
 import android.app.Activity
 import android.content.Context
 import android.content.Intent
+import android.util.Log
 import android.widget.Toast
 import androidx.datastore.preferences.core.edit
 import androidx.lifecycle.*
+import com.example.dailyinsight.R
 import com.example.dailyinsight.data.datastore.CookieKeys
 import com.example.dailyinsight.data.datastore.cookieDataStore
 import com.example.dailyinsight.data.dto.LogInResponse
@@ -39,7 +41,7 @@ class ProfileViewModel(private val context: Context) : ViewModel() {
                     response: Response<UserProfileResponse?>
                 ) {
                     if(response.isSuccessful) {
-                        Toast.makeText(context, "로그아웃 되었습니다", Toast.LENGTH_SHORT).show()
+                        Toast.makeText(context, R.string.on_logout_successful, Toast.LENGTH_SHORT).show()
                         RetrofitInstance.cookieJar.clear()
                         val intent = Intent(context, StartActivity::class.java)
                         context.startActivity(intent)
@@ -49,12 +51,13 @@ class ProfileViewModel(private val context: Context) : ViewModel() {
                     } else {
                         val result = response.errorBody()?.string()
                         val message = Gson().fromJson(result, LogInResponse::class.java).message
-                        Toast.makeText(context, message, Toast.LENGTH_SHORT).show()
+                        Log.e("logout", "response with ${response.code()}: $message")
+                        Toast.makeText(context, R.string.on_logout_unsuccessful, Toast.LENGTH_SHORT).show()
                     }
                 }
 
                 override fun onFailure(call: Call<UserProfileResponse>, t: Throwable) {
-                    Toast.makeText(context, "Please check network connection", Toast.LENGTH_SHORT)
+                    Toast.makeText(context, R.string.on_api_failure, Toast.LENGTH_SHORT)
                         .show()
                 }
             })

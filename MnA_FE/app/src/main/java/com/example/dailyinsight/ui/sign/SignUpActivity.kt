@@ -2,6 +2,7 @@ package com.example.dailyinsight.ui.sign
 
 import android.content.Intent
 import android.os.Bundle
+import android.util.Log
 import android.view.inputmethod.EditorInfo
 import android.widget.Toast
 import androidx.activity.enableEdgeToEdge
@@ -59,21 +60,21 @@ class SignUpActivity : AppCompatActivity() {
             val verifyPW = verifyPWField.text.toString().trim()
             // check if all fields are provided and password matches
             if(id.isEmpty()) {
-                Toast.makeText(this, "please enter id", Toast.LENGTH_SHORT).show()
+                Toast.makeText(this, R.string.id_required, Toast.LENGTH_SHORT).show()
                 return@setOnClickListener
             }
             if(password.isEmpty()) {
-                Toast.makeText(this, "please enter password", Toast.LENGTH_SHORT).show()
+                Toast.makeText(this, R.string.password_required, Toast.LENGTH_SHORT).show()
                 return@setOnClickListener
             }
             if(password != verifyPW) {
-                Toast.makeText(this, "passwords entered are not same", Toast.LENGTH_SHORT).show()
+                Toast.makeText(this, R.string.password_not_same, Toast.LENGTH_SHORT).show()
                 return@setOnClickListener
             }
+            // TODO - check formats of id and pw here (maybe need to define new functions to check formats)
 
             // send signup request to the server
             sendSignupRequest(id, password)
-
         }
     }
 
@@ -103,13 +104,14 @@ class SignUpActivity : AppCompatActivity() {
                     } else {
                         val result = response.errorBody()?.string()
                         val message = Gson().fromJson(result, LogInResponse::class.java).message
-                        Toast.makeText(this@SignUpActivity, message, Toast.LENGTH_SHORT).show()
+                        Log.e("Sign Up", "response with ${response.code()}: $message")
+                        // must show 'id already used' -> check id, pw formats before the api call
+                        Toast.makeText(this@SignUpActivity, R.string.id_already_in_use, Toast.LENGTH_SHORT).show()
                     }
                 }
 
                 override fun onFailure(call: Call<SignUpResponse>, t: Throwable) {
-                    Toast.makeText(this@SignUpActivity, "failed to sign up", Toast.LENGTH_SHORT)
-                        .show()
+                    Toast.makeText(this@SignUpActivity, R.string.on_api_failure, Toast.LENGTH_SHORT).show()
                 }
             })
 

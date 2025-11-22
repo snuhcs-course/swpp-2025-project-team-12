@@ -3,6 +3,7 @@ package com.example.dailyinsight.ui.userinfo
 import android.content.Context
 import android.content.Intent
 import android.os.Bundle
+import android.util.Log
 import android.view.inputmethod.EditorInfo
 import android.widget.Toast
 import androidx.activity.enableEdgeToEdge
@@ -60,20 +61,18 @@ class WithdrawActivity : AppCompatActivity() {
         changeButton.setOnClickListener {
             val password = PWTextField.text.toString().trim()
             if(password.isEmpty()) {
-                Toast.makeText(this, "please enter password", Toast.LENGTH_SHORT).show()
+                Toast.makeText(this, R.string.password_required, Toast.LENGTH_SHORT).show()
                 return@setOnClickListener
             }
 
-            // TODO - to server WITHDRAW
-
             MaterialAlertDialogBuilder(this)
-                .setTitle("Are you sure to delete your account?")
-                .setMessage("This action cannot be undone")
-                .setNeutralButton("cancel") { dialog, which ->
+                .setTitle(R.string.withdraw_dialog_title)
+                .setMessage(R.string.withdraw_dialog_content)
+                .setNeutralButton(R.string.neutral_button) { dialog, which ->
                     // Respond to neutral button press
                     return@setNeutralButton
                 }
-                .setPositiveButton("Yes") { dialog, which ->
+                .setPositiveButton(R.string.yes_button) { dialog, which ->
                     // Respond to positive button press
                     RetrofitInstance.api.withdraw()
                         .enqueue(object : retrofit2.Callback<UserProfileResponse> {
@@ -82,7 +81,7 @@ class WithdrawActivity : AppCompatActivity() {
                                 response: retrofit2.Response<UserProfileResponse>
                             ) {
                                 if (response.isSuccessful) {
-                                    Toast.makeText(this@WithdrawActivity, "successfully deleted", Toast.LENGTH_SHORT).show()
+                                    Toast.makeText(this@WithdrawActivity, R.string.on_withdraw_successful, Toast.LENGTH_SHORT).show()
                                     // if successful
                                     RetrofitInstance.cookieJar.clear()
                                     val intent = Intent(this@WithdrawActivity, StartActivity::class.java)
@@ -91,12 +90,13 @@ class WithdrawActivity : AppCompatActivity() {
                                 } else {
                                     val result = response.errorBody()?.string()
                                     val message = Gson().fromJson(result, LogInResponse::class.java).message
-                                    Toast.makeText(this@WithdrawActivity, message, Toast.LENGTH_SHORT).show()
+                                    Log.e("withdraw", "response with ${response.code()}: $message")
+                                    Toast.makeText(this@WithdrawActivity, R.string.on_withdraw_unsuccessful, Toast.LENGTH_SHORT).show()
                                 }
                             }
 
                             override fun onFailure(call: Call<UserProfileResponse>, t: Throwable) {
-                                Toast.makeText(this@WithdrawActivity, "Please check network connection", Toast.LENGTH_SHORT)
+                                Toast.makeText(this@WithdrawActivity, R.string.on_api_failure, Toast.LENGTH_SHORT)
                                     .show()
                             }
                         })

@@ -2,6 +2,7 @@ package com.example.dailyinsight.ui.userinfo
 
 import android.content.Context
 import android.os.Bundle
+import android.util.Log
 import android.view.inputmethod.EditorInfo
 import android.view.inputmethod.InputMethodManager
 import android.widget.Toast
@@ -56,15 +57,16 @@ class ChangePasswordActivity : AppCompatActivity() {
             val password = PWTextField.text.toString().trim()
             val verifyPW = verifyPWField.text.toString().trim()
             if(password.isEmpty()) {
-                Toast.makeText(this, "please enter password", Toast.LENGTH_SHORT).show()
+                Toast.makeText(this, R.string.password_required, Toast.LENGTH_SHORT).show()
                 return@setOnClickListener
             }
             if(password != verifyPW) {
-                Toast.makeText(this, "passwords entered are not same", Toast.LENGTH_SHORT).show()
+                Toast.makeText(this, R.string.password_not_same, Toast.LENGTH_SHORT).show()
                 return@setOnClickListener
             }
 
-            // TODO - to server change PW
+            // TODO - check pw format here
+
             val request = ChangePasswordRequest(password)
             RetrofitInstance.api.changePassword(request)
                 .enqueue(object : retrofit2.Callback<UserProfileResponse> {
@@ -73,16 +75,17 @@ class ChangePasswordActivity : AppCompatActivity() {
                         response: retrofit2.Response<UserProfileResponse>
                     ) {
                         if (response.isSuccessful) {
-                            Toast.makeText(this@ChangePasswordActivity, "successfully changed!", Toast.LENGTH_SHORT).show()
+                            Toast.makeText(this@ChangePasswordActivity, R.string.on_change_successful, Toast.LENGTH_SHORT).show()
                         } else {
                             val result = response.errorBody()?.string()
                             val message = Gson().fromJson(result, LogInResponse::class.java).message
-                            Toast.makeText(this@ChangePasswordActivity, message, Toast.LENGTH_SHORT).show()
+                            Log.e("change password", "response with ${response.code()}: $message")
+                            Toast.makeText(this@ChangePasswordActivity, R.string.on_change_password_unsuccessful, Toast.LENGTH_SHORT).show()
                         }
                     }
 
                     override fun onFailure(call: Call<UserProfileResponse>, t: Throwable) {
-                        Toast.makeText(this@ChangePasswordActivity, "Please check network connection", Toast.LENGTH_SHORT)
+                        Toast.makeText(this@ChangePasswordActivity, R.string.on_api_failure, Toast.LENGTH_SHORT)
                             .show()
                     }
                 })

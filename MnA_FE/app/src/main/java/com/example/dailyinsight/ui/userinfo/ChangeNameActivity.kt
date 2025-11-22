@@ -3,6 +3,7 @@ package com.example.dailyinsight.ui.userinfo
 import android.content.Context
 import android.content.Intent
 import android.os.Bundle
+import android.util.Log
 import android.view.inputmethod.EditorInfo
 import android.view.inputmethod.InputMethodManager
 import android.widget.Toast
@@ -56,11 +57,12 @@ class ChangeNameActivity : AppCompatActivity() {
         changeButton.setOnClickListener {
             val id = IDTextField.text.toString().trim()
             if(id.isEmpty()) {
-                Toast.makeText(this, "please enter id", Toast.LENGTH_SHORT).show()
+                Toast.makeText(this, R.string.id_required, Toast.LENGTH_SHORT).show()
                 return@setOnClickListener
             }
 
-            // TODO - to server POST name (check)
+            // TODO - check id format here
+
             val request = ChangeNameRequest(id)
             RetrofitInstance.api.changeName(request)
                 .enqueue(object : retrofit2.Callback<UserProfileResponse> {
@@ -69,16 +71,17 @@ class ChangeNameActivity : AppCompatActivity() {
                         response: retrofit2.Response<UserProfileResponse>
                     ) {
                         if (response.isSuccessful) {
-                            Toast.makeText(this@ChangeNameActivity, "successfully changed!", Toast.LENGTH_SHORT).show()
+                            Toast.makeText(this@ChangeNameActivity, R.string.on_change_successful, Toast.LENGTH_SHORT).show()
                         } else {
                             val result = response.errorBody()?.string()
                             val message = Gson().fromJson(result, LogInResponse::class.java).message
-                            Toast.makeText(this@ChangeNameActivity, message, Toast.LENGTH_SHORT).show()
+                            Log.e("change name", "response with ${response.code()}: $message")
+                            Toast.makeText(this@ChangeNameActivity, R.string.id_already_in_use, Toast.LENGTH_SHORT).show()
                         }
                     }
 
                     override fun onFailure(call: Call<UserProfileResponse>, t: Throwable) {
-                        Toast.makeText(this@ChangeNameActivity, "Please check network connection", Toast.LENGTH_SHORT)
+                        Toast.makeText(this@ChangeNameActivity, R.string.on_api_failure, Toast.LENGTH_SHORT)
                             .show()
                     }
                 })
