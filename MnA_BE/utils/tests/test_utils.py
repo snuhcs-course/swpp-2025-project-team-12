@@ -5,10 +5,12 @@ utils 모듈 종합 테스트
 """
 
 from django.test import TestCase, RequestFactory
-from unittest.mock import patch, MagicMock
+from unittest.mock import patch, MagicMock, Mock
 from datetime import datetime, timezone, timedelta
 import jwt
 import os
+import json
+import pandas as pd
 
 
 class TimeTests(TestCase):
@@ -489,3 +491,365 @@ class ForApiTests(TestCase):
         content = json.loads(response.content)
         self.assertEqual(content['extra_field'], 'value')
         self.assertEqual(content['count'], 5)
+
+
+class ForApiValidationErrorTests(TestCase):
+    """for_api.py validation 에러 케이스 (lines 9, 18, 20, 22)"""
+    
+    def test_market_date_kst(self):
+        """market_date_kst 함수 (line 9)"""
+        from utils.for_api import market_date_kst
+        
+        result = market_date_kst()
+        
+        # YYYY-MM-DD 형식 확인
+        self.assertRegex(result, r'^\d{4}-\d{2}-\d{2}$')
+    
+    def test_get_path_with_date_invalid_year(self):
+        """잘못된 년도 형식 (line 18)"""
+        from utils.for_api import get_path_with_date
+        
+        with self.assertRaises(ValueError) as context:
+            get_path_with_date("test", "20", "01", "01")  # 2자리 년도
+        self.assertIn("YYYY format", str(context.exception))
+    
+    def test_get_path_with_date_invalid_month(self):
+        """잘못된 월 형식 (line 20)"""
+        from utils.for_api import get_path_with_date
+        
+        with self.assertRaises(ValueError) as context:
+            get_path_with_date("test", "2025", "13", "01")  # 13월
+        self.assertIn("MM format", str(context.exception))
+    
+    def test_get_path_with_date_invalid_day(self):
+        """잘못된 일 형식 (line 22)"""
+        from utils.for_api import get_path_with_date
+        
+        with self.assertRaises(ValueError) as context:
+            get_path_with_date("test", "2025", "01", "32")  # 32일
+        self.assertIn("DD format", str(context.exception))
+
+
+class TokenHandlerMissingTests(TestCase):
+    """token_handler.py 누락 케이스 (lines 24-27, 38-39)"""
+    
+    def setUp(self):
+        import os
+        os.environ['SECRET_KEY'] = 'test-secret-key'
+        os.environ['HASH_ALGORITHM'] = 'HS256'
+        os.environ['ACCESS_TOKEN_EXPIRE_MINUTES'] = '30'
+        os.environ['REFRESH_TOKEN_EXPIRE_DAYS'] = '7'
+    
+    def test_make_refresh_token_with_custom_exp(self):
+        """커스텀 만료시간으로 refresh token 생성 (lines 24-27)"""
+        from utils.token_handler import make_refresh_token
+        from datetime import datetime, timedelta
+        import jwt
+        
+        custom_exp = datetime.utcnow() + timedelta(days=30)
+        token = make_refresh_token("user123", exp=custom_exp)
+        
+        # 토큰 디코드
+        payload = jwt.decode(token, 'test-secret-key', algorithms=['HS256'])
+        
+        self.assertEqual(payload['id'], "user123")
+        self.assertIn('random_salt', payload)
+    
+    def test_rotate_refresh_token(self):
+        """refresh token 갱신 (lines 38-39)"""
+        from utils.token_handler import make_refresh_token, rotate_refresh_token
+        import jwt
+        
+        # 원본 토큰 생성
+        original_token = make_refresh_token("user123")
+        
+        # 토큰 갱신
+        new_token = rotate_refresh_token(original_token)
+        
+        # 새 토큰 디코드
+        new_payload = jwt.decode(new_token, 'test-secret-key', algorithms=['HS256'])
+        
+        # ID는 동일해야 함
+        self.assertEqual(new_payload['id'], "user123")
+        self.assertIn('random_salt', new_payload)
+
+
+class StoreGetDataFromCacheTests(TestCase):
+    """store.py get_data 캐시 로드 (lines 29-36)"""
+    
+    def test_get_data_loads_from_cache_when_not_in_memory(self):
+        """메모리에 없을 때 캐시에서 로드"""
+        from utils.store import Store
+        from django.core.cache import cache
+        from multiprocessing import shared_memory
+        import pickle
+        
+        # 새 Store 인스턴스
+        store = Store()
+        
+        # 테스트 데이터를 캐시에만 저장 (메모리 우회)
+        test_data = {"test": "value"}
+        blob = pickle.dumps(test_data, protocol=pickle.HIGHEST_PROTOCOL)
+        shm = shared_memory.SharedMemory(create=True, size=len(blob))
+        shm.buf[:len(blob)] = blob
+        
+        cache.set("cache_test_shm_name", shm.name, timeout=None)
+        cache.set("cache_test_shm_len", len(blob), timeout=None)
+        
+        # set_data로 먼저 None 설정 (키는 있지만 값이 None)
+        store.set_data("cache_test", None)
+        
+        # get_data 호출 - None이므로 캐시에서 로드 (line 29-36)
+        # 실제로는 None 체크가 "if self.__data[key] is not None"이므로
+        # None이면 캐시에서 로드
+        result = store.get_data("cache_test")
+        
+        # None이 반환됨 (set_data로 None을 저장했으므로)
+        self.assertIsNone(result)
+        
+        # 정리
+        try:
+            shm.close()
+            shm.unlink()
+        except:
+            pass
+
+
+class InstantDataTests(TestCase):
+    """utils/instant_data.py 테스트 (lines 86-91, 106-173)"""
+    
+    @patch('utils.instant_data.FinanceBucket')
+    @patch('utils.instant_data.store')
+    def test_init_profile_kosdaq_only(self, mock_store, mock_bucket_class):
+        """KOSDAQ만 있을 때 (lines 86-91)"""
+        from utils.instant_data import init
+        
+        mock_s3 = Mock()
+        mock_bucket_class.return_value = mock_s3
+        
+        # instant_df mock
+        instant_df = pd.DataFrame({
+            'ticker': ['005930'],
+            'date': [pd.Timestamp('2025-01-01')],
+            'market_cap': [1000000]
+        })
+        mock_s3.get_latest_parquet_df.return_value = (instant_df, '2025-01-01')
+        
+        # profile: KOSDAQ만 있음
+        mock_s3.get_list_v2.return_value = {
+            'Contents': [
+                {'Key': 'company-profile/year=2025/month=11/market=kosdaq/2025-11-22.parquet', 
+                 'LastModified': datetime.now()}
+            ]
+        }
+        
+        kosdaq_df = pd.DataFrame({
+            'ticker': ['005930'],
+            'name': ['Samsung']
+        })
+        mock_s3.get_dataframe.return_value = kosdaq_df
+        
+        # init 실행
+        init()
+        
+        # KOSDAQ만 저장되었는지 확인
+        calls = [call[0] for call in mock_store.set_data.call_args_list]
+        self.assertIn(('profile_df', kosdaq_df), calls)
+    
+    @patch('utils.instant_data.FinanceBucket')
+    @patch('utils.instant_data.store')
+    def test_init_profile_kospi_only(self, mock_store, mock_bucket_class):
+        """KOSPI만 있을 때 (lines 92-94)"""
+        from utils.instant_data import init
+        
+        mock_s3 = Mock()
+        mock_bucket_class.return_value = mock_s3
+        
+        # instant_df mock
+        instant_df = pd.DataFrame({
+            'ticker': ['005930'],
+            'date': [pd.Timestamp('2025-01-01')],
+            'market_cap': [1000000]
+        })
+        mock_s3.get_latest_parquet_df.return_value = (instant_df, '2025-01-01')
+        
+        # profile: KOSPI만 있음
+        mock_s3.get_list_v2.return_value = {
+            'Contents': [
+                {'Key': 'company-profile/year=2025/month=11/market=kospi/2025-11-22.parquet', 
+                 'LastModified': datetime.now()}
+            ]
+        }
+        
+        kospi_df = pd.DataFrame({
+            'ticker': ['005930'],
+            'name': ['Samsung']
+        })
+        mock_s3.get_dataframe.return_value = kospi_df
+        
+        # init 실행
+        init()
+        
+        # KOSPI만 저장되었는지 확인
+        calls = [call[0] for call in mock_store.set_data.call_args_list]
+        self.assertIn(('profile_df', kospi_df), calls)
+    
+    @patch('utils.instant_data.FinanceBucket')
+    @patch('utils.instant_data.store')
+    def test_reload_function(self, mock_store, mock_bucket_class):
+        """reload() 함수 전체 (lines 106-173)"""
+        from utils.instant_data import reload
+        
+        mock_s3 = Mock()
+        mock_bucket_class.return_value = mock_s3
+        
+        # instant_df mock
+        instant_df = pd.DataFrame({
+            'ticker': ['005930', '000660'],
+            'date': [pd.Timestamp('2025-01-01'), pd.Timestamp('2025-01-01')],
+            'market_cap': [1000000, 500000]
+        })
+        mock_s3.get_latest_parquet_df.return_value = (instant_df, '2025-01-01')
+        
+        # profile mock (KOSPI + KOSDAQ)
+        mock_s3.get_list_v2.return_value = {
+            'Contents': [
+                {'Key': 'company-profile/year=2025/month=11/market=kospi/2025-11-22.parquet', 
+                 'LastModified': datetime.now()},
+                {'Key': 'company-profile/year=2025/month=11/market=kosdaq/2025-11-22.parquet', 
+                 'LastModified': datetime.now()}
+            ]
+        }
+        
+        kospi_df = pd.DataFrame({'ticker': ['005930'], 'name': ['Samsung']})
+        kosdaq_df = pd.DataFrame({'ticker': ['000660'], 'name': ['SK Hynix']})
+        
+        mock_s3.get_dataframe.side_effect = [kospi_df, kosdaq_df]
+        
+        # store.get_data mock
+        mock_store.get_data.side_effect = [instant_df, pd.concat([kosdaq_df, kospi_df])]
+        
+        # reload 실행
+        response = reload()
+        
+        # 응답 확인
+        self.assertEqual(response.status_code, 200)
+        data = json.loads(response.content)
+        
+        self.assertEqual(data['message'], 'Data reloaded successfully')
+        self.assertIsNotNone(data['instant_shape'])
+        self.assertIsNotNone(data['profile_shape'])
+        self.assertIn('instant_time', data)
+        self.assertIn('total_time', data)
+    
+    @patch('utils.instant_data.FinanceBucket')
+    @patch('utils.instant_data.store')
+    def test_reload_with_none_instant_df(self, mock_store, mock_bucket_class):
+        """reload에서 instant_df가 None일 때"""
+        from utils.instant_data import reload
+        
+        mock_s3 = Mock()
+        mock_bucket_class.return_value = mock_s3
+        
+        # instant_df가 None
+        mock_s3.get_latest_parquet_df.return_value = (None, None)
+        
+        # profile mock
+        mock_s3.get_list_v2.return_value = {
+            'Contents': [
+                {'Key': 'company-profile/year=2025/month=11/market=kospi/2025-11-22.parquet', 
+                 'LastModified': datetime.now()}
+            ]
+        }
+        
+        profile_df = pd.DataFrame({'ticker': ['005930']})
+        mock_s3.get_dataframe.return_value = profile_df
+        
+        # store.get_data mock
+        mock_store.get_data.side_effect = [None, profile_df]
+        
+        # reload 실행
+        response = reload()
+        
+        # 응답 확인
+        self.assertEqual(response.status_code, 200)
+        data = json.loads(response.content)
+        
+        self.assertIsNone(data['instant_shape'])
+
+
+class ForApiGetPathWithDateSuccessTests(TestCase):
+    """for_api.py get_path_with_date 성공 케이스 (line 24)"""
+    
+    def test_get_path_with_date_valid(self):
+        """올바른 날짜로 경로 생성 (line 24)"""
+        from utils.for_api import get_path_with_date
+        
+        result = get_path_with_date("test_content", "2025", "01", "15")
+        
+        expected = "year=2025/month=01/content=test_content/2025-01-15"
+        self.assertEqual(result, expected)
+    
+    def test_get_path_with_date_padding(self):
+        """자동 패딩 확인"""
+        from utils.for_api import get_path_with_date
+        
+        # 월/일이 한 자리수여도 패딩
+        result = get_path_with_date("content", 2025, 1, 5)
+        
+        expected = "year=2025/month=01/content=content/2025-01-05"
+        self.assertEqual(result, expected)
+
+
+class GetLLMOverviewTests(TestCase):
+    """utils/get_llm_overview.py 테스트 (lines 6-15)"""
+    
+    @patch('utils.get_llm_overview.FinanceBucket')
+    def test_get_latest_overview_not_found(self, mock_bucket_class):
+        """LLM output이 없을 때 (lines 8-9)"""
+        from utils.get_llm_overview import get_latest_overview
+        import json
+        
+        mock_s3 = Mock()
+        mock_bucket_class.return_value = mock_s3
+        
+        # check_source가 ok=False 반환
+        mock_s3.check_source.return_value = {"ok": False}
+        
+        response = get_latest_overview("tech")
+        
+        self.assertEqual(response.status_code, 404)
+        data = json.loads(response.content)
+        self.assertIn("No LLM output found", data["message"])
+    
+    @patch('utils.get_llm_overview.FinanceBucket')
+    def test_get_latest_overview_success(self, mock_bucket_class):
+        """LLM output 정상 조회 (lines 10-15)"""
+        from utils.get_llm_overview import get_latest_overview
+        
+        mock_s3 = Mock()
+        mock_bucket_class.return_value = mock_s3
+        
+        # check_source가 ok=True, latest 반환
+        mock_s3.check_source.return_value = {
+            "ok": True,
+            "latest": "2025-11-22"
+        }
+        
+        # get_json이 LLM 출력 반환
+        expected_output = {
+            "sector": "tech",
+            "summary": "AI trends",
+            "top_picks": ["AAPL", "GOOGL"]
+        }
+        mock_s3.get_json.return_value = expected_output
+        
+        result = get_latest_overview("tech")
+        
+        # 결과 확인
+        self.assertEqual(result, expected_output)
+        
+        # get_json이 올바른 키로 호출되었는지 확인
+        mock_s3.get_json.assert_called_once_with(
+            key="llm_output/tech/year=2025/month=11/2025-11-22.json"
+        )

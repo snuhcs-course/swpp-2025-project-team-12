@@ -145,4 +145,27 @@ class StylePageViewTest(TestCase):
             HTTP_COOKIE=f"access_token={self.access_token}"
         )
         self.assertEqual(res.status_code, 405)
-        self.assertIn("NOT ALLOWED METHOD", res.json()["message"])
+        data = res.json(); self.assertIn("detail", data)
+
+    @patch('apps.user.style.page.Paginator')
+    def test_get_page_exception_returns_empty(self, mock_paginator):
+        """페이지 조회 중 Exception 발생 시 빈 리스트 반환"""
+        # Paginator 생성 시 Exception 발생
+        mock_paginator.side_effect = Exception("Pagination Error")
+        
+        # 테스트 데이터 생성
+        for i in range(5):
+            Style.objects.create(
+                user=self.user,
+                interests=f"topic{i}",
+                strategy="Balanced"
+            )
+        
+        res = self.client.get(
+            self.url(1),
+            HTTP_COOKIE=f"access_token={self.access_token}"
+        )
+        
+        self.assertEqual(res.status_code, 200)
+        data = res.json()
+        self.assertEqual(data["style_page"], [])

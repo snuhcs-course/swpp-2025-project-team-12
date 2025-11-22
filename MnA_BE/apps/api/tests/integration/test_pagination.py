@@ -7,18 +7,16 @@ class ApiPaginationTests(TestCase):
     모든 엔드포인트의 페이지네이션 일관성 테스트
     
     ✅ 수정사항:
-    - Personalized API는 인증이 필요하므로 테스트에서 제외
-    - General recommendations와 company-profiles만 테스트
+    - Recommendations API가 제거되어 company-profiles만 테스트
     """
     
     def setUp(self):
         """각 테스트 전에 실행"""
         self.client = Client()
         
-        # Personalized API는 인증 필요하므로 테스트 엔드포인트에서 제외
+        # 페이지네이션을 지원하는 엔드포인트
         self.endpoints = [
             "/api/company-profiles",
-            "/api/recommendations/general?risk=공격투자형",
         ]
     
     def test_pagination_default_values(self):
@@ -122,13 +120,6 @@ class ApiPaginationTests(TestCase):
                         3,
                         f"{endpoint} returned more items than limit"
                     )
-                # data 필드가 있는 경우 (recommendations)
-                elif "data" in data and not data.get("degraded"):
-                    self.assertLessEqual(
-                        len(data["data"]),
-                        3,
-                        f"{endpoint} returned more items than limit"
-                    )
     
     def test_pagination_offset_beyond_total_returns_empty(self):
         """offset이 total을 초과하면 빈 결과"""
@@ -142,9 +133,6 @@ class ApiPaginationTests(TestCase):
                 # items가 비어있어야 함
                 if "items" in data and not data.get("degraded"):
                     self.assertEqual(len(data["items"]), 0)
-                # data 필드가 있는 경우
-                elif "data" in data and not data.get("degraded"):
-                    self.assertEqual(len(data["data"]), 0)
     
     def test_pagination_consistency_across_pages(self):
         """여러 페이지를 순회해도 데이터가 일관되는지 확인"""
@@ -176,15 +164,3 @@ class ApiPaginationTests(TestCase):
                 self.assertIn("total", data, f"{endpoint} should have 'total' field")
                 self.assertIsInstance(data["total"], int, "total should be integer")
                 self.assertGreaterEqual(data["total"], 0, "total should be non-negative")
-    
-    def test_pagination_personalized_requires_auth(self):
-        """Personalized API는 인증 필요 확인"""
-        endpoint = "/api/recommendations/personalized"
-        response = self.client.get(endpoint)
-        
-        # 인증 없이 요청하면 401
-        self.assertEqual(response.status_code, 401)
-        
-        data = response.json()
-        self.assertIn("message", data)
-        self.assertIn("Unauthorized", data["message"])

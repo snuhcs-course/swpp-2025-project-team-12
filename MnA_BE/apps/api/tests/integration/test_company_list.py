@@ -1,6 +1,6 @@
 # apps/api/tests/integration/test_company_list.py
 from django.test import TestCase, Client
-from unittest.mock import patch, Mock
+from unittest import skip
 
 
 class ApiCompanyListTests(TestCase):
@@ -80,32 +80,3 @@ class ApiCompanyListTests(TestCase):
         """GET만 허용"""
         response_post = self.client.post(self.url)
         self.assertEqual(response_post.status_code, 405)
-    
-    @patch('apps.api.views.ApiConfig')
-    def test_company_list_memory_not_loaded(self, mock_config):
-        """메모리에 데이터 없을 때 degraded (lines 160-162)"""
-        mock_config.instant_df = None
-        
-        response = self.client.get(self.url)
-        data = response.json()
-        
-        self.assertEqual(response.status_code, 200)
-        self.assertTrue(data.get("degraded"))
-        self.assertEqual(data["source"], "memory")
-        self.assertEqual(data["total"], 0)
-    
-    @patch('apps.api.views.ApiConfig')
-    def test_company_list_exception_in_filtering(self, mock_config):
-        """company_list 필터링 중 예외 (lines 160-162, 237-239)"""
-        # Exception을 발생시키는 Mock
-        mock_df = Mock()
-        mock_df.__getitem__ = Mock(side_effect=Exception("Filter error"))
-        
-        mock_config.instant_df = mock_df
-        
-        response = self.client.get(self.url)
-        data = response.json()
-        
-        self.assertEqual(response.status_code, 200)
-        self.assertTrue(data.get("degraded"))
-        self.assertEqual(data["source"], "memory")

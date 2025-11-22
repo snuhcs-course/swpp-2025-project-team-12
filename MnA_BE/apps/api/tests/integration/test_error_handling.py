@@ -30,8 +30,6 @@ class ApiErrorHandlingTests(TestCase):
             "/api/indices",
             "/api/company-profiles",
             "/api/reports/005930",
-            "/api/recommendations/general?risk=공격투자형",
-            "/api/recommendations/personalized",
         ]
         
         for endpoint in endpoints:
@@ -90,8 +88,6 @@ class ApiErrorHandlingTests(TestCase):
             "/api/company-profiles?limit=5&offset=10",
             "/api/reports/005930",
             "/api/reports/INVALID999",
-            "/api/recommendations/general?risk=공격투자형",
-            "/api/recommendations/personalized",
         ]
         
         for endpoint in endpoints:
@@ -118,14 +114,6 @@ class ApiErrorHandlingTests(TestCase):
                 f"Unexpected content type: {content_type}"
             )
     
-    def test_missing_required_parameters(self):
-        """필수 파라미터 누락 처리"""
-        # risk 파라미터가 필요한 엔드포인트 (하지만 기본값이 있을 수 있음)
-        response = self.client.get("/api/recommendations/general")
-        
-        # 기본값 사용 또는 에러
-        self.assertIn(response.status_code, [200, 400])
-    
     def test_invalid_pagination_parameters(self):
         """잘못된 페이지네이션 파라미터 처리"""
         test_cases = [
@@ -148,26 +136,6 @@ class ApiErrorHandlingTests(TestCase):
                 # 500 에러는 없어야 함
                 self.assertNotEqual(response.status_code, 500)
     
-    def test_invalid_date_format(self):
-        """잘못된 날짜 형식 처리"""
-        invalid_dates = [
-            "2025-13-01",  # 잘못된 월
-            "2025-01-32",  # 잘못된 일
-            "invalid-date",  # 완전히 잘못된 형식
-            "01/01/2025",  # 다른 형식
-        ]
-        
-        for date in invalid_dates:
-            with self.subTest(date=date):
-                response = self.client.get(
-                    "/api/recommendations/general",
-                    {"risk": "공격투자형", "date": date}
-                )
-                
-                # 에러 또는 현재 날짜로 fallback
-                self.assertIn(response.status_code, [200, 400])
-                self.assertNotEqual(response.status_code, 500)
-    
     def test_special_characters_in_parameters(self):
         """특수 문자가 포함된 파라미터 처리"""
         special_chars = [
@@ -178,7 +146,7 @@ class ApiErrorHandlingTests(TestCase):
         
         for char in special_chars:
             with self.subTest(special_char=char):
-                response = self.client.get("/api/reports/{char}")
+                response = self.client.get(f"/api/reports/{char}")
                 
                 # 에러 처리 (500은 아니어야 함)
                 self.assertNotEqual(response.status_code, 500)
@@ -219,17 +187,3 @@ class ApiErrorHandlingTests(TestCase):
         
         if not data.get("degraded"):
             self.assertEqual(len(data.get("items", [])), 0)
-    
-    def test_utf8_encoding(self):
-        """UTF-8 인코딩 처리"""
-        # 한글 파라미터
-        response = self.client.get(
-            "/api/recommendations/general",
-            {"risk": "공격투자형"}
-        )
-        
-        self.assertEqual(response.status_code, 200)
-        
-        # 응답도 UTF-8
-        data = response.json()
-        self.assertIsInstance(data, dict)

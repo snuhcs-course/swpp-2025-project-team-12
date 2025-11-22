@@ -175,32 +175,6 @@ class ApiUrlNamesSmokeTests(TestCase):
         data = response.json()
         self.assertIsInstance(data, dict)
     
-    def test_recommendations_general_endpoint_requires_risk_parameter(self):
-        """일반 추천 엔드포인트가 risk 파라미터를 올바르게 처리하는지 확인"""
-        url = "/api/recommendations/general"
-        
-        # 파라미터 없이 요청
-        response_without_param = self.client.get(url)
-        
-        # 404가 아니어야 함 (라우팅은 되어야 함)
-        self.assertNotEqual(response_without_param.status_code, 404)
-        
-        # 파라미터와 함께 요청
-        response_with_param = self.client.get(url, {"risk": "공격투자형"})
-        
-        # 응답이 있어야 함
-        self.assertIn(response_with_param.status_code, [200, 400])
-    
-    def test_recommendations_personalized_endpoint_exists(self):
-        """개인화 추천 엔드포인트가 존재하고 응답하는지 확인"""
-        response = self.client.get("/api/recommendations/personalized")
-        
-        # 404가 아니어야 함
-        self.assertNotEqual(response.status_code, 404)
-        
-        # JSON 응답이어야 함
-        self.assertIn("application/json", response.get("Content-Type", ""))
-    
     def test_all_endpoints_return_json(self):
         """모든 엔드포인트가 JSON Content-Type을 반환하는지 확인"""
         endpoints = [
@@ -224,7 +198,6 @@ class ApiUrlNamesSmokeTests(TestCase):
             reverse("indices"),
             reverse("company_profiles"),
             reverse("reports_detail", kwargs={"symbol": "005930"}),
-            "/api/recommendations/personalized",
         ]
         
         for endpoint in endpoints:
