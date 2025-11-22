@@ -35,4 +35,29 @@
     <string name="no_chart_data">no chart data</string>
     <string name="placeholder_loading">불러오는 중…</string>
     <string name="label_overview">전반</string>
+
+    <!--toast messages-->
+    <string name="not_implemented">서비스 준비중입니다</string>
+    <string name="on_api_failure">네트워크 연결을 다시 확인해주세요</string>
+    <string name="id_required">아이디를 입력해주세요</string>
+    <string name="password_required">비밀번호를 입력해주세요</string>
+    <string name="password_not_same">비밀번호가 일치하지 않습니다</string>
+    <string name="on_login_unsuccessful">로그인에 실패했습니다. 아이디 또는 비밀번호를 다시 확인해주세요</string>
+    <string name="on_change_successful">성공적으로 변경되었습니다</string>
+<!--    <string name="on_signup_unsuccessful">이미 사용중인 아이디입니다</string>-->
+    <string name="id_already_in_use">이미 사용중인 아이디입니다</string>
+    <string name="on_change_password_unsuccessful">비밀번호 변경에 실패했습니다. 잠시 후 다시 시도해주세요</string>
+    <string name="on_logout_successful">로그아웃 되었습니다</string>
+    <string name="on_logout_unsuccessful">로그아웃에 실패했습니다. 잠시 후 다시 시도해주세요</string>
+    <string name="on_withdraw_successful">성공적으로 탈퇴되었습니다</string>
+    <string name="on_withdraw_unsuccessful">회원 탈퇴에 실패했습니다. 잠시 후 다시 시도해주세요</string>
+
+    <!--dialog-->
+    <string name="yes_button">네</string>
+    <string name="no_button">아니오</string>
+    <string name="neutral_button">취소</string>
+    <string name="withdraw_dialog_title">정말 탈퇴하시겠습니까?</string>
+    <string name="withdraw_dialog_content">탈퇴한 계정은 다시 복구할 수 없습니다</string>
+    <string name="logout_dialog_title">정말 로그아웃 하시겠습니까?</string>
+
 </resources>
