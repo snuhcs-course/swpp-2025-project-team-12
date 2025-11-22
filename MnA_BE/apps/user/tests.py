@@ -1,11 +1,9 @@
-# apps/user/tests/test_user_views.py
+# apps/user/tests.py
 import json
 import bcrypt
 import jwt
 from datetime import datetime, timedelta
 from unittest.mock import patch, MagicMock
-
-# Create your tests here.
 import os
 from dotenv import load_dotenv
 load_dotenv()
@@ -29,7 +27,6 @@ class UserViewsTest(TestCase):
             refresh_token="refresh_token_abc"
         )
 
-    # Helper to create valid tokens -------------------
     def make_jwt(self, user_id: int, exp_minutes: int = 30):
         payload = {
             "id": user_id,
@@ -37,9 +34,6 @@ class UserViewsTest(TestCase):
         }
         return jwt.encode(payload, self.secret, algorithm="HS256")
 
-    # -----------------------------
-    # URL reverse
-    # -----------------------------
     def test_url_names_exist(self):
         for name in ["login", "signup", "logout", "withdraw"]:
             try:
@@ -47,9 +41,6 @@ class UserViewsTest(TestCase):
             except NoReverseMatch as e:
                 self.fail(f"URL missing: {name} ({e})")
 
-    # -----------------------------
-    # signup
-    # -----------------------------
     @patch("apps.user.views.validate_password", return_value=True)
     @patch("apps.user.views.make_access_token", return_value="access123")
     @patch("apps.user.views.make_refresh_token", return_value="refresh123")
@@ -79,9 +70,6 @@ class UserViewsTest(TestCase):
         res = self.client.post(reverse("signup"), data=json.dumps(body), content_type="application/json")
         self.assertEqual(res.status_code, 400)
 
-    # -----------------------------
-    # login
-    # -----------------------------
     @patch("apps.user.views.make_access_token", return_value="access123")
     @patch("apps.user.views.make_refresh_token", return_value="refresh123")
     def test_login_success(self, m1, m2):
@@ -110,14 +98,9 @@ class UserViewsTest(TestCase):
         res = self.client.get(reverse("login"))
         self.assertEqual(res.status_code, 405)
 
-    # -----------------------------
-    # logout
-    # -----------------------------
     def test_logout_success_with_real_token(self):
-        """실제 유효한 JWT 토큰을 사용한 logout"""
         token = self.make_jwt(self.user.id)
         self.client.cookies["access_token"] = token
-
         res = self.client.post(reverse("logout"))
         self.assertEqual(res.status_code, 200)
         self.assertEqual(res.json()["message"], "LOGOUT SUCCESS")
@@ -126,14 +109,9 @@ class UserViewsTest(TestCase):
         res = self.client.post(reverse("logout"))
         self.assertEqual(res.status_code, 401)
 
-    # -----------------------------
-    # withdraw
-    # -----------------------------
     def test_withdraw_success_with_real_token(self):
-        """access_token 쿠키 + 실제 유효한 JWT"""
         token = self.make_jwt(self.user.id)
         self.client.cookies["access_token"] = token
-
         res = self.client.delete(reverse("withdraw"))
         self.assertEqual(res.status_code, 200)
         self.assertEqual(res.json()["message"], "WITHDRAWAL SUCCESS")
@@ -142,12 +120,96 @@ class UserViewsTest(TestCase):
         res = self.client.delete(reverse("withdraw"))
         self.assertEqual(res.status_code, 401)
 
-    # -----------------------------
-    # require_auth decorator edge
-    # -----------------------------
     def test_auth_expired_token(self):
-        """만료된 access_token → 401"""
         expired_token = self.make_jwt(self.user.id, exp_minutes=-1)
         self.client.cookies["access_token"] = expired_token
         res = self.client.post(reverse("logout"))
         self.assertIn(res.status_code, (401, 500))
+
+
+# ===== 추가: views.py 누락 커버리지 =====
+class LoginMissingTests(TestCase):
+    """login 누락 라인 (40, 42)"""
+    
+    def test_login_missing_user_id(self):
+        """user_id 없음 (line 40)"""
+        client = Client()
+        url = reverse("login")
+        res = client.post(url, json.dumps({"password": "Test1234!"}), content_type="application/json")
+        self.assertEqual(res.status_code, 400)
+        self.assertIn("ID REQUIRED", res.json()["message"])
+    
+    def test_login_missing_password(self):
+        """password 없음 (line 42) - id는 제공"""
+        client = Client()
+        url = reverse("login")
+        # 'user_id'가 아니라 'id' 키 사용
+        res = client.post(url, json.dumps({"id": "testuser"}), content_type="application/json")
+        self.assertEqual(res.status_code, 400)
+        self.assertIn("PASSWORD REQUIRED", res.json()["message"])
+
+
+class SignupRefreshTokenFailTests(TestCase):
+    """signup refresh token 저장 실패 (lines 59-60)"""
+    
+    @patch('apps.user.views.validate_password')
+    @patch('apps.user.views.validate_name')
+    @patch('apps.user.views.User.objects.create')
+    def test_signup_refresh_token_save_failed(self, mock_create, mock_val_name, mock_val_pw):
+        """refresh token user.save() 실패 (lines 59-60)"""
+        mock_val_name.return_value = True
+        mock_val_pw.return_value = True
+        
+        # User 생성은 성공
+        mock_user = MagicMock()
+        mock_user.id = 999
+        mock_create.return_value = mock_user
+        
+        # save() 실패
+        mock_user.save.side_effect = Exception("Token save failed")
+        
+        client = Client()
+        url = reverse("signup")
+        res = client.post(url, json.dumps({"id": "newuser", "password": "Valid123!"}), content_type="application/json")
+        
+        self.assertEqual(res.status_code, 500)
+        self.assertIn("USER CREATE FAILED", res.json()["message"])
+
+
+class WithdrawMissingTests(TestCase):
+    """withdraw 누락 라인 (123-125, 152-153)"""
+    
+    def setUp(self):
+        from utils.token_handler import make_access_token
+        self.client = Client()
+        self.url = reverse("withdraw")
+        self.user = User.objects.create(
+            name="testuser",
+            password=bcrypt.hashpw("Pass123!".encode(), bcrypt.gensalt()).decode(),
+            refresh_token="dummy"
+        )
+        self.access_token = make_access_token(str(self.user.id))
+    
+    @patch('apps.user.views.BaseBucket')
+    def test_withdraw_profile_exists_delete_failed(self, mock_bucket_class):
+        """프로필 있지만 삭제 실패 (lines 123-125)"""
+        mock_s3 = MagicMock()
+        mock_bucket_class.return_value = mock_s3
+        mock_s3.get.return_value = "some_image_data"
+        mock_s3.delete.side_effect = Exception("S3 delete failed")
+        
+        res = self.client.delete(self.url, HTTP_COOKIE=f"access_token={self.access_token}")
+        self.assertEqual(res.status_code, 500)
+        self.assertIn("PROFILE DELETE FAILED", res.json()["message"])
+    
+    @patch('apps.user.views.BaseBucket')
+    def test_withdraw_user_delete_failed(self, mock_bucket_class):
+        """user.delete() 실패 (lines 152-153)"""
+        mock_s3 = MagicMock()
+        mock_bucket_class.return_value = mock_s3
+        mock_s3.get.side_effect = Exception("Not found")
+        
+        with patch.object(User, 'delete', side_effect=Exception("DB delete failed")):
+            res = self.client.delete(self.url, HTTP_COOKIE=f"access_token={self.access_token}")
+            self.assertEqual(res.status_code, 500)
+            self.assertIn("USER DELETE FAILED", res.json()["message"])

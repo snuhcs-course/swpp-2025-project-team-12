@@ -26,7 +26,7 @@ urlpatterns = [
 
     path("articles/", include(articles_url)),
 
-    # path("recommendations/", include(recommendations_url)),
+    path("recommendations/", include(recommendations_url)),
 
     path('reload-data', APIView.as_view({
         'post': 'reload_data'
