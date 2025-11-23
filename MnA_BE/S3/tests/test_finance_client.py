@@ -1,7 +1,6 @@
 # S3/tests/test_finance_client.py
 """
-FinanceS3Client 종합 테스트 (finance.py)
-목표: 100% 커버리지
+FinanceS3Client 종합 테스트
 """
 
 from django.test import TestCase
@@ -41,7 +40,7 @@ class FinanceS3ClientTests(TestCase):
         mock_s3.get_object.return_value = {"Body": body_mock}
         
         client = FinanceBucket()
-        result_df = client.get_dataframe("test-bucket", "prices.parquet")
+        result_df = client.get_dataframe("prices.parquet")
         
         self.assertIsInstance(result_df, pd.DataFrame)
         self.assertIn('price', result_df.columns)
@@ -62,7 +61,7 @@ class FinanceS3ClientTests(TestCase):
         mock_s3.get_object.return_value = {"Body": body_mock}
         
         client = FinanceBucket()
-        result_df = client.get_dataframe("test-bucket", "data.csv")
+        result_df = client.get_dataframe("data.csv")
         
         self.assertIsInstance(result_df, pd.DataFrame)
         self.assertIn('price', result_df.columns)
@@ -83,7 +82,7 @@ class FinanceS3ClientTests(TestCase):
         mock_s3.get_object.return_value = {"Body": body_mock}
         
         client = FinanceBucket()
-        result_df = client.get_dataframe("test-bucket", "data")
+        result_df = client.get_dataframe("data")
         
         self.assertIsInstance(result_df, pd.DataFrame)
     
@@ -99,7 +98,7 @@ class FinanceS3ClientTests(TestCase):
         client = FinanceBucket()
         
         with self.assertRaises(Exception) as context:
-            client.get_dataframe("test-bucket", "data.parquet")
+            client.get_dataframe("data.parquet")
         
         self.assertIn("Couldn't load DataFrame", str(context.exception))
     
@@ -130,7 +129,7 @@ class FinanceS3ClientTests(TestCase):
         mock_s3.get_object.return_value = {"Body": body_mock}
         
         client = FinanceBucket()
-        result_df, ts = client.get_latest_parquet_df("test-bucket", "data/")
+        result_df, ts = client.get_latest_parquet_df("data/")
         
         self.assertIsInstance(result_df, pd.DataFrame)
         self.assertEqual(len(result_df), 3)
@@ -149,7 +148,7 @@ class FinanceS3ClientTests(TestCase):
         paginator_mock.paginate.return_value = [{"Contents": []}]
         
         client = FinanceBucket()
-        df, ts = client.get_latest_parquet_df("test-bucket", "data/")
+        df, ts = client.get_latest_parquet_df("data/")
         
         self.assertIsNone(df)
         self.assertIsNone(ts)
@@ -165,7 +164,7 @@ class FinanceS3ClientTests(TestCase):
         df = pd.DataFrame({'col1': [1, 2, 3]})
         
         client = FinanceBucket()
-        client.put_dataframe("test-bucket", "data.parquet", df)
+        client.put_dataframe("data.parquet", df)
         
         mock_s3.put_object.assert_called_once()
         call_kwargs = mock_s3.put_object.call_args[1]
@@ -182,7 +181,7 @@ class FinanceS3ClientTests(TestCase):
         df = pd.DataFrame({'stock': ['AAPL', 'GOOGL'], 'price': [150, 2800]})
         
         client = FinanceBucket()
-        client.put_dataframe("test-bucket", "stocks.csv", df)
+        client.put_dataframe("stocks.csv", df)
         
         mock_s3.put_object.assert_called_once()
         call_kwargs = mock_s3.put_object.call_args[1]
@@ -199,7 +198,7 @@ class FinanceS3ClientTests(TestCase):
         df = pd.DataFrame({'col1': [1, 2, 3]})
         
         client = FinanceBucket()
-        client.put_dataframe("test-bucket", "data", df)
+        client.put_dataframe("data", df)
         
         mock_s3.put_object.assert_called_once()
         call_kwargs = mock_s3.put_object.call_args[1]
@@ -218,7 +217,7 @@ class FinanceS3ClientTests(TestCase):
         df = pd.DataFrame({'col1': [1]})
         
         with self.assertRaises(Exception) as context:
-            client.put_dataframe("test-bucket", "data.parquet", df)
+            client.put_dataframe("data.parquet", df)
         
         self.assertIn("Couldn't write DataFrame", str(context.exception))
 

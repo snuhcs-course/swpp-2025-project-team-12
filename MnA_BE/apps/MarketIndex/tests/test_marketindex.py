@@ -417,25 +417,24 @@ class ViewsTests(TestCase):
         if test_path.exists():
             shutil.rmtree(test_path)
     
-    @patch('apps.MarketIndex.views.FinanceS3Client')
     @patch('apps.MarketIndex.views.StockindexManager')
-    def test_stockindex_latest(self, mock_manager_class, mock_s3_client):
+    def test_stockindex_latest(self, mock_manager_class):
         """stockindex_latest view"""
         # StockindexManager Mock
         mock_manager = MagicMock()
         mock_manager.get_latest.return_value = {
-            'KOSPI': {'close': 2500.0},
-            'KOSDAQ': {'close': 800.0}
+            'KOSPI': {
+                'close': 2500.0,
+                'change_amount': 10.0,
+                'change_percent': 0.40
+            },
+            'KOSDAQ': {
+                'close': 800.0,
+                'change_amount': 5.0,
+                'change_percent': 0.63
+            }
         }
         mock_manager_class.return_value = mock_manager
-        
-        # FinanceS3Client Mock
-        mock_s3 = MagicMock()
-        mock_s3.get_json.return_value = {
-            'KOSPI': {'value': 2500.0, 'change': 10.0},
-            'KOSDAQ': {'value': 800.0, 'change': 5.0}
-        }
-        mock_s3_client.return_value = mock_s3
         
         response = self.client.get('/marketindex/stockindex/latest/')
         
@@ -443,7 +442,9 @@ class ViewsTests(TestCase):
         data = json.loads(response.content)
         
         self.assertEqual(data['status'], 'success')
+        self.assertIn('data', data)
         self.assertIn('KOSPI', data['data'])
+        self.assertIn('KOSDAQ', data['data'])
     
     @patch('apps.MarketIndex.views.StockindexManager')
     def test_stockindex_history_single_index(self, mock_manager_class):
@@ -971,3 +972,225 @@ class StockindexTimeoutAndErrorTests(TestCase):
         import shutil
         if manager.data_dir.exists():
             shutil.rmtree(manager.data_dir)
+
+# ============================================================
+# 추가: stockindex_manager.py 누락 커버리지 테스트
+# Lines: 48-50, 75, 82-89, 94, 112-114, 181-182, 439-455
+# ============================================================
+
+class StockindexManagerMissingCoverageTests(TestCase):
+    """stockindex_manager.py 누락 커버리지"""
+    
+    def setUp(self):
+        self.test_data_dir = "test_stockindex_coverage"
+        
+    def tearDown(self):
+        import shutil
+        from pathlib import Path
+        test_path = Path(__file__).resolve().parent.parent / self.test_data_dir
+        if test_path.exists():
+            shutil.rmtree(test_path)
+    
+    @patch('apps.MarketIndex.stockindex_manager.boto3.client')
+    def test_s3_init_failure(self, mock_boto_client):
+        """S3 초기화 실패 (lines 48-50)"""
+        from apps.MarketIndex.stockindex_manager import StockindexManager
+        
+        mock_boto_client.side_effect = Exception("AWS credentials error")
+        
+        manager = StockindexManager(data_dir_name=self.test_data_dir, use_s3=True)
+        
+        self.assertFalse(manager.use_s3)
+    
+    def test_load_from_s3_when_s3_disabled(self):
+        """use_s3=False일 때 _load_from_s3 (line 75)"""
+        from apps.MarketIndex.stockindex_manager import StockindexManager
+        from datetime import datetime
+        
+        manager = StockindexManager(data_dir_name=self.test_data_dir, use_s3=False)
+        result = manager._load_from_s3('KOSPI', datetime.now())
+        
+        self.assertIsNone(result)
+    
+    @patch('apps.MarketIndex.stockindex_manager.boto3.client')
+    def test_load_from_s3_client_error(self, mock_boto_client):
+        """S3 load ClientError (lines 82-86)"""
+        from apps.MarketIndex.stockindex_manager import StockindexManager
+        from datetime import datetime
+        from botocore.exceptions import ClientError
+        
+        mock_s3 = MagicMock()
+        mock_boto_client.return_value = mock_s3
+        
+        error_response = {'Error': {'Code': 'NoSuchKey'}}
+        mock_s3.get_object.side_effect = ClientError(error_response, 'GetObject')
+        
+        manager = StockindexManager(data_dir_name=self.test_data_dir, use_s3=True)
+        result = manager._load_from_s3('KOSPI', datetime.now())
+        
+        self.assertIsNone(result)
+    
+    @patch('apps.MarketIndex.stockindex_manager.boto3.client')
+    def test_load_from_s3_general_exception(self, mock_boto_client):
+        """S3 load 일반 예외 (lines 87-89)"""
+        from apps.MarketIndex.stockindex_manager import StockindexManager
+        from datetime import datetime
+        
+        mock_s3 = MagicMock()
+        mock_boto_client.return_value = mock_s3
+        mock_s3.get_object.side_effect = Exception("Network error")
+        
+        manager = StockindexManager(data_dir_name=self.test_data_dir, use_s3=True)
+        result = manager._load_from_s3('KOSPI', datetime.now())
+        
+        self.assertIsNone(result)
+    
+    def test_save_to_s3_when_s3_disabled(self):
+        """use_s3=False일 때 _save_to_s3 (line 94)"""
+        from apps.MarketIndex.stockindex_manager import StockindexManager
+        from datetime import datetime
+        
+        manager = StockindexManager(data_dir_name=self.test_data_dir, use_s3=False)
+        result = manager._save_to_s3('KOSPI', {'close': 2500}, datetime.now())
+        
+        self.assertFalse(result)
+    
+    @patch('apps.MarketIndex.stockindex_manager.boto3.client')
+    def test_save_to_s3_upload_failure(self, mock_boto_client):
+        """S3 업로드 실패 (lines 112-114)"""
+        from apps.MarketIndex.stockindex_manager import StockindexManager
+        from datetime import datetime
+        
+        mock_s3 = MagicMock()
+        mock_boto_client.return_value = mock_s3
+        mock_s3.put_object.side_effect = Exception("Upload failed")
+        
+        manager = StockindexManager(data_dir_name=self.test_data_dir, use_s3=True)
+        result = manager._save_to_s3('KOSPI', {'close': 2500}, datetime.now())
+        
+        self.assertFalse(result)
+    
+    def test_view_summary_function(self):
+        """view_summary() 함수 (lines 439-455)"""
+        from apps.MarketIndex.stockindex_manager import view_summary
+        
+        with patch('apps.MarketIndex.stockindex_manager.yf.download') as mock_yf:
+            mock_df = pd.DataFrame({
+                'Close': [2500.0],
+                'Volume': [1000000]
+            }, index=pd.date_range(start='2025-01-01', periods=1))
+            mock_yf.return_value = mock_df
+            
+            result = view_summary()
+            
+            self.assertIsInstance(result, dict)
+            self.assertIn('KOSPI', result)
+            self.assertIn('KOSDAQ', result)
+
+
+class StockindexManagerFinalCoverageTests(TestCase):
+    """stockindex_manager.py 마지막 4줄 커버 (85-86, 181-182)"""
+    
+    def setUp(self):
+        self.test_data_dir = "test_stockindex_final_coverage"
+        
+    def tearDown(self):
+        import shutil
+        from pathlib import Path
+        test_path = Path(__file__).resolve().parent.parent / self.test_data_dir
+        if test_path.exists():
+            shutil.rmtree(test_path)
+    
+    @patch('apps.MarketIndex.stockindex_manager.boto3.client')
+    def test_load_from_s3_client_error_not_nosuchkey(self, mock_boto_client):
+        """S3 ClientError - NoSuchKey가 아닌 다른 에러 (lines 85-86)"""
+        from apps.MarketIndex.stockindex_manager import StockindexManager
+        from datetime import datetime
+        from botocore.exceptions import ClientError
+        
+        mock_s3 = MagicMock()
+        mock_boto_client.return_value = mock_s3
+        
+        # AccessDenied 에러 (NoSuchKey가 아님)
+        error_response = {'Error': {'Code': 'AccessDenied'}}
+        mock_s3.get_object.side_effect = ClientError(error_response, 'GetObject')
+        
+        manager = StockindexManager(data_dir_name=self.test_data_dir, use_s3=True)
+        result = manager._load_from_s3('KOSPI', datetime.now())
+        
+        # None 반환되어야 함
+        self.assertIsNone(result)
+    
+    @patch('apps.MarketIndex.stockindex_manager.yf.Ticker')
+    @patch('apps.MarketIndex.stockindex_manager.boto3.client')
+    def test_fetch_daily_local_exists_s3_upload_needed(self, mock_boto_client, mock_ticker):
+        """fetch_daily: 로컬에 있고 S3 업로드 필요 (lines 181-182)"""
+        from apps.MarketIndex.stockindex_manager import StockindexManager
+        import pandas as pd
+        from datetime import datetime
+        from botocore.exceptions import ClientError
+        
+        mock_s3 = MagicMock()
+        mock_boto_client.return_value = mock_s3
+        
+        # S3에 데이터 없음 (NoSuchKey)
+        error_response = {'Error': {'Code': 'NoSuchKey'}}
+        mock_s3.get_object.side_effect = ClientError(error_response, 'GetObject')
+        
+        # put_object는 성공
+        mock_s3.put_object.return_value = {}
+        
+        manager = StockindexManager(data_dir_name=self.test_data_dir, use_s3=True)
+        
+        # 1. 로컬에 먼저 오늘 데이터 저장 (정확히 동일한 값)
+        today = datetime.now()
+        today_str = today.strftime('%Y-%m-%d')
+        close_price = 2510.0
+        
+        manager._save_local_data('KOSPI', {
+            today_str: {
+                'date': today_str,
+                'close': close_price,
+                'change_amount': 10.0,
+                'change_percent': 0.4,
+                'volume': 1000000
+            }
+        })
+        
+        # 2. Yahoo Finance도 정확히 동일한 데이터 반환
+        mock_hist = pd.DataFrame({
+            'Open': [2500.0],
+            'High': [2520.0],
+            'Low': [2490.0],
+            'Close': [close_price],  # 로컬과 정확히 동일 (0.01 이내)
+            'Volume': [1000000]
+        }, index=pd.DatetimeIndex([today]))
+        
+        mock_ticker_instance = MagicMock()
+        mock_ticker_instance.history.return_value = mock_hist
+        mock_ticker.return_value = mock_ticker_instance
+        
+        # 3. fetch_daily 호출
+        # 조건: 로컬에 있음 + 종가 동일 + S3에 없음 → lines 181-182 실행
+        result = manager.fetch_daily()
+        
+        # S3 업로드가 시도되어야 함
+        self.assertTrue(mock_s3.put_object.called)
+
+class MarketLLMViewTests(TestCase):
+    """MarketLLMview 테스트"""
+    
+    def setUp(self):
+        self.client = Client()
+        self.url = "/marketindex/overview"
+    
+    @patch('apps.MarketIndex.views.get_latest_overview')
+    def test_get_market_overview_exception(self, mock_get_overview):
+        """Exception 발생 시 500 반환"""
+        mock_get_overview.side_effect = Exception("S3 Error")
+        
+        response = self.client.get(self.url)
+        
+        self.assertEqual(response.status_code, 500)
+        data = response.json()
+        self.assertIn("Unexpected Server Error", data["message"])
