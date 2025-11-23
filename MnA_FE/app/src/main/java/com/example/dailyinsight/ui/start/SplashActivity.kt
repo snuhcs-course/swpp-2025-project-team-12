@@ -43,7 +43,7 @@ class SplashActivity : AppCompatActivity() {
         } catch (e: Exception) {
             Log.e("splash", "getName")
             e.printStackTrace()
-            Toast.makeText(this, "failed to reach server", Toast.LENGTH_SHORT).show()
+            Toast.makeText(this, R.string.on_api_failure, Toast.LENGTH_SHORT).show()
             navigateToLogin()
         }
     }
