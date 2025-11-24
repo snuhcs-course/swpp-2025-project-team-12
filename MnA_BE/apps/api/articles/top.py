@@ -23,6 +23,7 @@ class ArticleItemSerializer(serializers.Serializer):
     content = serializers.CharField()
     content_length = serializers.IntegerField()
 
+
 class ArticleResponseSerializer(serializers.Serializer):
     items = ArticleItemSerializer(many=True)
     total = serializers.IntegerField()
@@ -39,12 +40,22 @@ class TopArticleView(viewsets.ViewSet):
     @swagger_auto_schema(
         operation_description="Get top financial news articles",
         manual_parameters=[
-            openapi.Parameter('limit', openapi.IN_QUERY, description="Number of items (default: 10, max: 50)", type=openapi.TYPE_INTEGER),
-            openapi.Parameter('offset', openapi.IN_QUERY, description="Pagination offset (default: 0)", type=openapi.TYPE_INTEGER),
+            openapi.Parameter(
+                "limit",
+                openapi.IN_QUERY,
+                description="Number of items (default: 10, max: 50)",
+                type=openapi.TYPE_INTEGER,
+            ),
+            openapi.Parameter(
+                "offset",
+                openapi.IN_QUERY,
+                description="Pagination offset (default: 0)",
+                type=openapi.TYPE_INTEGER,
+            ),
         ],
-        responses={200: ArticleResponseSerializer()}
+        responses={200: ArticleResponseSerializer()},
     )
-    @action(detail=False, methods=['get'])
+    @action(detail=False, methods=["get"])
     @default_error_handler
     def get_top(self, request: HttpRequest):
         limit, offset = get_pagination(request, default_limit=10, max_limit=50)
@@ -56,25 +67,29 @@ class TopArticleView(viewsets.ViewSet):
                 if data:
                     items = data.get("articles", data.get("items", []))
                     total = len(items)
-                    page_items = items[offset:offset + limit]
-                    return ok({
-                        "items": page_items,
-                        "total": total,
-                        "limit": limit,
-                        "offset": offset,
-                        "source": "s3"
-                    })
+                    page_items = items[offset : offset + limit]
+                    return ok(
+                        {
+                            "items": page_items,
+                            "total": total,
+                            "limit": limit,
+                            "offset": offset,
+                            "source": "s3",
+                        }
+                    )
             except Exception as e:
                 return degraded(str(e), source="s3", total=0, limit=limit, offset=offset)
 
         items = MOCK_ARTICLES.get("items", [])
         total = len(items)
-        page_items = items[offset:offset + limit]
-        return ok({
-            "items": page_items,
-            "total": total,
-            "limit": limit,
-            "offset": offset,
-            "asOf": MOCK_ARTICLES.get("asOf", iso_now()),
-            "source": "mock"
-        })
+        page_items = items[offset : offset + limit]
+        return ok(
+            {
+                "items": page_items,
+                "total": total,
+                "limit": limit,
+                "offset": offset,
+                "asOf": MOCK_ARTICLES.get("asOf", iso_now()),
+                "source": "mock",
+            }
+        )

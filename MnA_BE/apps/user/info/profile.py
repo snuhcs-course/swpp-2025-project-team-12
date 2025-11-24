@@ -13,11 +13,14 @@ import os
 # Serializers
 # ============================================================================
 
+
 class ProfileImageResponseSerializer(serializers.Serializer):
     image_url = serializers.CharField()
 
+
 class ProfileImageRequestSerializer(serializers.Serializer):
     image_url = serializers.CharField(help_text="Base64-encoded image data URL")
+
 
 class ProfileMessageResponseSerializer(serializers.Serializer):
     message = serializers.CharField()
@@ -26,6 +29,7 @@ class ProfileMessageResponseSerializer(serializers.Serializer):
 # ============================================================================
 # Views
 # ============================================================================
+
 
 class ProfileView(viewsets.ViewSet):
     """
@@ -36,10 +40,10 @@ class ProfileView(viewsets.ViewSet):
         operation_description="Get user's profile image URL from S3 (requires authentication)",
         responses={
             200: ProfileImageResponseSerializer(),
-            500: openapi.Response(description="S3 retrieval failed or image not found")
-        }
+            500: openapi.Response(description="S3 retrieval failed or image not found"),
+        },
     )
-    @action(detail=False, methods=['get'])
+    @action(detail=False, methods=["get"])
     @default_error_handler
     @require_auth
     def get(self, request, user):
@@ -56,14 +60,14 @@ class ProfileView(viewsets.ViewSet):
         responses={
             200: ProfileMessageResponseSerializer(),
             400: openapi.Response(description="Image data required"),
-            500: openapi.Response(description="S3 upload failed")
-        }
+            500: openapi.Response(description="S3 upload failed"),
+        },
     )
-    @action(detail=False, methods=['post'])
+    @action(detail=False, methods=["post"])
     @default_error_handler
     @require_auth
     def post(self, request, user):
-        body = json.loads(request.body.decode('utf-8'))
+        body = json.loads(request.body.decode("utf-8"))
         image_url = body.get("image_url")
 
         if image_url is None:
@@ -78,11 +82,9 @@ class ProfileView(viewsets.ViewSet):
 
     @swagger_auto_schema(
         operation_description="Delete user's profile image from S3 (requires authentication)",
-        responses={
-            200: ProfileMessageResponseSerializer()
-        }
+        responses={200: ProfileMessageResponseSerializer()},
     )
-    @action(detail=False, methods=['delete'])
+    @action(detail=False, methods=["delete"])
     @default_error_handler
     @require_auth
     def delete(self, request, user):
