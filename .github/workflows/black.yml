@@ -1,19 +1,11 @@
-name: black formatter
-
-on:
-  push:
-    branches:
-      - '*'
-  pull_request:
-    branches:
-      - '*'
-
+name: black-action
+on: [push, pull_request]
 jobs:
-  Black_code_formatter:
+  linter_name:
+    name: runner / black formatter
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
-      - uses: psf/black@stable
+      - uses: actions/checkout@v4
+      - uses: rickstaa/action-black@v1
         with:
-          options: "-l 100 --check --diff --color --check"
-          src: "MnA_BE/apps/"
+          black_args: "MnA_BE/apps -l 100 --check --diff --color"
