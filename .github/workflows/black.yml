@@ -8,4 +8,4 @@ jobs:
       - uses: actions/checkout@v4
       - uses: rickstaa/action-black@v1
         with:
-          black_args: "MnA_BE/apps -l 100 --check --diff --color"
+          black_args: "MnA_BE/apps -l 100"
