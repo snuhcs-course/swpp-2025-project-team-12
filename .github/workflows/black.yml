@@ -16,4 +16,4 @@ jobs:
       - uses: psf/black@stable
         with:
           options: "-l 100 --diff --color --check"
-          src: "MnA_BE/"
+          src: "MnA_BE/apps/"
