@@ -9,15 +9,16 @@ from utils import instant_data
 
 
 class Command(BaseCommand):
-    help = 'Reload instant and profile data from S3 into Django cache'
+    help = "Reload instant and profile data from S3 into Django cache"
 
     def handle(self, *args, **options):
-        self.stdout.write(self.style.WARNING('Starting data reload...'))
-        
+        self.stdout.write(self.style.WARNING("Starting data reload..."))
+
         try:
             instant_data.reload()
-            
+
         except Exception as e:
-            self.stdout.write(self.style.ERROR(f'✗ Error: {e}'))
+            self.stdout.write(self.style.ERROR(f"✗ Error: {e}"))
             import traceback
+
             self.stdout.write(traceback.format_exc())

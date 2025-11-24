@@ -18,7 +18,8 @@ S3_REGION = "ap-northeast-2"
 try:
     import boto3
     from botocore.exceptions import ClientError
-    s3_client = boto3.client('s3', region_name=S3_REGION)
+
+    s3_client = boto3.client("s3", region_name=S3_REGION)
 except:
     s3_client = None
 
@@ -60,7 +61,9 @@ def setup_driver():
     if not chrome_bin:
         raise RuntimeError("Chrome binary not found")
 
-    if chrome_bin.endswith(".app/Contents/MacOS/Google Chrome") or chrome_bin.endswith(".app/Contents/MacOS/Chromium"):
+    if chrome_bin.endswith(".app/Contents/MacOS/Google Chrome") or chrome_bin.endswith(
+        ".app/Contents/MacOS/Chromium"
+    ):
         real = chrome_bin
     else:
         real = os.path.realpath(chrome_bin)
@@ -78,10 +81,12 @@ def setup_driver():
     driver = webdriver.Chrome(service=service, options=options)
     driver.set_page_load_timeout(60)
     driver.implicitly_wait(3)
-    
+
     caps = driver.capabilities
-    print(f"[DRV] Chrome {caps.get('browserVersion')} / Driver {caps.get('chrome',{}).get('chromedriverVersion','').split(' ')[0]}")
-    
+    print(
+        f"[DRV] Chrome {caps.get('browserVersion')} / Driver {caps.get('chrome',{}).get('chromedriverVersion','').split(' ')[0]}"
+    )
+
     return driver
 
 
@@ -106,49 +111,50 @@ def extract_content(driver, url):
                 try:
                     # ISO 형식으로 변환
                     from dateutil import parser
+
                     dt = parser.parse(date_text)
                     published_at = dt.strftime("%a, %d %b %Y %H:%M:%S GMT")
                 except:
                     published_at = date_text
-            
+
             # 본문 추출
             content_area = soup.find("article", id="dic_area")
             if not content_area:
                 content_area = soup.find("div", id="articleBodyContents")
-            
+
             if content_area:
-                for tag in content_area(['script', 'style', 'em', 'strong']):
+                for tag in content_area(["script", "style", "em", "strong"]):
                     tag.decompose()
-                
+
                 text = content_area.get_text(" ", strip=True)
-                text = re.sub(r'\s+', ' ', text).strip()
-                text = re.sub(r'// flash.*', '', text)
-                text = re.sub(r'무단전재.*', '', text)
-                text = re.sub(r'ⓒ.*', '', text)
-                
+                text = re.sub(r"\s+", " ", text).strip()
+                text = re.sub(r"// flash.*", "", text)
+                text = re.sub(r"무단전재.*", "", text)
+                text = re.sub(r"ⓒ.*", "", text)
+
                 if len(text) >= 100:
                     content_text = text
-        
+
         # 일반 언론사 사이트
         if not content_text:
-            for tag in soup(['script', 'style', 'nav', 'header', 'footer', 'aside']):
+            for tag in soup(["script", "style", "nav", "header", "footer", "aside"]):
                 tag.decompose()
 
             content_area = soup.find("article")
             if not content_area:
                 content_area = soup.find("main")
-            
+
             if content_area:
                 text = content_area.get_text(" ", strip=True)
             else:
                 paragraphs = soup.find_all("p")
                 text = " ".join(p.get_text(" ", strip=True) for p in paragraphs)
-            
-            text = re.sub(r'\s+', ' ', text).strip()
+
+            text = re.sub(r"\s+", " ", text).strip()
 
             if len(text) >= 100:
                 content_text = text
-        
+
         return content_text, published_at
     except Exception as e:
         return None, None
@@ -156,18 +162,52 @@ def extract_content(driver, url):
 
 # 네이버 뉴스 언론사 코드 매핑 (주요 언론사)
 NAVER_PRESS_CODE = {
-    "001": "연합뉴스", "003": "뉴시스", "005": "국민일보", "008": "머니투데이",
-    "009": "매일경제", "011": "서울경제", "014": "파이낸셜뉴스", "015": "한국경제",
-    "016": "헤럴드경제", "018": "이데일리", "020": "동아일보", "021": "문화일보",
-    "022": "세계일보", "023": "조선일보", "025": "중앙일보", "028": "한겨레",
-    "032": "경향신문", "038": "한국일보", "047": "오마이뉴스", "052": "YTN",
-    "055": "SBS", "056": "MBC", "057": "MBN", "214": "MBN",
-    "081": "서울신문", "082": "부산일보", "083": "매일신문", "084": "국제신문",
-    "087": "강원일보", "088": "전북일보", "092": "동아일보",
-    "119": "데일리안", "123": "조세일보", "138": "디지털타임스", "243": "이코노미스트",
-    "277": "아시아경제", "293": "블로터", "366": "조선비즈", "374": "SBS Biz",
-    "417": "머니S", "421": "뉴스1", "422": "연합인포맥스", "449": "채널A",
-    "629": "더팩트", "648": "비즈워치", "654": "NSP통신",
+    "001": "연합뉴스",
+    "003": "뉴시스",
+    "005": "국민일보",
+    "008": "머니투데이",
+    "009": "매일경제",
+    "011": "서울경제",
+    "014": "파이낸셜뉴스",
+    "015": "한국경제",
+    "016": "헤럴드경제",
+    "018": "이데일리",
+    "020": "동아일보",
+    "021": "문화일보",
+    "022": "세계일보",
+    "023": "조선일보",
+    "025": "중앙일보",
+    "028": "한겨레",
+    "032": "경향신문",
+    "038": "한국일보",
+    "047": "오마이뉴스",
+    "052": "YTN",
+    "055": "SBS",
+    "056": "MBC",
+    "057": "MBN",
+    "214": "MBN",
+    "081": "서울신문",
+    "082": "부산일보",
+    "083": "매일신문",
+    "084": "국제신문",
+    "087": "강원일보",
+    "088": "전북일보",
+    "092": "동아일보",
+    "119": "데일리안",
+    "123": "조세일보",
+    "138": "디지털타임스",
+    "243": "이코노미스트",
+    "277": "아시아경제",
+    "293": "블로터",
+    "366": "조선비즈",
+    "374": "SBS Biz",
+    "417": "머니S",
+    "421": "뉴스1",
+    "422": "연합인포맥스",
+    "449": "채널A",
+    "629": "더팩트",
+    "648": "비즈워치",
+    "654": "NSP통신",
 }
 
 
@@ -183,12 +223,12 @@ def extract_source(url: str) -> str:
                     if part in ["article"] and i + 1 < len(parts):
                         press_code = parts[i + 1]
                         return NAVER_PRESS_CODE.get(press_code, f"press_{press_code}")
-        
+
         # 일반 언론사 사이트
         host = (urlparse(url).hostname or "").lower()
         if host.startswith("www."):
             host = host[4:]
-        
+
         # 도메인별 매핑
         domain_map = {
             "chosun": "조선일보",
@@ -203,12 +243,12 @@ def extract_source(url: str) -> str:
             "heraldcorp": "헤럴드경제",
             "mt": "머니투데이",
         }
-        
+
         labels = [p for p in host.split(".") if p]
         if len(labels) >= 2:
             domain_key = labels[-2]
             return domain_map.get(domain_key, domain_key)
-        
+
         return host
     except:
         return "Unknown"
@@ -216,10 +256,10 @@ def extract_source(url: str) -> str:
 
 def crawl_economy_section(driver, target_count=TARGET_COUNT):
     """네이버 경제 섹션에서 기사 URL 수집"""
-    print("\n" + "="*60)
+    print("\n" + "=" * 60)
     print("📰 기사 URL 수집 시작")
-    print("="*60)
-    
+    print("=" * 60)
+
     driver.get(SECTION_URL)
     time.sleep(3)
 
@@ -258,11 +298,13 @@ def crawl_economy_section(driver, target_count=TARGET_COUNT):
                 continue
 
             seen_urls.add(url)
-            articles.append({
-                "title": title,
-                "url": url,
-                "order": len(articles) + 1,
-            })
+            articles.append(
+                {
+                    "title": title,
+                    "url": url,
+                    "order": len(articles) + 1,
+                }
+            )
 
         added = len(articles) - before
 
@@ -284,8 +326,7 @@ def crawl_economy_section(driver, target_count=TARGET_COUNT):
 
         try:
             btn = driver.find_element(
-                By.CSS_SELECTOR,
-                "a.section_more_inner._CONTENT_LIST_LOAD_MORE_BUTTON"
+                By.CSS_SELECTOR, "a.section_more_inner._CONTENT_LIST_LOAD_MORE_BUTTON"
             )
             driver.execute_script("arguments[0].scrollIntoView(true);", btn)
             time.sleep(0.5)
@@ -308,51 +349,53 @@ def crawl_economy_section(driver, target_count=TARGET_COUNT):
 
 def extract_all_contents(driver, articles, max_count=1000):
     """모든 기사의 본문 추출 (최대 개수 제한)"""
-    print("\n" + "="*60)
+    print("\n" + "=" * 60)
     print(f"📝 본문 추출 시작 (목표: {max_count}개, 수집: {len(articles)}개)")
-    print("="*60)
-    
+    print("=" * 60)
+
     results = []
     failed_count = 0
-    
+
     for idx, article_info in enumerate(articles):
         # 목표 개수 도달 시 중단
         if len(results) >= max_count:
             print(f"\n✓ 목표 개수({max_count}개) 도달, 추출 종료")
             break
-        
+
         if (idx + 1) % 50 == 0:
-            print(f"[{idx+1}/{len(articles)}] 진행 중... (성공: {len(results)}, 실패: {failed_count})")
-        
+            print(
+                f"[{idx+1}/{len(articles)}] 진행 중... (성공: {len(results)}, 실패: {failed_count})"
+            )
+
         try:
-            content, published_at = extract_content(driver, article_info['url'])
-            
+            content, published_at = extract_content(driver, article_info["url"])
+
             if content and len(content) >= 100:
                 fetched_at = datetime.now(tz.gettz("Asia/Seoul"))
-                
+
                 article_data = {
-                    "title": article_info['title'],
-                    "url": article_info['url'],
-                    "source": extract_source(article_info['url']),
+                    "title": article_info["title"],
+                    "url": article_info["url"],
+                    "source": extract_source(article_info["url"]),
                     "section": "경제",
                     "fetched_at": fetched_at.isoformat(),
                     "content": content,
                     "content_length": len(content),
                 }
-                
+
                 # published_at이 있으면 추가
                 if published_at:
                     article_data["published_at"] = published_at
-                
+
                 results.append(article_data)
             else:
                 failed_count += 1
         except Exception as e:
             failed_count += 1
             continue
-        
+
         time.sleep(0.3)
-    
+
     print(f"\n✓ 본문 추출 완료: {len(results)}개 성공 / {failed_count}개 실패")
     return results, failed_count
 
@@ -362,27 +405,24 @@ def upload_to_s3(local_file_path, date_obj):
     if not s3_client:
         print("\n⚠️ boto3가 설치되지 않아 S3 업로드를 건너뜁니다.")
         return False
-    
+
     try:
         year = date_obj.strftime("%Y")
-        month = str(int(date_obj.strftime('%m')))
-        day = str(int(date_obj.strftime('%d')))
-        
+        month = str(int(date_obj.strftime("%m")))
+        day = str(int(date_obj.strftime("%d")))
+
         s3_key = f"news-articles/year={year}/month={month}/day={day}/multi_section_top100.json"
-        
+
         print(f"\n📤 S3 업로드 중...")
         print(f"   s3://{S3_BUCKET_NAME}/{s3_key}")
-        
+
         s3_client.upload_file(
-            local_file_path, 
-            S3_BUCKET_NAME, 
-            s3_key,
-            ExtraArgs={'ContentType': 'application/json'}
+            local_file_path, S3_BUCKET_NAME, s3_key, ExtraArgs={"ContentType": "application/json"}
         )
-        
+
         print(f"✅ S3 업로드 완료!")
         return True
-        
+
     except ClientError as e:
         print(f"❌ S3 업로드 실패: {e}")
         return False
@@ -393,6 +433,7 @@ def upload_to_s3(local_file_path, date_obj):
 
 def main():
     import sys
+
     try:
         sys.stdout.reconfigure(line_buffering=True)
     except Exception:
@@ -401,21 +442,21 @@ def main():
     start_time = time.time()
     start_datetime = datetime.now(tz.gettz("Asia/Seoul"))
 
-    print("="*60)
+    print("=" * 60)
     print("네이버 뉴스 경제 섹션 크롤러")
     print(f"Started at: {start_datetime.strftime('%Y-%m-%d %H:%M:%S')}")
     print(f"Target: {TARGET_COUNT}개 기사")
-    print("="*60)
+    print("=" * 60)
 
     driver = setup_driver()
 
     try:
         # 1단계: 기사 URL 수집
         articles = crawl_economy_section(driver, target_count=TARGET_COUNT)
-        
+
         # 2단계: 본문 추출
         results, failed_count = extract_all_contents(driver, articles, max_count=TARGET_COUNT)
-        
+
     finally:
         driver.quit()
         print("\n🔒 브라우저 종료")
@@ -430,7 +471,7 @@ def main():
     fetched_at = datetime.now(tz.gettz("Asia/Seoul"))
     date_folder = fetched_at.strftime("%Y%m%d")
     os.makedirs(f"articles/{date_folder}", exist_ok=True)
-    
+
     # 파일명: multi_section_top100.json
     out_filename = "multi_section_top100.json"
     out_path = f"articles/{date_folder}/{out_filename}"
@@ -446,17 +487,17 @@ def main():
             "contents_success": len(results),
             "contents_failed": failed_count,
             "section": "경제",
-            "source": "네이버 뉴스 섹션"
+            "source": "네이버 뉴스 섹션",
         },
-        "articles": results
+        "articles": results,
     }
 
     with open(out_path, "w", encoding="utf-8") as f:
         json.dump(final_output, f, ensure_ascii=False, indent=2)
 
-    print("\n" + "="*60)
+    print("\n" + "=" * 60)
     print("📊 최종 결과")
-    print("="*60)
+    print("=" * 60)
     print(f"시작: {start_datetime.strftime('%Y-%m-%d %H:%M:%S')}")
     print(f"종료: {end_datetime.strftime('%Y-%m-%d %H:%M:%S')}")
     print(f"소요 시간: {elapsed_minutes:.2f}분 ({elapsed_seconds:.2f}초)")
@@ -466,12 +507,12 @@ def main():
     print(f"  본문 실패: {failed_count}개")
     print(f"\n🎯 최종 수집: {len(results)}개")
     print(f"💾 로컬 저장: {out_path}")
-    
+
     # S3 업로드 (파티션 구조)
     upload_to_s3(out_path, fetched_at)
-    
-    print("="*60)
-    
+
+    print("=" * 60)
+
     return final_output
 
 

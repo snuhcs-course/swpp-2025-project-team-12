@@ -13,8 +13,10 @@ import json
 # Serializers
 # ============================================================================
 
+
 class PasswordRequestSerializer(serializers.Serializer):
     password = serializers.CharField(help_text="New password")
+
 
 class PasswordMessageResponseSerializer(serializers.Serializer):
     message = serializers.CharField()
@@ -23,6 +25,7 @@ class PasswordMessageResponseSerializer(serializers.Serializer):
 # ============================================================================
 # Views
 # ============================================================================
+
 
 class PasswordView(viewsets.ViewSet):
     """
@@ -35,14 +38,14 @@ class PasswordView(viewsets.ViewSet):
         responses={
             200: PasswordMessageResponseSerializer(),
             400: openapi.Response(description="Invalid password format or missing"),
-            500: openapi.Response(description="Save failed")
-        }
+            500: openapi.Response(description="Save failed"),
+        },
     )
-    @action(detail=False, methods=['put'])
+    @action(detail=False, methods=["put"])
     @default_error_handler
     @require_auth
     def put(self, request, user):
-        body = json.loads(request.body.decode('utf-8'))
+        body = json.loads(request.body.decode("utf-8"))
         password = body.get("password")
 
         if password is None:

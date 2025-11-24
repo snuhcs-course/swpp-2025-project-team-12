@@ -18,11 +18,14 @@ s3 = boto3.client("s3", region_name=REGION)
 def _yyyymmdd(d: datetime.date) -> str:
     return d.strftime("%Y%m%d")
 
+
 def _local_path(d: datetime.date) -> str:
     return os.path.join(LOCAL_BASE, _yyyymmdd(d), "business_top50.json")
 
+
 def _s3_key(d: datetime.date) -> str:
     return f"{PREFIX}/year={d.year}/month={d.month}/day={d.day}/business_top50.json"
+
 
 def _load_payload(d: datetime.date) -> dict:
     # 1) 로컬 파일 우선
@@ -34,12 +37,17 @@ def _load_payload(d: datetime.date) -> dict:
     obj = s3.get_object(Bucket=BUCKET, Key=_s3_key(d))
     return json.load(obj["Body"])
 
+
 def list_articles(date_str: t.Optional[str] = None) -> list[dict]:
     """기사 목록 - 인덱스 기반 ID 사용"""
-    d = datetime.date.today() if not date_str else datetime.datetime.strptime(date_str, "%Y-%m-%d").date()
+    d = (
+        datetime.date.today()
+        if not date_str
+        else datetime.datetime.strptime(date_str, "%Y-%m-%d").date()
+    )
     payload = _load_payload(d)
     arts = payload.get("articles", [])
-    
+
     # 인덱스를 ID로 사용
     out = []
     for idx, a in enumerate(arts):
@@ -48,17 +56,22 @@ def list_articles(date_str: t.Optional[str] = None) -> list[dict]:
         out.append(a2)
     return out
 
+
 def get_article_by_id(article_id: int, date_str: t.Optional[str] = None) -> t.Optional[dict]:
     """특정 ID 기사 조회 - 인덱스 기반"""
-    d = datetime.date.today() if not date_str else datetime.datetime.strptime(date_str, "%Y-%m-%d").date()
+    d = (
+        datetime.date.today()
+        if not date_str
+        else datetime.datetime.strptime(date_str, "%Y-%m-%d").date()
+    )
     payload = _load_payload(d)
     arts = payload.get("articles", [])
-    
+
     # 인덱스로 직접 접근
     if 0 <= article_id < len(arts):
         a2 = dict(arts[article_id])
         a2["id"] = article_id
         a2["date"] = d.strftime("%Y-%m-%d")
         return a2
-    
+
     return None

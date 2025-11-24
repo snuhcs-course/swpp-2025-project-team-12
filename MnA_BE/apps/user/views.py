@@ -22,25 +22,32 @@ import json
 # Serializers
 # ============================================================================
 
+
 class LoginRequestSerializer(serializers.Serializer):
     id = serializers.CharField(help_text="Username")
     password = serializers.CharField(help_text="User password")
 
+
 class LoginResponseSerializer(serializers.Serializer):
     message = serializers.CharField()
+
 
 class SignupRequestSerializer(serializers.Serializer):
     id = serializers.CharField(help_text="Username (must be unique)")
     password = serializers.CharField(help_text="Password (must meet validation requirements)")
 
+
 class SignupResponseSerializer(serializers.Serializer):
     message = serializers.CharField()
+
 
 class LogoutResponseSerializer(serializers.Serializer):
     message = serializers.CharField()
 
+
 class WithdrawResponseSerializer(serializers.Serializer):
     message = serializers.CharField()
+
 
 class UserErrorResponseSerializer(serializers.Serializer):
     message = serializers.CharField()
@@ -49,6 +56,7 @@ class UserErrorResponseSerializer(serializers.Serializer):
 # ============================================================================
 # Views
 # ============================================================================
+
 
 class UserView(viewsets.ModelViewSet):
     """
@@ -62,10 +70,10 @@ class UserView(viewsets.ModelViewSet):
             200: LoginResponseSerializer(),
             400: UserErrorResponseSerializer(),
             401: UserErrorResponseSerializer(),
-            500: UserErrorResponseSerializer()
-        }
+            500: UserErrorResponseSerializer(),
+        },
     )
-    @action(detail=False, methods=['post'])
+    @action(detail=False, methods=["post"])
     @default_error_handler
     def login(self, request):
         try:
@@ -105,10 +113,10 @@ class UserView(viewsets.ModelViewSet):
         operation_description="Logout user and clear authentication cookies",
         responses={
             200: LogoutResponseSerializer(),
-            401: openapi.Response(description="Unauthorized (invalid or missing token)")
-        }
+            401: openapi.Response(description="Unauthorized (invalid or missing token)"),
+        },
     )
-    @action(detail=False, methods=['post'])
+    @action(detail=False, methods=["post"])
     @default_error_handler
     @require_auth
     def logout(self, request, user):
@@ -123,10 +131,10 @@ class UserView(viewsets.ModelViewSet):
             201: SignupResponseSerializer(),
             400: UserErrorResponseSerializer(),
             409: UserErrorResponseSerializer(),
-            500: UserErrorResponseSerializer()
-        }
+            500: UserErrorResponseSerializer(),
+        },
     )
-    @action(detail=False, methods=['post'])
+    @action(detail=False, methods=["post"])
     @default_error_handler
     def signup(self, request):
         try:
@@ -176,10 +184,10 @@ class UserView(viewsets.ModelViewSet):
         responses={
             200: WithdrawResponseSerializer(),
             401: openapi.Response(description="Unauthorized (invalid or missing token)"),
-            500: UserErrorResponseSerializer()
-        }
+            500: UserErrorResponseSerializer(),
+        },
     )
-    @action(detail=False, methods=['delete'])
+    @action(detail=False, methods=["delete"])
     @default_error_handler
     @require_auth
     def withdraw(self, request, user):
@@ -204,4 +212,3 @@ class UserView(viewsets.ModelViewSet):
             return JsonResponse({"message": "USER DELETE FAILED"}, status=500)
 
         return response
-    

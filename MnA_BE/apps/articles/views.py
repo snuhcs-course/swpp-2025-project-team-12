@@ -13,6 +13,7 @@ from .services import list_articles, get_article_by_id
 # Serializers
 # ============================================================================
 
+
 class ArticleDetailItemSerializer(serializers.Serializer):
     title = serializers.CharField()
     url = serializers.CharField()
@@ -23,12 +24,15 @@ class ArticleDetailItemSerializer(serializers.Serializer):
     content = serializers.CharField()
     content_length = serializers.IntegerField()
 
+
 class ArticleListResponseSerializer(serializers.Serializer):
     data = ArticleDetailItemSerializer(many=True)
+
 
 class ArticleDateResponseSerializer(serializers.Serializer):
     date = serializers.CharField()
     data = ArticleDetailItemSerializer(many=True)
+
 
 class ArticleDetailResponseSerializer(serializers.Serializer):
     title = serializers.CharField()
@@ -40,6 +44,7 @@ class ArticleDetailResponseSerializer(serializers.Serializer):
     content = serializers.CharField()
     content_length = serializers.IntegerField()
 
+
 class ArticleErrorResponseSerializer(serializers.Serializer):
     message = serializers.CharField()
 
@@ -48,6 +53,7 @@ class ArticleErrorResponseSerializer(serializers.Serializer):
 # Views
 # ============================================================================
 
+
 class ArticleView(viewsets.ViewSet):
     """
     Article Views - Financial news articles
@@ -55,11 +61,9 @@ class ArticleView(viewsets.ViewSet):
 
     @swagger_auto_schema(
         operation_description="Get today's financial news articles",
-        responses={
-            200: ArticleListResponseSerializer()
-        }
+        responses={200: ArticleListResponseSerializer()},
     )
-    @action(detail=False, methods=['get'])
+    @action(detail=False, methods=["get"])
     @default_error_handler
     def get(self, request):
         data = list_articles(None)
@@ -68,14 +72,20 @@ class ArticleView(viewsets.ViewSet):
     @swagger_auto_schema(
         operation_description="Get financial news articles for a specific date",
         manual_parameters=[
-            openapi.Parameter('date', openapi.IN_PATH, description="Date in YYYY-MM-DD format (e.g., 2025-11-19)", type=openapi.TYPE_STRING, required=True),
+            openapi.Parameter(
+                "date",
+                openapi.IN_PATH,
+                description="Date in YYYY-MM-DD format (e.g., 2025-11-19)",
+                type=openapi.TYPE_STRING,
+                required=True,
+            ),
         ],
         responses={
             200: ArticleDateResponseSerializer(),
-            400: openapi.Response(description="Invalid date format")
-        }
+            400: openapi.Response(description="Invalid date format"),
+        },
     )
-    @action(detail=False, methods=['get'])
+    @action(detail=False, methods=["get"])
     @default_error_handler
     def get_by_date(self, request, date):
         try:
@@ -87,15 +97,23 @@ class ArticleView(viewsets.ViewSet):
     @swagger_auto_schema(
         operation_description="Get detailed article by ID with optional date filter",
         manual_parameters=[
-            openapi.Parameter('id', openapi.IN_PATH, description="Article ID (integer index)", type=openapi.TYPE_INTEGER, required=True),
-            openapi.Parameter('date', openapi.IN_QUERY, description="Optional: Specific date to search in (YYYY-MM-DD format)", type=openapi.TYPE_STRING),
+            openapi.Parameter(
+                "id",
+                openapi.IN_PATH,
+                description="Article ID (integer index)",
+                type=openapi.TYPE_INTEGER,
+                required=True,
+            ),
+            openapi.Parameter(
+                "date",
+                openapi.IN_QUERY,
+                description="Optional: Specific date to search in (YYYY-MM-DD format)",
+                type=openapi.TYPE_STRING,
+            ),
         ],
-        responses={
-            200: ArticleDetailResponseSerializer(),
-            404: ArticleErrorResponseSerializer()
-        }
+        responses={200: ArticleDetailResponseSerializer(), 404: ArticleErrorResponseSerializer()},
     )
-    @action(detail=False, methods=['get'])
+    @action(detail=False, methods=["get"])
     @default_error_handler
     def get_detail(self, request, id):
         date = request.GET.get("date")

@@ -8,16 +8,17 @@ from decorators import require_auth, default_error_handler
 from apps.user.models import User
 from apps.api.constants import *
 
+
 class PersonalizedRecommendationsView(viewsets.ViewSet):
 
-    @action(detail=False, methods=['get'])
+    @action(detail=False, methods=["get"])
     @require_auth
     @default_error_handler
-    def get(self, request: HttpRequest, year=None, month=None, day=None, user: User=None):
+    def get(self, request: HttpRequest, year=None, month=None, day=None, user: User = None):
         # Get pagination parameters
         try:
-            limit = int(request.GET.get('limit', 10))
-            offset = int(request.GET.get('offset', 0))
+            limit = int(request.GET.get("limit", 10))
+            offset = int(request.GET.get("offset", 0))
             # Enforce max limit
             limit = min(limit, 100)
             # Ensure positive limit (minimum 1) and non-negative offset
@@ -26,11 +27,11 @@ class PersonalizedRecommendationsView(viewsets.ViewSet):
         except (ValueError, TypeError):
             limit = 10
             offset = 0
-        
+
         # if no date provided, get the latest
         if year is None and month is None and day is None:
             source = FinanceBucket().check_source(prefix="llm_output")
-            if not source["ok"]: 
+            if not source["ok"]:
                 return JsonResponse({"message": "No LLM output found"}, status=404)
             year, month, day = source["latest"].split("-")
 
@@ -47,7 +48,7 @@ class PersonalizedRecommendationsView(viewsets.ViewSet):
         # Filter by user preferences
         filtered_items = []
         style_of_user = user.style_set.first()
-        
+
         if style_of_user:
             strategy = style_of_user.strategy.get("strategy")
             interests = style_of_user.interests.get("interests")
@@ -58,28 +59,33 @@ class PersonalizedRecommendationsView(viewsets.ViewSet):
                     filtered_items.extend(datum)
                 elif datum:
                     filtered_items.append(datum)
-        
+
         # Transform to frontend format
         all_items = []
         for pick in filtered_items:
-            all_items.append({
-                "ticker": pick.get("ticker"),
-                "name": pick.get("name"),
-                "price": None,  # TODO: Get from price-financial-info
-                "change": None,
-                "change_rate": None,
-                "time": "09:00",  # TODO: Get actual time
-                "headline": pick.get("reason")
-            })
+            all_items.append(
+                {
+                    "ticker": pick.get("ticker"),
+                    "name": pick.get("name"),
+                    "price": None,  # TODO: Get from price-financial-info
+                    "change": None,
+                    "change_rate": None,
+                    "time": "09:00",  # TODO: Get actual time
+                    "headline": pick.get("reason"),
+                }
+            )
 
         # Apply pagination
         total = len(all_items)
-        paginated_items = all_items[offset:offset+limit]
+        paginated_items = all_items[offset : offset + limit]
 
-        return JsonResponse({
-            "data": paginated_items,
-            "status": "success",
-            "total": total,
-            "limit": limit,
-            "offset": offset
-        }, status=200)
+        return JsonResponse(
+            {
+                "data": paginated_items,
+                "status": "success",
+                "total": total,
+                "limit": limit,
+                "offset": offset,
+            },
+            status=200,
+        )

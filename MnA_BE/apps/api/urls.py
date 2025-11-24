@@ -1,35 +1,29 @@
 # apps/api/urls.py
 from django.urls import path, include
 from .views import APIView
-from .articles.urls import urlpatterns as  articles_url
+from .articles.urls import urlpatterns as articles_url
 from .recommendations.urls import urlpatterns as recommendations_url
 
 urlpatterns = [
-    path("health", APIView.as_view({
-        'get': 'get_health'
-    }), name="health"),
-    path("indices", APIView.as_view({
-        'get': 'get_indices'
-    }), name="indices"),
-    path("company-list", APIView.as_view({
-        'get': 'get_company_list'
-    })),
-    path("company-profiles", APIView.as_view({
-        'get': 'get_company_profiles'
-    }), name="company_profiles"),
-    path("overview/<str:ticker>", APIView.as_view({
-        'get': 'get_company_overview'
-    }), name="company-overview"),
-    path("reports/<str:symbol>", APIView.as_view({
-        'get': 'get_reports_detail'
-    }), name="reports_detail"),
-
+    path("health", APIView.as_view({"get": "get_health"}), name="health"),
+    path("indices", APIView.as_view({"get": "get_indices"}), name="indices"),
+    path("company-list", APIView.as_view({"get": "get_company_list"})),
+    path(
+        "company-profiles",
+        APIView.as_view({"get": "get_company_profiles"}),
+        name="company_profiles",
+    ),
+    path(
+        "overview/<str:ticker>",
+        APIView.as_view({"get": "get_company_overview"}),
+        name="company-overview",
+    ),
+    path(
+        "reports/<str:symbol>",
+        APIView.as_view({"get": "get_reports_detail"}),
+        name="reports_detail",
+    ),
     path("articles/", include(articles_url)),
-
     path("recommendations/", include(recommendations_url)),
-
-    path('reload-data', APIView.as_view({
-        'post': 'reload_data'
-    }), name='reload-data'),
-
+    path("reload-data", APIView.as_view({"post": "reload_data"}), name="reload-data"),
 ]

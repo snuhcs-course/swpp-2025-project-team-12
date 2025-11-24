@@ -12,17 +12,23 @@ import json
 # Serializers
 # ============================================================================
 
+
 class StyleDataSerializer(serializers.Serializer):
     interests = serializers.ListField(child=serializers.CharField())
     strategy = serializers.CharField()
     create_at = serializers.DateTimeField()
 
+
 class StyleGetResponseSerializer(serializers.Serializer):
     style = StyleDataSerializer(allow_null=True)
 
+
 class StylePostRequestSerializer(serializers.Serializer):
-    interests = serializers.ListField(child=serializers.CharField(), help_text="List of user interests")
+    interests = serializers.ListField(
+        child=serializers.CharField(), help_text="List of user interests"
+    )
     strategy = serializers.CharField(help_text="Investment strategy")
+
 
 class StyleMessageResponseSerializer(serializers.Serializer):
     message = serializers.CharField()
@@ -32,6 +38,7 @@ class StyleMessageResponseSerializer(serializers.Serializer):
 # Views
 # ============================================================================
 
+
 class StyleView(viewsets.ViewSet):
     """
     Style Views - User interests and investment strategy
@@ -39,11 +46,9 @@ class StyleView(viewsets.ViewSet):
 
     @swagger_auto_schema(
         operation_description="Get user's latest interests and strategy (requires authentication)",
-        responses={
-            200: StyleGetResponseSerializer()
-        }
+        responses={200: StyleGetResponseSerializer()},
     )
-    @action(detail=False, methods=['get'])
+    @action(detail=False, methods=["get"])
     @default_error_handler
     @require_auth
     def get(self, request, user):
@@ -54,7 +59,7 @@ class StyleView(viewsets.ViewSet):
             style = {
                 "interests": style_row.interests,
                 "strategy": style_row.strategy,
-                "create_at": style_row.create_at
+                "create_at": style_row.create_at,
             }
         except Exception as e:
             style = None
@@ -67,16 +72,16 @@ class StyleView(viewsets.ViewSet):
         responses={
             200: StyleMessageResponseSerializer(),
             400: openapi.Response(description="Missing required fields"),
-            500: openapi.Response(description="Save failed")
-        }
+            500: openapi.Response(description="Save failed"),
+        },
     )
-    @action(detail=False, methods=['post'])
+    @action(detail=False, methods=["post"])
     @default_error_handler
     @require_auth
     def post(self, request, user):
-        body = json.loads(request.body.decode('utf-8'))
-        interests = body.get('interests')
-        strategy = body.get('strategy')
+        body = json.loads(request.body.decode("utf-8"))
+        interests = body.get("interests")
+        strategy = body.get("strategy")
 
         if interests is None:
             return JsonResponse({"message": "INTERESTS REQUIRED"}, status=400)
@@ -85,11 +90,7 @@ class StyleView(viewsets.ViewSet):
             return JsonResponse({"message": "STRATEGY REQUIRED"}, status=400)
 
         try:
-            new_style = Style.objects.create(
-                user=user,
-                interests=interests,
-                strategy=strategy
-            )
+            new_style = Style.objects.create(user=user, interests=interests, strategy=strategy)
             new_style.save()
         except Exception as e:
             return JsonResponse({"message": "SAVE INTERESTS FAILED"}, status=500)
