@@ -332,6 +332,7 @@ class APIView(viewsets.ViewSet):
             openapi.Parameter('limit', openapi.IN_QUERY, description="Number of items (default: 10, max: 100)", type=openapi.TYPE_INTEGER),
             openapi.Parameter('offset', openapi.IN_QUERY, description="Pagination offset (default: 0)", type=openapi.TYPE_INTEGER),
             openapi.Parameter('market', openapi.IN_QUERY, description='Market filter: "kospi" or "kosdaq"', type=openapi.TYPE_STRING),
+            openapi.Parameter('industry', openapi.IN_QUERY, description='Industry filter', type=openapi.TYPE_STRING)
         ],
         responses={200: CompanyListResponseSerializer()}
     )
@@ -340,6 +341,7 @@ class APIView(viewsets.ViewSet):
     def get_company_list(self, request):
         limit, offset = get_pagination(request, default_limit=10, max_limit=100)
         market = request.GET.get("market", None)
+        industry = request.GET.get("industry", None)
 
         if market:
             market = market.upper()
@@ -355,6 +357,9 @@ class APIView(viewsets.ViewSet):
             # if market is set, filter by market
             if market and 'market' in df_latest.columns:
                 df_latest = df_latest[df_latest['market'] == market]
+
+            if industry and 'industry' in df_latest.columns:
+                df_latest = df_latest[df_latest['industry'] == industry]
 
             total = len(df_latest)
             page_df = df_latest.iloc[offset:offset + limit]
