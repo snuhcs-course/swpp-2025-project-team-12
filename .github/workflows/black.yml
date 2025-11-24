@@ -1,0 +1,19 @@
+name: black formatter
+
+on:
+  push:
+    branches:
+      - '*'
+  pull_request:
+    branches:
+      - '*'
+
+jobs:
+  Black_code_formatter:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: psf/black@stable
+        with:
+          options: "-l 100 --diff --color --check"
+          src: "MnA_BE/"
