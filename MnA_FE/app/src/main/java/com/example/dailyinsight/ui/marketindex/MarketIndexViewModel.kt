@@ -39,21 +39,12 @@ class MarketIndexViewModel : ViewModel() {
         fetchLLMSummary()
         preCacheChartData()
     }
-
-    fun fetchMarketBriefing() {
-        viewModelScope.launch {
-            _llmSummary.value = repository.getLLMSummaryLatest()
-        }
-    }
-
     private fun fetchMarketData() {
         viewModelScope.launch {
             try {
                 // The repository now returns the map directly
                 val dataMap = repository.getMarketData()
-
                 // Manually add the name (key) to each StockIndexData
-
                 dataMap.forEach { (key, value) ->
                     value.name = key
                 }

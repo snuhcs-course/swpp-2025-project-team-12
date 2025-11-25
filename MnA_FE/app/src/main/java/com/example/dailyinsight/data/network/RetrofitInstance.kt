@@ -18,7 +18,12 @@ import java.net.CookieManager
 import java.net.CookiePolicy
 import java.net.HttpURLConnection
 import com.example.dailyinsight.data.datastore.cookieDataStore
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 import java.net.Proxy
+import java.util.concurrent.Executors
+import kotlinx.coroutines.launch
 
 /**
  * Unified Retrofit Instance for all API calls
@@ -27,9 +32,8 @@ import java.net.Proxy
 object RetrofitInstance {
     private const val BASE_URL = "http://ec2-13-124-209-234.ap-northeast-2.compute.amazonaws.com:8000/"
     // private const val BASE_URL = "http://10.0.2.2:8000/"
-
     // Toggle: true = 1st tab network calls return mock responses
-    private const val MOCK_MODE = true
+
 
     private val logging = HttpLoggingInterceptor().apply {
         level = HttpLoggingInterceptor.Level.BODY
@@ -51,11 +55,8 @@ object RetrofitInstance {
 
         client = OkHttpClient.Builder()
             .cookieJar(cookieJar)
-//            .addInterceptor(AuthInterceptor(context.applicationContext))
-//            .apply {
-//                if (MOCK_MODE) addInterceptor(MockInterceptor())
-//                addInterceptor(logging)
-//            }
+            .addInterceptor(AuthInterceptor(context.applicationContext))
+            .apply { addInterceptor(logging)}
             .addInterceptor(logging)
             .build()
 
@@ -63,6 +64,8 @@ object RetrofitInstance {
             .baseUrl(BASE_URL)
             .client(client)
             .addConverterFactory(GsonConverterFactory.create())
+            // JSON 파싱 작업이 백그라운드 IO 스레드에서 처리됨
+            .callbackExecutor(java.util.concurrent.Executors.newSingleThreadExecutor())
             .build()
             .create(ApiService::class.java)
     }
@@ -70,10 +73,12 @@ object RetrofitInstance {
     private class AuthInterceptor(private val context: Context) : Interceptor {
         override fun intercept(chain: Interceptor.Chain): Response {
             val response = chain.proceed(chain.request())
-
             if (response.code == 401) {
-                runBlocking {
-                    context.cookieDataStore.edit { it.clear() }
+                // ✅ runBlocking 제거, IO 스레드에서 비동기 처리 (ANR 방지)
+                CoroutineScope(Dispatchers.IO).launch {
+                    context.cookieDataStore.edit { prefs ->
+                        prefs.clear()
+                    }
                 }
             }
             return response
@@ -123,65 +128,4 @@ object RetrofitInstance {
 //            .create(ApiService::class.java)
 //    }
 
-
-    private val contentType = "application/json".toMediaType()
-
-
-    // Simple mocking interceptor (MOCK_MODE=true replaces /api/* requests with local JSON)
-    private class MockInterceptor : Interceptor {
-        override fun intercept(chain: Interceptor.Chain): Response {
-            val req = chain.request()
-            val path = req.url.encodedPath
-            Log.d("MockInterceptor", "MOCK ${req.method} $path")
-
-            // 2) Today's recommendations
-            if (req.method == "GET" && path == "/api/recommendations/today") {
-                val body = TODAY_JSON.toResponseBody(contentType)
-                return Response.Builder()
-                    .request(req)
-                    .protocol(Protocol.HTTP_1_1)
-                    .code(HttpURLConnection.HTTP_OK)
-                    .message("OK")
-                    .body(body)
-                    .build()
-            }
-
-            // 3) Health check
-            if (req.method == "GET" && path == "/health") {
-                val body = HEALTH_JSON.toResponseBody(contentType)
-                return Response.Builder()
-                    .request(req)
-                    .protocol(Protocol.HTTP_1_1)
-                    .code(HttpURLConnection.HTTP_OK)
-                    .message("OK")
-                    .body(body)
-                    .build()
-            }
-
-            // Otherwise, proceed with actual network call
-            return chain.proceed(req)
-        }
-    }
-
-    // Sample JSON responses (ApiResponse<T> format)
-    private val HEALTH_JSON = """
-    { "success": true, "data": { "status": "ok" } }
-    """.trimIndent()
-
-    private val TODAY_JSON = """
-    {
-      "success": true,
-      "data": [
-        {
-          "stockInfo": { "ticker": "005930", "company_name": "삼성전자", "market_type": "KOSPI" },
-          "reason": "반도체 업황 개선 기대 재부각",
-          "links": ["https://news.example.com/1"],
-          "date": "2025-10-19T09:30:00+09:00",
-          "price": 74800,
-          "change": 1200,
-          "change_rate": 1.63
-        }
-      ]
-    }
-    """.trimIndent()
 }

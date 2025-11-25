@@ -49,6 +49,9 @@ import java.util.Date
 import java.text.SimpleDateFormat
 import java.util.Locale
 import android.text.TextUtils
+import android.view.LayoutInflater
+import kotlinx.coroutines.delay
+import android.util.Log
 
 
 class StockDetailFragment : Fragment(R.layout.fragment_stock_detail) {
@@ -58,6 +61,17 @@ class StockDetailFragment : Fragment(R.layout.fragment_stock_detail) {
 
     private val args: StockDetailFragmentArgs by navArgs()
     private val viewModel: StockDetailViewModel by viewModels()
+
+    private var currentChartUi: PriceChartUi? = null
+    private var currentRange = Range.M6
+
+    override fun onCreateView(
+        inflater: LayoutInflater, container: ViewGroup?,
+        savedInstanceState: Bundle?
+    ): View {
+        _binding = FragmentStockDetailBinding.inflate(inflater, container, false)
+        return binding.root
+    }
 
     private val xSdf = java.text.SimpleDateFormat("MM/dd", java.util.Locale.KOREA)
     private var currentXAxisFormat = "MM/dd" // 선택된 X축 날짜 포맷
@@ -138,86 +152,132 @@ class StockDetailFragment : Fragment(R.layout.fragment_stock_detail) {
     // 프로퍼티
     private var chartData: List<Entry> = emptyList() // Entry 리스트로 변경
     private var chartLabels: List<String> = emptyList()
+    // 데이터 로딩 상태를 체크할 변수
+    private var isReportReady = false
+    private var isOverviewReady = false
+
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-        _binding = FragmentStockDetailBinding.bind(view)
 
-        // Header
-        renderHeader(args.item)
+        // 1. 초기화: 로딩 화면 보이기 (XML에서 visible로 했지만 확실하게)
+        binding.loadingOverlay.visibility = View.VISIBLE
 
-        // 상세 로드
-        viewModel.load(args.item.ticker)
+        val ticker = args.item.ticker
+        Log.d("StockDetail", "Loading started for ticker: $ticker")
+        viewModel.load(ticker)
 
-        // 상태 수집
         viewLifecycleOwner.lifecycleScope.launch {
             viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
-                viewModel.state.collect { st ->
-                    when (st) {
-                        is LoadResult.Loading -> {
-                            binding.progress.isVisible = true
-                            binding.tvError.isVisible = false
+
+                // 2. 상세 정보(차트/가격) 관찰
+                launch {
+                    viewModel.state.collect { state ->
+                        if (_binding == null) return@collect // 🚨 뷰 없으면 중단
+
+                        when (state) {
+                            is LoadResult.Success -> {
+                                Log.d("StockDetail", "Report Loaded: Success")
+                                bindDetail(state.data)
+                                isReportReady = true
+                                checkAllLoaded()
+                            }
+                            is LoadResult.Error -> {
+                                Log.e("StockDetail", "Report Failed: ${state.throwable.message}")
+                                isReportReady = true
+                                checkAllLoaded()
+                            }
+                            is LoadResult.Loading -> Log.d("StockDetail", "Report: Loading...")
+                            else -> {}
                         }
-                        is LoadResult.Error -> {
-                            binding.progress.isVisible = false
-                            binding.tvError.isVisible = true
-                            binding.tvError.text = st.throwable.message ?: getString(R.string.error_generic)
+                    }
+                }
+
+                // 3. 개요 정보(요약 텍스트) 관찰
+                launch {
+                    viewModel.overviewState.collect { state ->
+                        if (_binding == null) return@collect // 🚨 뷰 없으면 중단
+
+                        when (state) {
+                            is LoadResult.Success -> {
+                                Log.d("StockDetail", "Overview Loaded: Success")
+                                bindOverview(state.data)
+                                isOverviewReady = true
+                                checkAllLoaded()
+                            }
+                            is LoadResult.Error -> {
+                                Log.e("StockDetail", "Overview Failed: ${state.throwable.message}")
+                                isOverviewReady = true
+                                checkAllLoaded()
+                            }
+                            is LoadResult.Loading -> Log.d("StockDetail", "Overview: Loading...")
+                            else -> {}
                         }
-                        is LoadResult.Success -> {
-                            binding.progress.isVisible = false
-                            binding.tvError.isVisible = false
-                            bindDetail(st.data) // DTO 데이터 바인딩
+                    }
+                }
+
+                // 4. 차트 데이터 관찰
+                launch {
+                    viewModel.priceState.collect { state ->
+                        if (_binding == null) return@collect
+                        if (state is LoadResult.Success) {
+                            // 데이터 꺼내기 (MPAndroidChart 구조에 맞춰 안전하게 추출)
+                            val lineData = state.data.chart.data
+                            if (lineData.dataSetCount > 0) {
+                                val set = lineData.getDataSetByIndex(0) as LineDataSet
+
+                                // 1. 변수에 저장 (나중에 버튼 누를 때 씀)
+                                chartData = set.values.toList() // 복사해서 저장
+                                chartLabels = state.data.chart.xLabels
+
+                                // 2. 버튼 활성화 및 그리기
+                                binding.btnGroupRange.isEnabled = true
+                                renderChart(currentRange)
+
+                                Log.d("StockDetail", "Chart Loaded: Success")
+                            }
                         }
-                        else -> Unit
                     }
                 }
             }
         }
-        // --- 2. 👈 (신규) '요약' 상태 수집 ---
+/*
+        // 🚨 5. [안전장치] 5초가 지나도 로딩이 안 끝나면 강제로 화면 보여주기
         viewLifecycleOwner.lifecycleScope.launch {
-            viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
-                viewModel.overviewState.collect { st ->
-                    when (st) {
-                        is LoadResult.Success -> {
-                            bindOverview(st.data) // 텍스트 바인딩 함수 호출
-                        }
-                        // 로딩/에러는 _state가 이미 처리하므로 여기선 생략 가능
-                        else -> Unit
-                    }
-                }
+            delay(5000) // 5초 대기
+            if (binding.loadingOverlay.visibility == View.VISIBLE) {
+                Log.w("StockDetail", "Force hiding loader due to timeout")
+                binding.loadingOverlay.visibility = View.GONE
             }
-        }
-
-        // 상태 수집 (차트)
-        viewLifecycleOwner.lifecycleScope.launch {
-            viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
-                viewModel.priceState.collect { st ->
-                    if (st is LoadResult.Success) {
-                        //  차트 데이터(Entry)와 라벨(String)을 프래그먼트에 저장
-                        chartData = (st.data.chart.lineData.dataSets[0] as LineDataSet).values
-                        chartLabels = st.data.chart.xLabels
-                        binding.btnGroupRange.isEnabled = true
-                        renderChart(Range.M6) // 기본 6개월 선택
-                    } else if (st is LoadResult.Error) {
-                        binding.lineChart.clear()
-                        binding.lineChart.setNoDataText(getString(R.string.no_chart_data))
-                        binding.btnGroupRange.isEnabled = false
-                    }
-                }
-            }
-        }
-
+        }*/
         // 하단 여백 보정
         ViewCompat.setOnApplyWindowInsetsListener(binding.root) { v, insets ->
             val navInsets = insets.getInsets(WindowInsetsCompat.Type.systemBars())
             v.updatePadding(bottom = navInsets.bottom + dp(80))
             insets
         }
-
         setupChart()
         setupRangeButtons() // 버튼 연결
     }
+    // 로딩 완료 판별 함수
+    private fun checkAllLoaded() {
+        // 두 데이터가 모두 준비되었을 때만 로딩 화면 제거
+        if (isReportReady && isOverviewReady) {
+            // 부드럽게 사라지게 애니메이션 적용
+            binding.loadingOverlay.animate()
+                .alpha(0f)
+                .setDuration(300)
+                .withEndAction {
+                    if (_binding != null) {
+                        binding.loadingOverlay.visibility = View.GONE
+                    }
+                }
+                .start()
+        }
+    }
 
+    // --- 3. 요약/분석/뉴스 바인딩 함수 ---
+    // 🚨 Overview 데이터를 화면 뷰에 꽂아주는 함수 (없으면 추가하세요!)
     // --- 3. 요약/분석/뉴스 바인딩 함수 ---
     private fun bindOverview(overview: StockOverviewDto) = with(binding) {
         // 1. 요약
@@ -242,6 +302,7 @@ class StockDetailFragment : Fragment(R.layout.fragment_stock_detail) {
             tvNews.text = newsList.joinToString("\n") { "• $it" }
         }
     }
+
 
     /** 상단 헤더(요약) */
     private fun renderHeader(item: RecommendationDto) = with(binding) {
@@ -364,8 +425,12 @@ class StockDetailFragment : Fragment(R.layout.fragment_stock_detail) {
             else LineDataSet.Mode.CUBIC_BEZIER
             color = ContextCompat.getColor(requireContext(), R.color.price_up)
             lineWidth = 3f
-            setDrawCircles(fewPoints)
-            circleRadius = if (fewPoints) 3f else 0f
+            if (fewPoints) {
+                setDrawCircles(true)
+                circleRadius = 3f
+            } else {
+                setDrawCircles(false)
+            }
             setDrawValues(false)
 
             val drawFill = !fewPoints && !almostFlat
@@ -414,7 +479,7 @@ class StockDetailFragment : Fragment(R.layout.fragment_stock_detail) {
             Range.Y3 -> Calendar.getInstance().apply { add(Calendar.YEAR, -3) }.timeInMillis
             Range.Y5 -> Calendar.getInstance().apply { add(Calendar.YEAR, -5) }.timeInMillis
         }
-        currentXAxisFormat = if (range == Range.Y3 || range == Range.Y5) "yyyy/MM" else "MM/dd"
+        currentXAxisFormat = if (range == Range.Y1 ||range == Range.Y3 || range == Range.Y5) "yyyy/MM" else "MM/dd"
         val filteredEntries = mutableListOf<Entry>()
         val filteredLabels = mutableListOf<String>()
 
@@ -653,7 +718,7 @@ class StockDetailFragment : Fragment(R.layout.fragment_stock_detail) {
     }
 
     override fun onDestroyView() {
-        _binding = null
         super.onDestroyView()
+        _binding = null
     }
 }
