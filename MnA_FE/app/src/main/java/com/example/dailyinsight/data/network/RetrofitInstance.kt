@@ -23,6 +23,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import java.net.Proxy
 import java.util.concurrent.Executors
+import kotlinx.coroutines.launch
 
 /**
  * Unified Retrofit Instance for all API calls
@@ -31,6 +32,8 @@ import java.util.concurrent.Executors
 object RetrofitInstance {
     private const val BASE_URL = "http://ec2-13-124-209-234.ap-northeast-2.compute.amazonaws.com:8000/"
     // private const val BASE_URL = "http://10.0.2.2:8000/"
+    // Toggle: true = 1st tab network calls return mock responses
+
 
     private val logging = HttpLoggingInterceptor().apply {
         level = HttpLoggingInterceptor.Level.BODY
@@ -43,7 +46,7 @@ object RetrofitInstance {
         private set
 
     fun init(context: Context) {
-        val realCookieJar = MyCookieJar(context.applicationContext)
+        val realCookieJar = MyCookieJar()
 
         cookieJar = ProxyCookieJar(
             real = realCookieJar,
@@ -53,6 +56,7 @@ object RetrofitInstance {
         client = OkHttpClient.Builder()
             .cookieJar(cookieJar)
             .addInterceptor(AuthInterceptor(context.applicationContext))
+            .apply { addInterceptor(logging)}
             .addInterceptor(logging)
             .build()
 
@@ -70,7 +74,7 @@ object RetrofitInstance {
         override fun intercept(chain: Interceptor.Chain): Response {
             val response = chain.proceed(chain.request())
             if (response.code == 401) {
-                // runBlocking 제거, IO 스레드에서 비동기 처리 (ANR 방지)
+                // ✅ runBlocking 제거, IO 스레드에서 비동기 처리 (ANR 방지)
                 CoroutineScope(Dispatchers.IO).launch {
                     context.cookieDataStore.edit { prefs ->
                         prefs.clear()

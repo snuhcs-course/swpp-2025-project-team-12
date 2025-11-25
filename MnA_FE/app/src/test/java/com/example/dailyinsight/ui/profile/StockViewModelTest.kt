@@ -17,6 +17,7 @@ import org.junit.Test
 import org.mockito.kotlin.mock
 import org.mockito.kotlin.whenever
 import java.io.IOException
+import com.example.dailyinsight.ui.stock.StockViewModel
 
 @ExperimentalCoroutinesApi
 class StockViewModelTest {
@@ -107,7 +108,7 @@ class StockViewModelTest {
     fun refresh_withRepositoryError_updatesStateToError() = runTest {
         // Given: Mock repository throws exception
         val exception = IOException("Network error")
-        whenever(repository.getTodayRecommendations()).thenThrow(exception)
+        whenever(repository.getStockList()).thenThrow(exception)
 
         // When: Create ViewModel
         viewModel = StockViewModel(repository)
@@ -126,7 +127,7 @@ class StockViewModelTest {
         whenever(repository.getStockList()).thenReturn(recommendations)
 
         // When: Create ViewModel (don't advance idle yet)
-        viewModel = TodayViewModel(repository)
+        viewModel = StockViewModel(repository)
 
         // Then: State should be Loading
         assertTrue(viewModel.state.value is LoadResult.Loading)
