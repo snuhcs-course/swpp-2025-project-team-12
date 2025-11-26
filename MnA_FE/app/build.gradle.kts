@@ -19,10 +19,13 @@ android {
         versionCode = 1
         versionName = "1.0"
 
-        testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+        testInstrumentationRunner = "com.example.dailyinsight.CustomTestRunner"
     }
 
     buildTypes {
+        debug {
+            enableAndroidTestCoverage = true
+        }
         release {
             isMinifyEnabled = false
             proguardFiles(
@@ -49,6 +52,13 @@ android {
     }
 }
 
+configurations.all {
+    resolutionStrategy {
+        force("androidx.test:core:1.7.0")
+        force("androidx.test:runner:1.6.2")
+    }
+}
+
 dependencies {
 
     implementation(libs.androidx.core.ktx)
@@ -63,7 +73,7 @@ dependencies {
 
     // Activity / Fragment KTX (for by viewModels)
     implementation("androidx.activity:activity-ktx:1.8.0")
-    implementation("androidx.fragment:fragment-ktx:1.6.1")
+    implementation("androidx.fragment:fragment-ktx:1.8.5")
     // Retrofit & Gson
     implementation("com.squareup.retrofit2:retrofit:2.9.0")
     implementation("com.squareup.retrofit2:converter-gson:2.9.0")
@@ -76,8 +86,10 @@ dependencies {
     implementation("androidx.tracing:tracing:1.3.0")
     // test
     testImplementation(libs.junit)
-    testImplementation("org.robolectric:robolectric:4.16")
-    testImplementation ("androidx.test:core:1.5.0")
+    testImplementation("org.robolectric:robolectric:4.14.1")
+    testImplementation("androidx.test:core:1.7.0")
+    androidTestImplementation("androidx.test:core:1.7.0")
+    androidTestImplementation("androidx.test:runner:1.6.2")
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
     androidTestImplementation("androidx.test.espresso:espresso-intents:3.7.0")
@@ -90,8 +102,8 @@ dependencies {
     testImplementation("androidx.arch.core:core-testing:2.2.0")
 
     // Fragment testing
-    debugImplementation("androidx.fragment:fragment-testing:1.6.1")
-    androidTestImplementation("androidx.fragment:fragment-testing:1.6.1")
+    debugImplementation("androidx.fragment:fragment-testing:1.8.5")
+    androidTestImplementation("androidx.fragment:fragment-testing:1.8.5")
 
     // Navigation testing
     androidTestImplementation("androidx.navigation:navigation-testing:2.7.7")
@@ -99,6 +111,7 @@ dependencies {
     // Mockito for Android testing
     androidTestImplementation("org.mockito:mockito-android:5.5.0")
     androidTestImplementation("org.mockito:mockito-core:5.5.0")
+    androidTestImplementation("org.mockito.kotlin:mockito-kotlin:5.1.0")
 
     // Material Design 3
     implementation("com.google.android.material:material:1.13.0")
