@@ -11,6 +11,7 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.widget.addTextChangedListener
+import androidx.lifecycle.lifecycleScope
 import com.example.dailyinsight.R
 import com.example.dailyinsight.data.dto.ChangeNameRequest
 import com.example.dailyinsight.data.dto.ChangePasswordRequest
@@ -23,6 +24,7 @@ import com.google.android.material.button.MaterialButton
 import com.google.android.material.textfield.TextInputEditText
 import com.google.android.material.textfield.TextInputLayout
 import com.google.gson.Gson
+import kotlinx.coroutines.launch
 import retrofit2.Call
 
 class ChangePasswordActivity : AppCompatActivity() {
@@ -93,28 +95,29 @@ class ChangePasswordActivity : AppCompatActivity() {
             }
             if(PWText.error != null) return@setOnClickListener
 
-            val request = ChangePasswordRequest(password)
-            RetrofitInstance.api.changePassword(request)
-                .enqueue(object : retrofit2.Callback<UserProfileResponse> {
-                    override fun onResponse(
-                        call: Call<UserProfileResponse>,
-                        response: retrofit2.Response<UserProfileResponse>
-                    ) {
-                        if (response.isSuccessful) {
-                            Toast.makeText(this@ChangePasswordActivity, R.string.on_change_successful, Toast.LENGTH_SHORT).show()
-                        } else {
-                            val result = response.errorBody()?.string()
-                            val message = Gson().fromJson(result, LogInResponse::class.java).message
-                            Log.e("change password", "response with ${response.code()}: $message")
-                            Toast.makeText(this@ChangePasswordActivity, R.string.on_change_password_unsuccessful, Toast.LENGTH_SHORT).show()
-                        }
-                    }
 
-                    override fun onFailure(call: Call<UserProfileResponse>, t: Throwable) {
-                        Toast.makeText(this@ChangePasswordActivity, R.string.on_api_failure, Toast.LENGTH_SHORT)
-                            .show()
-                    }
-                })
+            lifecycleScope.launch {
+                changePassword(password)
+            }
+        }
+    }
+
+    suspend fun changePassword(password: String) {
+        val request = ChangePasswordRequest(password)
+        try {
+            val response = RetrofitInstance.api.changePassword(request)
+            if (response.isSuccessful) {
+                Toast.makeText(this@ChangePasswordActivity, R.string.on_change_successful, Toast.LENGTH_SHORT).show()
+            } else {
+                val result = response.errorBody()?.string()
+                val message = Gson().fromJson(result, LogInResponse::class.java).message
+                Log.e("change password", "response with ${response.code()}: $message")
+                Toast.makeText(this@ChangePasswordActivity, R.string.on_change_password_unsuccessful, Toast.LENGTH_SHORT).show()
+            }
+        } catch (e: Exception) {
+            Log.e("change password", "exception on api call")
+            e.printStackTrace()
+            Toast.makeText(this@ChangePasswordActivity, R.string.on_api_failure, Toast.LENGTH_SHORT).show()
         }
     }
 

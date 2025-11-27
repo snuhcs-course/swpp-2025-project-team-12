@@ -12,6 +12,7 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.widget.addTextChangedListener
+import androidx.lifecycle.lifecycleScope
 import com.example.dailyinsight.R
 import com.example.dailyinsight.data.dto.ChangeNameRequest
 import com.example.dailyinsight.data.dto.LogInResponse
@@ -24,6 +25,7 @@ import com.google.android.material.button.MaterialButton
 import com.google.android.material.textfield.TextInputEditText
 import com.google.android.material.textfield.TextInputLayout
 import com.google.gson.Gson
+import kotlinx.coroutines.launch
 import retrofit2.Call
 
 class ChangeNameActivity : AppCompatActivity() {
@@ -80,29 +82,29 @@ class ChangeNameActivity : AppCompatActivity() {
                 IDText.error = null
             }
 
-            val request = ChangeNameRequest(id)
-            RetrofitInstance.api.changeName(request)
-                .enqueue(object : retrofit2.Callback<UserProfileResponse> {
-                    override fun onResponse(
-                        call: Call<UserProfileResponse>,
-                        response: retrofit2.Response<UserProfileResponse>
-                    ) {
-                        if (response.isSuccessful) {
-                            Toast.makeText(this@ChangeNameActivity, R.string.on_change_successful, Toast.LENGTH_SHORT).show()
-                        } else {
-                            val result = response.errorBody()?.string()
-                            val message = Gson().fromJson(result, LogInResponse::class.java).message
-                            Log.e("change name", "response with ${response.code()}: $message")
-                            Toast.makeText(this@ChangeNameActivity, R.string.id_already_in_use, Toast.LENGTH_SHORT).show()
-                        }
-                    }
-
-                    override fun onFailure(call: Call<UserProfileResponse>, t: Throwable) {
-                        Toast.makeText(this@ChangeNameActivity, R.string.on_api_failure, Toast.LENGTH_SHORT)
-                            .show()
-                    }
-                })
+            lifecycleScope.launch {
+                changeName(id)
+            }
         }
+    }
 
+    suspend fun changeName(id: String) {
+        val request = ChangeNameRequest(id)
+        try {
+            val response = RetrofitInstance.api.changeName(request)
+
+            if (response.isSuccessful) {
+                Toast.makeText(this@ChangeNameActivity, R.string.on_change_successful, Toast.LENGTH_SHORT).show()
+            } else {
+                val result = response.errorBody()?.string()
+                val message = Gson().fromJson(result, LogInResponse::class.java).message
+                Log.e("change name", "response with ${response.code()}: $message")
+                Toast.makeText(this@ChangeNameActivity, R.string.id_already_in_use, Toast.LENGTH_SHORT).show()
+            }
+        } catch (e: Exception) {
+            Log.e("change name", "exception on api call")
+            e.printStackTrace()
+            Toast.makeText(this@ChangeNameActivity, R.string.on_api_failure, Toast.LENGTH_SHORT).show()
+        }
     }
 }
