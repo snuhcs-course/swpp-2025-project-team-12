@@ -62,11 +62,11 @@ class SignInActivity : AppCompatActivity() {
             PWText.error = null
         }
 
-        val findPWButton = findViewById<MaterialButton>(R.id.findPWButton)
-        findPWButton.setOnClickListener {
-            // TODO - find PW (is implemented on server?)
-            Toast.makeText(this, R.string.not_implemented, Toast.LENGTH_SHORT).show()
-        }
+//        val findPWButton = findViewById<MaterialButton>(R.id.findPWButton)
+//        findPWButton.setOnClickListener {
+//            // TODO - find PW (is implemented on server?)
+//            Toast.makeText(this, R.string.not_implemented, Toast.LENGTH_SHORT).show()
+//        }
 
         loginButton.setOnClickListener {
             val id = IDTextField.text.toString().trim()
