@@ -10,9 +10,10 @@ import androidx.room.TypeConverters
     entities = [
         CachedHistory::class,         // 차트 1년치
         BriefingCardCache::class,     // 브리핑 리스트
-        StockDetailCache::class       // 상세 정보 캐시 테이블
+        StockDetailCache::class, // 상세 정보 캐시 테이블
+        FavoriteTicker::class
     ],
-    version = 3,
+    version = 6,
     exportSchema = false
 )
 @TypeConverters(

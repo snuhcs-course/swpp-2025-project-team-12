@@ -19,7 +19,6 @@ import java.text.SimpleDateFormat
 import java.util.Locale
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.Dispatchers
-
 data class ChartUi(
     val data: LineData,
     val xLabels: List<String>

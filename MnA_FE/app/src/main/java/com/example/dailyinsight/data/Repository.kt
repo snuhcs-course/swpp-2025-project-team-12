@@ -14,4 +14,5 @@ interface Repository {
     //suspend fun getStockList(offset: Int, sort: String?): Pair<List<RecommendationDto>, String?>
     suspend fun getStockReport(ticker: String): StockDetailDto
     suspend fun getStockOverview(ticker: String): StockOverviewDto
+    suspend fun toggleFavorite(ticker: String, isActive: Boolean): Boolean
 }

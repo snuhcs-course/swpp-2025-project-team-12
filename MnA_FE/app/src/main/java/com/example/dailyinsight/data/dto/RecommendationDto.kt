@@ -13,5 +13,6 @@ data class RecommendationDto(
     @SerialName("price")       val price: Long,       // 141500
     @SerialName("change")      val change: Long,      // -100
     @SerialName("change_rate") val changeRate: Double,// -0.29  ← BE가 snake_case라면 유지
-    @SerialName("headline")    val headline: String? = null
+    @SerialName("headline")    val headline: String? = null,
+    var isFavorite: Boolean = false // 즐겨찾기 여부 (기본값 false)
 ) : Parcelable

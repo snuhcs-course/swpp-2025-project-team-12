@@ -15,9 +15,10 @@ import androidx.core.content.ContextCompat
 import android.text.TextUtils
 import android.view.ViewTreeObserver
 import android.util.Log
-
+import android.widget.CheckBox
 class StockAdapter(
-    private val onClick: (RecommendationDto) -> Unit = {}
+    private val onClick: (RecommendationDto) -> Unit = {},
+    private val onFavoriteClick: (RecommendationDto, Boolean) -> Unit = { _, _ -> } // 별표 클릭 콜백 추가 (아이템, 체크여부)
 ) : ListAdapter<RecommendationDto, StockAdapter.ItemVH>(
     object : DiffUtil.ItemCallback<RecommendationDto>() {
         override fun areItemsTheSame(o: RecommendationDto, n: RecommendationDto): Boolean =
@@ -41,7 +42,7 @@ class StockAdapter(
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ItemVH {
         val v = LayoutInflater.from(parent.context)
             .inflate(R.layout.item_stock_row, parent, false)
-        return ItemVH(v, onClick, onExpandToggle) //  ItemVH에 토글 함수를 전달
+        return ItemVH(v, onClick, onExpandToggle, onFavoriteClick) //  ItemVH에 토글 함수를 전달
     }
 
     override fun onBindViewHolder(holder: ItemVH, position: Int) {
@@ -52,8 +53,9 @@ class StockAdapter(
 
     class ItemVH(view: View,
                  private val onClick: (RecommendationDto) -> Unit,
-                 private val onExpandToggle: (String) -> Unit) :
-        RecyclerView.ViewHolder(view) {
+                 private val onExpandToggle: (String) -> Unit,
+                 private val onFavoriteClick: (RecommendationDto, Boolean) -> Unit
+    ) : RecyclerView.ViewHolder(view) {
         private val tvName = view.findViewById<TextView>(R.id.tvName)
         private val tvScore = view.findViewById<TextView>(R.id.tvScore)
         private val tvDesc  = view.findViewById<TextView>(R.id.tvDesc)
@@ -69,6 +71,7 @@ class StockAdapter(
             }
         }
 
+        val btnFavorite = view.findViewById<CheckBox>(R.id.btnFavorite)
         fun bind(d: RecommendationDto, isExpanded: Boolean) {
             current = d
             tvName.text = d.name
@@ -123,6 +126,11 @@ class StockAdapter(
                 }
             })
 
+            btnFavorite.setOnCheckedChangeListener(null)
+            btnFavorite.isChecked = d.isFavorite
+            btnFavorite.setOnCheckedChangeListener { _, isChecked ->
+                onFavoriteClick(d, isChecked) // 뷰모델로 토스
+            }
         }
     }
 }

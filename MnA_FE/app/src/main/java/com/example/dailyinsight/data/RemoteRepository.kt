@@ -13,6 +13,8 @@ import kotlinx.coroutines.flow.flowOf
 import com.example.dailyinsight.data.database.StockDetailCache
 import com.example.dailyinsight.data.database.StockDetailDao
 import com.google.gson.Gson
+import com.example.dailyinsight.data.dto.PortfolioRequest
+import com.example.dailyinsight.data.database.FavoriteTicker
 
 class RemoteRepository(
     private val api: ApiService,
@@ -29,6 +31,9 @@ class RemoteRepository(
     // 2. 네트워크 호출 -> DB 저장 (ViewModel이 호출)
     override suspend fun fetchAndSaveBriefing(offset: Int, clear: Boolean): String? = coroutineScope {
         try {
+            // [백업] DB를 지우기 전에, 현재 내가 찜한 종목들의 Ticker를 미리 가져옵니다.
+            // (BriefingDao에 getFavoriteTickers() 함수가 있어야 합니다)
+            val savedFavorites = briefingDao.getFavoriteTickers().toSet()
             // (1) 목록 가져오기 (10개씩)
             val response = api.getBriefingList(limit = 10, offset = offset, sort = null)
             val items = response.items
@@ -41,6 +46,7 @@ class RemoteRepository(
                 val price = item.close?.toLongOrNull() ?: 0L
                 val change = item.change?.toLongOrNull() ?: 0L
                 val changeRate = item.changeRate?.toDoubleOrNull() ?: 0.0
+                val isFav = savedFavorites.contains(item.ticker)
 
                 BriefingCardCache(
                     ticker = item.ticker,
@@ -50,12 +56,14 @@ class RemoteRepository(
                     changeRate = changeRate,
                     headline = item.summary, // 요약 텍스트는 item.summary에서 가져옴
                     label = null, confidence = null, // (company-list JSON에 label, confidence는 없으므로 null 처리)
-                    fetchedAt = baseTime + offset + index
+                    fetchedAt = baseTime + offset + index,
+                    isFavorite = isFav
                 )
             }
             // (3) DB 트랜잭션
             if (clear) briefingDao.clearAll()
             if (entities.isNotEmpty()) briefingDao.insertCards(entities)
+            briefingDao.syncFavorites()
             response.asOf
         } catch (e: Exception) {
             e.printStackTrace()
@@ -79,5 +87,35 @@ class RemoteRepository(
 
     override suspend fun getStockOverview(ticker: String): StockOverviewDto {
         return api.getStockOverview(ticker)
+    }
+
+    //  즐겨찾기 토글 (Optimistic Update: DB 먼저 -> 서버 나중)
+    override suspend fun toggleFavorite(ticker: String, isActive: Boolean): Boolean {
+        //  로컬 DB 즉시 반영 (화면이 바로 바뀜)
+        //briefingDao.updateFavorite(ticker, isActive)
+        /*
+        try {
+            // 2. 현재 나의 모든 즐겨찾기 목록을 가져옴
+            val currentFavorites = briefingDao.getFavoriteTickers().toMutableSet()
+
+            // (혹시 모를 DB 갱신 시차 고려, 확실하게 처리)
+            if (isActive) currentFavorites.add(ticker)
+            else currentFavorites.remove(ticker)
+
+            // 3. 서버에 통째로 전송 (SetPortfolio)
+            // (주의: PortfolioRequest가 { "portfolio": ["005930", "000660"] } 형태여야 함)
+            api.setPortfolio(PortfolioRequest(currentFavorites))
+        } catch (e: Exception) {
+            e.printStackTrace()
+            // 실패하면? 나중에 다시 동기화하거나 조용히 넘어감 (UX 방해 X)
+        }*/
+        if (isActive) {
+            briefingDao.insertFavorite(FavoriteTicker(ticker))
+        } else {
+            briefingDao.deleteFavorite(ticker)
+        }
+        // 화면 갱신을 위해 동기화
+        briefingDao.syncFavorites()
+        return true
     }
 }

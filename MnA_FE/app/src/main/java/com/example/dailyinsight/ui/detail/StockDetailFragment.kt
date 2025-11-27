@@ -74,7 +74,7 @@ class StockDetailFragment : Fragment(R.layout.fragment_stock_detail) {
     }
 
     private val xSdf = java.text.SimpleDateFormat("MM/dd", java.util.Locale.KOREA)
-    private var currentXAxisFormat = "MM/dd" // 선택된 X축 날짜 포맷
+    private var currentXAxisFormat = "yyyy/MM/dd" // 선택된 X축 날짜 포맷
     // 차트 기간
     private enum class Range { W1, M1, M3, M6, YTD, Y1, Y3, Y5 }
 
@@ -492,7 +492,6 @@ class StockDetailFragment : Fragment(R.layout.fragment_stock_detail) {
             Range.Y3 -> Calendar.getInstance().apply { add(Calendar.YEAR, -3) }.timeInMillis
             Range.Y5 -> Calendar.getInstance().apply { add(Calendar.YEAR, -5) }.timeInMillis
         }
-        currentXAxisFormat = "yyyy/MM"
         val filteredEntries = mutableListOf<Entry>()
         val filteredLabels = mutableListOf<String>()
 
