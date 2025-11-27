@@ -17,4 +17,30 @@ interface BriefingDao {
 
     @Query("DELETE FROM briefing_cards")
     suspend fun clearAll()
+
+    // 즐겨찾기 전용 테이블 조작 함수
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insertFavorite(item: FavoriteTicker)
+
+    @Query("DELETE FROM favorite_tickers WHERE ticker = :ticker")
+    suspend fun deleteFavorite(ticker: String)
+
+    @Query("SELECT ticker FROM favorite_tickers")
+    suspend fun getAllFavoriteTickers(): List<String>
+
+    // 브리핑 카드 + 즐겨찾기 조인 업데이트
+    // (화면에 보이는 리스트의 별표 상태를 '즐겨찾기 테이블' 보고 동기화)
+    @Query("""
+        UPDATE briefing_cards 
+        SET isFavorite = (ticker IN (SELECT ticker FROM favorite_tickers))
+    """)
+    suspend fun syncFavorites()
+
+    //  즐겨찾기 상태만 업데이트 (전체 덮어쓰기 X)
+    @Query("UPDATE briefing_cards SET isFavorite = :isFavorite WHERE ticker = :ticker")
+    suspend fun updateFavorite(ticker: String, isFavorite: Boolean)
+
+    //  현재 즐겨찾기된 Ticker 목록 (서버 전송용)
+    @Query("SELECT ticker FROM briefing_cards WHERE isFavorite = 1")
+    suspend fun getFavoriteTickers(): List<String>
 }

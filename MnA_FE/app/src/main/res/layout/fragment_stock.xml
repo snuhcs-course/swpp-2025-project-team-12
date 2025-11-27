@@ -32,38 +32,45 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent">
 
-        <com.google.android.material.chip.ChipGroup
-            android:id="@+id/chipGroup"
+        <LinearLayout
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            app:singleLine="true"
-            app:selectionRequired="true"
-            app:singleSelection="true">
+            android:orientation="horizontal">
 
-            <com.google.android.material.chip.Chip
-                android:id="@+id/chipAi"
-                android:background="@drawable/selector_chip_background"
+        <com.google.android.material.chip.Chip
+            android:id="@+id/chipInterest"
+            style="@style/Widget.MaterialComponents.Chip.Filter"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="관심종목"
+            android:checkable="true"
+            android:layout_marginEnd="10dp"/>
+
+            <com.google.android.material.chip.ChipGroup
+                android:id="@+id/chipGroup"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="관심종목"
-                android:checked="true"/>
+                app:selectionRequired="true"
+                app:singleLine="true"
+                app:singleSelection="true">
 
-            <com.google.android.material.chip.Chip
-                android:id="@+id/chipVolume"
-                android:background="@drawable/selector_chip_background"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="산업"/>
+                <com.google.android.material.chip.Chip
+                    android:id="@+id/chipIndustry"
+                    style="@style/Widget.MaterialComponents.Chip.Choice"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="산업 ▼" />
 
-            <com.google.android.material.chip.Chip
-                android:id="@+id/chipRise"
-                android:background="@drawable/selector_chip_background"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="규모"/>
+                <com.google.android.material.chip.Chip
+                    android:id="@+id/chipSize"
+                    style="@style/Widget.MaterialComponents.Chip.Choice"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="규모 ▼" />
 
 
-        </com.google.android.material.chip.ChipGroup>
+            </com.google.android.material.chip.ChipGroup>
+        </LinearLayout>
     </HorizontalScrollView>
 
     <TextView

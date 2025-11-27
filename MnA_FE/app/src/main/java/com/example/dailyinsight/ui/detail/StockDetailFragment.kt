@@ -74,7 +74,7 @@ class StockDetailFragment : Fragment(R.layout.fragment_stock_detail) {
     }
 
     private val xSdf = java.text.SimpleDateFormat("MM/dd", java.util.Locale.KOREA)
-    private var currentXAxisFormat = "MM/dd" // 선택된 X축 날짜 포맷
+    private var currentXAxisFormat = "yyyy/MM/dd" // 선택된 X축 날짜 포맷
     // 차트 기간
     private enum class Range { W1, M1, M3, M6, YTD, Y1, Y3, Y5 }
 
@@ -156,6 +156,8 @@ class StockDetailFragment : Fragment(R.layout.fragment_stock_detail) {
     private var isReportReady = false
     private var isOverviewReady = false
 
+    private var isChartReady = false
+
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
@@ -196,7 +198,7 @@ class StockDetailFragment : Fragment(R.layout.fragment_stock_detail) {
                 // 3. 개요 정보(요약 텍스트) 관찰
                 launch {
                     viewModel.overviewState.collect { state ->
-                        if (_binding == null) return@collect // 🚨 뷰 없으면 중단
+                        if (_binding == null) return@collect //  뷰 없으면 중단
 
                         when (state) {
                             is LoadResult.Success -> {
@@ -220,22 +222,33 @@ class StockDetailFragment : Fragment(R.layout.fragment_stock_detail) {
                 launch {
                     viewModel.priceState.collect { state ->
                         if (_binding == null) return@collect
-                        if (state is LoadResult.Success) {
-                            // 데이터 꺼내기 (MPAndroidChart 구조에 맞춰 안전하게 추출)
-                            val lineData = state.data.chart.data
-                            if (lineData.dataSetCount > 0) {
-                                val set = lineData.getDataSetByIndex(0) as LineDataSet
+                        when (state) {
+                            is LoadResult.Success -> {
+                                val lineData = state.data.chart.data
+                                if (lineData.dataSetCount > 0) {
+                                    val set = lineData.getDataSetByIndex(0) as LineDataSet
 
-                                // 1. 변수에 저장 (나중에 버튼 누를 때 씀)
-                                chartData = set.values.toList() // 복사해서 저장
-                                chartLabels = state.data.chart.xLabels
+                                    // 1. 변수에 저장 (나중에 버튼 누를 때 씀)
+                                    chartData = set.values.toList()
+                                    chartLabels = state.data.chart.xLabels
 
-                                // 2. 버튼 활성화 및 그리기
-                                binding.btnGroupRange.isEnabled = true
-                                renderChart(currentRange)
+                                    // 2. 버튼 활성화 및 그리기
+                                    binding.btnGroupRange.isEnabled = true
+                                    renderChart(currentRange)
 
-                                Log.d("StockDetail", "Chart Loaded: Success")
+                                    Log.d("StockDetail", "Chart Loaded: Success")
+                                }
+                                //  성공했으니 로딩 완료 신호 보냄
+                                isChartReady = true
+                                checkAllLoaded()
                             }
+                            is LoadResult.Error -> {
+                                Log.e("StockDetail", "Chart Failed: ${state.throwable.message}")
+                                // 실패했더라도 로딩은 끝난 것으로 처리 (그래야 화면이 뜸)
+                                isChartReady = true
+                                checkAllLoaded()
+                            }
+                            else -> {} // Loading 상태 등 무시
                         }
                     }
                 }
@@ -262,7 +275,7 @@ class StockDetailFragment : Fragment(R.layout.fragment_stock_detail) {
     // 로딩 완료 판별 함수
     private fun checkAllLoaded() {
         // 두 데이터가 모두 준비되었을 때만 로딩 화면 제거
-        if (isReportReady && isOverviewReady) {
+        if (isReportReady && isOverviewReady && isChartReady) {
             // 부드럽게 사라지게 애니메이션 적용
             binding.loadingOverlay.animate()
                 .alpha(0f)
@@ -479,7 +492,6 @@ class StockDetailFragment : Fragment(R.layout.fragment_stock_detail) {
             Range.Y3 -> Calendar.getInstance().apply { add(Calendar.YEAR, -3) }.timeInMillis
             Range.Y5 -> Calendar.getInstance().apply { add(Calendar.YEAR, -5) }.timeInMillis
         }
-        currentXAxisFormat = if (range == Range.Y1 ||range == Range.Y3 || range == Range.Y5) "yyyy/MM" else "MM/dd"
         val filteredEntries = mutableListOf<Entry>()
         val filteredLabels = mutableListOf<String>()
 
