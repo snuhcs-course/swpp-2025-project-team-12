@@ -368,6 +368,18 @@ class APIView(viewsets.ViewSet):
                 description="Industry filter",
                 type=openapi.TYPE_STRING,
             ),
+            openapi.Parameter(
+                "min",
+                openapi.IN_QUERY,
+                description="Minimum rank (by capacity)",
+                type=openapi.TYPE_STRING
+            ),
+            openapi.Parameter(
+                "max",
+                openapi.IN_QUERY,
+                description="Maximum rank (by capacity)",
+                type=openapi.TYPE_STRING
+            )
         ],
         responses={200: CompanyListResponseSerializer()},
     )
@@ -375,62 +387,67 @@ class APIView(viewsets.ViewSet):
     @default_error_handler
     def get_company_list(self, request):
         limit, offset = get_pagination(request, default_limit=10, max_limit=100)
-        market = request.GET.get("market", None)
-        industry = request.GET.get("industry", None)
+        market      = request.GET.get("market", None)
+        industry    = request.GET.get("industry", "")
+        min_rank    = int(request.GET.get("min", 0))
+        max_rank    = int(request.GET.get("max", 0))
 
-        if market:
-            market = market.upper()
+        if market: market = market.upper()
 
-        try:
-            df = store.get_data("instant_df")
-            if df is None:
-                return degraded(
-                    "Data not loaded in cache", source="cache", total=0, limit=limit, offset=offset
-                )
-
-            latest_date = df["date"].max()
-            df_latest = df[df["date"] == latest_date]
-
-            # if market is set, filter by market
-            if market and "market" in df_latest.columns:
-                df_latest = df_latest[df_latest["market"] == market]
-
-            if industry and "industry" in df_latest.columns:
-                df_latest = df_latest[df_latest["industry"] == industry]
-
-            total = len(df_latest)
-            page_df = df_latest.iloc[offset : offset + limit]
-
-            company_overview = get_latest_overview("company-overview")
-
-            items = [
-                {
-                    "ticker": row["ticker"],
-                    "name": str(row["name"]),
-                    "close": row["close"],
-                    "change": row["change"],
-                    "change_rate": row["change_rate"],
-                    "summary": json.loads(company_overview.get(row["ticker"], "{}")).get(
-                        "summary", None
-                    ),
-                }
-                for idx, row in page_df.iterrows()
-            ]
-
-            return ok(
-                {
-                    "items": items,
-                    "total": total,
-                    "limit": limit,
-                    "offset": offset,
-                    "source": "cache",
-                    "asOf": str(latest_date) if latest_date else iso_now(),
-                }
+        df = store.get_data("instant_df")
+        if df is None:
+            return degraded(
+                "Data not loaded in cache", source="cache", total=0, limit=limit, offset=offset
             )
 
-        except Exception as e:
-            debug_print(e)
-            return degraded(str(e), source="cache", total=0, limit=limit, offset=offset)
+        latest_date = df["date"].max()
+        df_latest = df[df["date"] == latest_date]
+
+        if max_rank == 0: max_rank = len(df_latest)
+        max_rank = min(max_rank, len(df_latest))
+        if min_rank > max_rank: raise ValueError("min cannot be greater than max")
+        df_latest = df_latest.iloc[min_rank:max_rank + 1]
+
+        # if market is set, filter by market
+        if market and "market" in df_latest.columns:
+            df_latest = df_latest[df_latest["market"] == market]
+
+        df_latest = df_latest[df_latest["industry"].str.contains(industry)]
+
+        total = len(df_latest)
+        page_df = df_latest.iloc[offset: offset + limit]
+
+        tags = set()
+        for idx, row in page_df.iterrows():
+            tags.add(row["industry"])
+        print(tags)
+
+        company_overview = get_latest_overview("company-overview")
+
+        items = [
+            {
+                "ticker": row["ticker"],
+                "name": str(row["name"]),
+                "close": row["close"],
+                "change": row["change"],
+                "change_rate": row["change_rate"],
+                "summary": json.loads(company_overview.get(row["ticker"], "{}")).get(
+                    "summary", None
+                ),
+            }
+            for idx, row in page_df.iterrows()
+        ]
+
+        return ok(
+            {
+                "items": items,
+                "total": total,
+                "limit": limit,
+                "offset": offset,
+                "source": "cache",
+                "asOf": str(latest_date) if latest_date else iso_now(),
+            }
+        )
 
     @swagger_auto_schema(
         operation_description="Get company profile descriptions from cache",
