@@ -12,8 +12,11 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.widget.addTextChangedListener
+import androidx.datastore.preferences.core.edit
 import androidx.lifecycle.lifecycleScope
 import com.example.dailyinsight.R
+import com.example.dailyinsight.data.datastore.CookieKeys
+import com.example.dailyinsight.data.datastore.cookieDataStore
 import com.example.dailyinsight.data.dto.ChangeNameRequest
 import com.example.dailyinsight.data.dto.LogInResponse
 import com.example.dailyinsight.data.dto.SignUpResponse
@@ -25,6 +28,8 @@ import com.google.android.material.button.MaterialButton
 import com.google.android.material.textfield.TextInputEditText
 import com.google.android.material.textfield.TextInputLayout
 import com.google.gson.Gson
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import retrofit2.Call
 
@@ -95,6 +100,11 @@ class ChangeNameActivity : AppCompatActivity() {
 
             if (response.isSuccessful) {
                 Toast.makeText(this@ChangeNameActivity, R.string.on_change_successful, Toast.LENGTH_SHORT).show()
+                CoroutineScope(Dispatchers.IO).launch {
+                    applicationContext.cookieDataStore.edit { prefs ->
+                        prefs[CookieKeys.USERNAME] = id
+                    }
+                }
             } else {
                 val result = response.errorBody()?.string()
                 val message = Gson().fromJson(result, LogInResponse::class.java).message
