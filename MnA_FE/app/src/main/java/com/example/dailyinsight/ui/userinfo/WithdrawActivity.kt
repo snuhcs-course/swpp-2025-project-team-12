@@ -74,34 +74,34 @@ class WithdrawActivity : AppCompatActivity() {
                 }
                 .setPositiveButton(R.string.yes_button) { dialog, which ->
                     // Respond to positive button press
-                    RetrofitInstance.api.withdraw()
-                        .enqueue(object : retrofit2.Callback<UserProfileResponse> {
-                            override fun onResponse(
-                                call: Call<UserProfileResponse>,
-                                response: retrofit2.Response<UserProfileResponse>
-                            ) {
-                                if (response.isSuccessful) {
-                                    Toast.makeText(this@WithdrawActivity, R.string.on_withdraw_successful, Toast.LENGTH_SHORT).show()
-                                    // if successful
-                                    RetrofitInstance.cookieJar.clear()
-                                    val intent = Intent(this@WithdrawActivity, StartActivity::class.java)
-                                    finishAffinity()
-                                    startActivity(intent)
-                                } else {
-                                    val result = response.errorBody()?.string()
-                                    val message = Gson().fromJson(result, LogInResponse::class.java).message
-                                    Log.e("withdraw", "response with ${response.code()}: $message")
-                                    Toast.makeText(this@WithdrawActivity, R.string.on_withdraw_unsuccessful, Toast.LENGTH_SHORT).show()
-                                }
-                            }
-
-                            override fun onFailure(call: Call<UserProfileResponse>, t: Throwable) {
-                                Toast.makeText(this@WithdrawActivity, R.string.on_api_failure, Toast.LENGTH_SHORT)
-                                    .show()
-                            }
-                        })
+                    lifecycleScope.launch {
+                        withdraw()
+                    }
                 }
                 .show()
+        }
+    }
+
+    suspend fun withdraw() {
+        try {
+            val response = RetrofitInstance.api.withdraw()
+            if (response.isSuccessful) {
+                Toast.makeText(this@WithdrawActivity, R.string.on_withdraw_successful, Toast.LENGTH_SHORT).show()
+                // if successful
+                RetrofitInstance.cookieJar.clear()
+                val intent = Intent(this@WithdrawActivity, StartActivity::class.java)
+                finishAffinity()
+                startActivity(intent)
+            } else {
+                val result = response.errorBody()?.string()
+                val message = Gson().fromJson(result, LogInResponse::class.java).message
+                Log.e("withdraw", "response with ${response.code()}: $message")
+                Toast.makeText(this@WithdrawActivity, R.string.on_withdraw_unsuccessful, Toast.LENGTH_SHORT).show()
+            }
+        } catch (e: Exception) {
+            Log.e("withdraw", "exception on api call")
+            e.printStackTrace()
+            Toast.makeText(this@WithdrawActivity, R.string.on_api_failure, Toast.LENGTH_SHORT).show()
         }
     }
 }

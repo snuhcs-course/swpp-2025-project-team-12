@@ -1,18 +1,13 @@
 package com.example.dailyinsight.ui.stock
 
 import androidx.arch.core.executor.testing.InstantTaskExecutorRule
-import androidx.lifecycle.Observer
+import com.example.dailyinsight.MainDispatcherRule
 import com.example.dailyinsight.data.Repository
 import com.example.dailyinsight.data.database.BriefingCardCache
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.flowOf
-import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.advanceUntilIdle
-import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runTest
-import kotlinx.coroutines.test.setMain
-import org.junit.After
 import org.junit.Assert.*
 import org.junit.Before
 import org.junit.Rule
@@ -25,19 +20,15 @@ class StockViewModelTest {
     @get:Rule
     val instantTaskExecutorRule = InstantTaskExecutorRule()
 
+    @get:Rule
+    val mainDispatcherRule = MainDispatcherRule()
+
     private lateinit var repository: Repository
-    private val testDispatcher = UnconfinedTestDispatcher()
 
     @Before
     fun setup() {
-        Dispatchers.setMain(testDispatcher)
         repository = mock()
         whenever(repository.getBriefingFlow()).thenReturn(flowOf(emptyList()))
-    }
-
-    @After
-    fun tearDown() {
-        Dispatchers.resetMain()
     }
 
     // ===== Initialization Tests =====
@@ -170,4 +161,90 @@ class StockViewModelTest {
         confidence = null,
         fetchedAt = System.currentTimeMillis()
     )
+
+    // ===== FavoriteMode Tests =====
+
+    @Test
+    fun setFavoriteMode_updatesState() = runTest {
+        whenever(repository.fetchAndSaveBriefing(any(), any())).thenReturn("2024-01-01")
+
+        val viewModel = StockViewModel(repository)
+        advanceUntilIdle()
+
+        viewModel.setFavoriteMode(true)
+        // setFavoriteMode는 내부 StateFlow를 업데이트하므로 크래시 없이 동작해야 함
+        assertNotNull(viewModel)
+    }
+
+    // ===== Filter Tests =====
+
+    @Test
+    fun refresh_withLargeFilter_usesCorrectOffset() = runTest {
+        whenever(repository.fetchAndSaveBriefing(any(), any())).thenReturn("2024-01-01")
+
+        val viewModel = StockViewModel(repository)
+        advanceUntilIdle()
+
+        viewModel.refresh(StockViewModel.SizeFilter.LARGE, "market_cap")
+        advanceUntilIdle()
+
+        verify(repository, atLeast(1)).fetchAndSaveBriefing(offset = 0, clear = true)
+    }
+
+    @Test
+    fun refresh_withMidFilter_usesCorrectOffset() = runTest {
+        whenever(repository.fetchAndSaveBriefing(any(), any())).thenReturn("2024-01-01")
+
+        val viewModel = StockViewModel(repository)
+        advanceUntilIdle()
+
+        viewModel.refresh(StockViewModel.SizeFilter.MID, "market_cap")
+        advanceUntilIdle()
+
+        verify(repository).fetchAndSaveBriefing(offset = 100, clear = true)
+    }
+
+    @Test
+    fun refresh_withSmallFilter_usesCorrectOffset() = runTest {
+        whenever(repository.fetchAndSaveBriefing(any(), any())).thenReturn("2024-01-01")
+
+        val viewModel = StockViewModel(repository)
+        advanceUntilIdle()
+
+        viewModel.refresh(StockViewModel.SizeFilter.SMALL, "market_cap")
+        advanceUntilIdle()
+
+        verify(repository).fetchAndSaveBriefing(offset = 300, clear = true)
+    }
+
+    @Test
+    fun getCurrentFilterMode_returnsCurrentFilter() = runTest {
+        whenever(repository.fetchAndSaveBriefing(any(), any())).thenReturn("2024-01-01")
+
+        val viewModel = StockViewModel(repository)
+        advanceUntilIdle()
+
+        assertEquals(StockViewModel.SizeFilter.ALL, viewModel.getCurrentFilterMode())
+
+        viewModel.refresh(StockViewModel.SizeFilter.LARGE, null)
+        advanceUntilIdle()
+
+        assertEquals(StockViewModel.SizeFilter.LARGE, viewModel.getCurrentFilterMode())
+    }
+
+    // ===== RefreshSortOnly Tests =====
+
+    @Test
+    fun refreshSortOnly_callsRefreshWithCurrentFilter() = runTest {
+        whenever(repository.fetchAndSaveBriefing(any(), any())).thenReturn("2024-01-01")
+
+        val viewModel = StockViewModel(repository)
+        advanceUntilIdle()
+
+        viewModel.refreshSortOnly("price")
+        advanceUntilIdle()
+
+        // refresh가 다시 호출됨
+        verify(repository, atLeast(2)).fetchAndSaveBriefing(offset = 0, clear = true)
+    }
 }

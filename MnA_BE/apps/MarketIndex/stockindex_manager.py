@@ -3,6 +3,9 @@ Korean stock market data manager (KOSPI & KOSDAQ only).
 Fetches data at 3:35 PM KST after market close.
 Stores data in S3 with partitioning AND local JSON files.
 Provides comprehensive data query methods.
+
+UAT Support: When UAT_DATE environment variable is set,
+returns data on or before that date.
 """
 
 import json
@@ -14,6 +17,15 @@ import pandas as pd
 from pathlib import Path
 import boto3
 from botocore.exceptions import ClientError
+
+# UAT 날짜 유틸리티 import
+try:
+    from utils.uat_date import get_uat_date
+except ImportError:
+
+    def get_uat_date():
+        return None
+
 
 # S3 설정
 S3_BUCKET_NAME = "swpp-12-bucket"
@@ -28,6 +40,9 @@ class StockindexManager:
     Manages KOSPI and KOSDAQ data in both S3 and local storage.
     Designed to run at 3:35 PM KST after market close.
     Provides comprehensive query and analysis methods.
+
+    UAT Mode: When UAT_DATE env is set, queries return data
+    on or before that date instead of the latest.
     """
 
     def __init__(self, data_dir_name: str = "stockindex", use_s3: bool = True):
@@ -55,6 +70,34 @@ class StockindexManager:
 
         self.max_days = 365  # Keep 1 year of history
         self.market_close_time = "15:30"  # Korean market closes at 3:30 PM
+
+    def _get_target_date(self, data: Dict) -> Optional[str]:
+        """
+        Get target date based on UAT mode.
+
+        UAT mode: returns the most recent date on or before UAT_DATE
+        Normal mode: returns the latest date
+
+        Args:
+            data: Dictionary with date strings as keys
+
+        Returns:
+            Target date string or None if no valid date found
+        """
+        if not data:
+            return None
+
+        uat_date = get_uat_date()
+
+        if uat_date:
+            # UAT 모드: 해당 날짜 이전의 가장 최근 데이터
+            valid_dates = [d for d in data.keys() if d <= uat_date]
+            if valid_dates:
+                return max(valid_dates)
+            return None
+        else:
+            # 일반 모드: 최신 날짜
+            return max(data.keys())
 
     def _get_local_file_path(self, index_type: str) -> Path:
         """Get the local JSON file path for an index."""
@@ -346,14 +389,20 @@ class StockindexManager:
         return results
 
     def get_latest(self) -> Dict:
-        """Get the latest data for both indices from local storage."""
+        """
+        Get the latest data for both indices from local storage.
+
+        UAT mode: Returns data on or before UAT_DATE
+        Normal mode: Returns the most recent data
+        """
         result = {}
 
         for index in self.indices.keys():
             data = self._load_local_data(index)
             if data:
-                latest_date = max(data.keys())
-                result[index] = data[latest_date]
+                target_date = self._get_target_date(data)
+                if target_date:
+                    result[index] = data[target_date]
 
         return result
 
@@ -364,6 +413,9 @@ class StockindexManager:
         Args:
             index_type: 'KOSPI' or 'KOSDAQ'
             days: Number of days (default: 30)
+
+        UAT mode: Returns data up to UAT_DATE
+        Normal mode: Returns the most recent N days
         """
         if index_type not in self.indices:
             raise ValueError(f"Invalid index. Choose 'KOSPI' or 'KOSDAQ'")
@@ -373,30 +425,56 @@ class StockindexManager:
         if not data:
             return []
 
-        # Get last N days (oldest to newest)
-        sorted_dates = sorted(data.keys(), reverse=True)[:days]
+        uat_date = get_uat_date()
+
+        if uat_date:
+            # UAT 모드: UAT 날짜 이전의 데이터만 필터링
+            valid_dates = [d for d in data.keys() if d <= uat_date]
+            sorted_dates = sorted(valid_dates, reverse=True)[:days]
+        else:
+            # 일반 모드: 최신 N일
+            sorted_dates = sorted(data.keys(), reverse=True)[:days]
+
+        # oldest to newest
         sorted_dates.reverse()
 
         return [data[date] for date in sorted_dates]
 
     def get_summary(self) -> Dict:
-        """Get summary statistics for KOSPI and KOSDAQ from local storage."""
+        """
+        Get summary statistics for KOSPI and KOSDAQ from local storage.
+
+        UAT mode: Calculates statistics based on data up to UAT_DATE
+        Normal mode: Uses all available data
+        """
         summary = {}
+        uat_date = get_uat_date()
 
         for index in self.indices.keys():
             data = self._load_local_data(index)
 
             if data:
-                # Last 30 days
-                sorted_dates = sorted(data.keys(), reverse=True)[:30]
-                prices = [data[d]["close"] for d in sorted_dates]
+                if uat_date:
+                    # UAT 모드: UAT 날짜 이전 데이터만
+                    valid_data = {d: v for d, v in data.items() if d <= uat_date}
+                else:
+                    valid_data = data
 
-                latest = data[sorted_dates[0]]
+                if not valid_data:
+                    continue
+
+                # Last 30 days
+                sorted_dates = sorted(valid_data.keys(), reverse=True)[:30]
+                prices = [valid_data[d]["close"] for d in sorted_dates]
+
+                latest = valid_data[sorted_dates[0]]
 
                 # Calculate 52-week high/low if we have enough data
-                sorted_all = sorted(data.keys(), reverse=True)[:252]  # ~1 year of trading days
+                sorted_all = sorted(valid_data.keys(), reverse=True)[
+                    :252
+                ]  # ~1 year of trading days
                 year_prices = (
-                    [data[d]["close"] for d in sorted_all] if len(sorted_all) > 0 else prices
+                    [valid_data[d]["close"] for d in sorted_all] if len(sorted_all) > 0 else prices
                 )
 
                 summary[index] = {
@@ -409,7 +487,7 @@ class StockindexManager:
                     "30d_avg": round(sum(prices) / len(prices), 2) if prices else None,
                     "52w_high": max(year_prices) if year_prices else None,
                     "52w_low": min(year_prices) if year_prices else None,
-                    "data_points": len(data),
+                    "data_points": len(valid_data),
                 }
 
         return summary

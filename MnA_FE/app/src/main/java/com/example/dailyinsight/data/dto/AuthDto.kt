@@ -46,3 +46,7 @@ data class SetStyleResponse(
 data class UserNameResponse(
     val name: String
 )
+
+data class UserApiResponse(
+    val message: String
+)

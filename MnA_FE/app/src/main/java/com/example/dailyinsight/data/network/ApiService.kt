@@ -79,17 +79,17 @@ interface ApiService {
 
     // ============ Authentication ============
     @GET("user/csrf")
-    fun setCsrf(): Call<CsrfResponse>
+    suspend fun setCsrf(): Response<CsrfResponse>
 
     @POST("user/login")
-    fun logIn(
+    suspend fun logIn(
         @Body request: LogInRequest
-    ): Call<LogInResponse>
+    ): Response<UserApiResponse>
 
     @POST("user/signup")
-    fun signUp(
+    suspend fun signUp(
         @Body request: SignUpRequest
-    ): Call<SignUpResponse>
+    ): Response<UserApiResponse>
 
     @POST("user/style/")
     fun setStyle(
@@ -107,18 +107,18 @@ interface ApiService {
 
     // ============ User Info ============
     @POST("user/logout")
-    fun logOut(): Call<UserProfileResponse>
+    suspend fun logOut(): Response<UserApiResponse>
 
     @DELETE("user/withdraw")
-    fun withdraw(): Call<UserProfileResponse>
+    suspend fun withdraw(): Response<UserApiResponse>
 
     @POST("user/info/name")
-    fun changeName(
+    suspend fun changeName(
         @Body request: ChangeNameRequest
-    ): Call<UserProfileResponse>
+    ): Response<UserApiResponse>
 
     @PUT("user/info/password")
-    fun changePassword(
+    suspend fun changePassword(
         @Body password: ChangePasswordRequest
-    ): Call<UserProfileResponse>
+    ): Response<UserApiResponse>
 }

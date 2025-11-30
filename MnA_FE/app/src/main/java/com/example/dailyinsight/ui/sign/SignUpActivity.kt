@@ -113,7 +113,9 @@ class SignUpActivity : AppCompatActivity() {
             if(PWText.error != null) return@setOnClickListener
 
             // send signup request to the server
-            sendSignupRequest(id, password)
+            lifecycleScope.launch {
+                sendSignupRequest(id, password)
+            }
         }
     }
 
@@ -131,7 +133,7 @@ class SignUpActivity : AppCompatActivity() {
         else PasswordState.VALID
     }
 
-    fun sendSignupRequest(id: String, password: String) {
+    suspend fun sendSignupRequest(id: String, password: String) {
         /**
          * send signup request to the server with given id and password
          * @id : id
@@ -139,34 +141,58 @@ class SignUpActivity : AppCompatActivity() {
          **/
         val request = SignUpRequest(id = id, password = password)
 
-        RetrofitInstance.api.signUp(request)
-            .enqueue(object : retrofit2.Callback<SignUpResponse> {
-                override fun onResponse(
-                    call: Call<SignUpResponse>,
-                    response: retrofit2.Response<SignUpResponse>
-                ) {
-                    if (response.isSuccessful) {
-                        CoroutineScope(Dispatchers.IO).launch {
-                            applicationContext.cookieDataStore.edit { prefs ->
-                                prefs[CookieKeys.USERNAME] = id
-                            }
-                        }
-                        val intent = Intent(this@SignUpActivity, MainActivity::class.java)
-                        finishAffinity()
-                        startActivity(intent)
-                    } else {
-                        val result = response.errorBody()?.string()
-                        val message = Gson().fromJson(result, LogInResponse::class.java).message
-                        Log.e("Sign Up", "response with ${response.code()}: $message")
-                        // must show 'id already used' -> check id, pw formats before the api call
-                        Toast.makeText(this@SignUpActivity, R.string.id_already_in_use, Toast.LENGTH_SHORT).show()
+        try {
+            val response = RetrofitInstance.api.signUp(request)
+            if (response.isSuccessful) {
+                CoroutineScope(Dispatchers.IO).launch {
+                    applicationContext.cookieDataStore.edit { prefs ->
+                        prefs[CookieKeys.USERNAME] = id
                     }
                 }
+                val intent = Intent(this@SignUpActivity, MainActivity::class.java)
+                finishAffinity()
+                startActivity(intent)
+            } else {
+                val result = response.errorBody()?.string()
+                val message = Gson().fromJson(result, LogInResponse::class.java).message
+                Log.e("Sign Up", "response with ${response.code()}: $message")
+                // must show 'id already used' -> check id, pw formats before the api call
+                Toast.makeText(this@SignUpActivity, R.string.id_already_in_use, Toast.LENGTH_SHORT).show()
+            }
+        } catch (e: Exception) {
+            Log.e("Sign up", "exception on api call")
+            e.printStackTrace()
+            Toast.makeText(this@SignUpActivity, R.string.on_api_failure, Toast.LENGTH_SHORT).show()
+        }
 
-                override fun onFailure(call: Call<SignUpResponse>, t: Throwable) {
-                    Toast.makeText(this@SignUpActivity, R.string.on_api_failure, Toast.LENGTH_SHORT).show()
-                }
-            })
+//        RetrofitInstance.api.signUp(request)
+//            .enqueue(object : retrofit2.Callback<SignUpResponse> {
+//                override fun onResponse(
+//                    call: Call<SignUpResponse>,
+//                    response: retrofit2.Response<SignUpResponse>
+//                ) {
+//                    if (response.isSuccessful) {
+//                        CoroutineScope(Dispatchers.IO).launch {
+//                            applicationContext.cookieDataStore.edit { prefs ->
+//                                prefs[CookieKeys.USERNAME] = id
+//                            }
+//                        }
+//                        val intent = Intent(this@SignUpActivity, MainActivity::class.java)
+//                        finishAffinity()
+//                        startActivity(intent)
+//                    } else {
+//                        val result = response.errorBody()?.string()
+//                        val message = Gson().fromJson(result, LogInResponse::class.java).message
+//                        Log.e("Sign Up", "response with ${response.code()}: $message")
+//                        // must show 'id already used' -> check id, pw formats before the api call
+//                        Toast.makeText(this@SignUpActivity, R.string.id_already_in_use, Toast.LENGTH_SHORT).show()
+//                    }
+//                }
+//
+//                override fun onFailure(call: Call<SignUpResponse>, t: Throwable) {
+//                    Toast.makeText(this@SignUpActivity, R.string.on_api_failure, Toast.LENGTH_SHORT).show()
+//                }
+//            })
 
     }
 }

@@ -62,11 +62,11 @@ class SignInActivity : AppCompatActivity() {
             PWText.error = null
         }
 
-        val findPWButton = findViewById<MaterialButton>(R.id.findPWButton)
-        findPWButton.setOnClickListener {
-            // TODO - find PW (is implemented on server?)
-            Toast.makeText(this, R.string.not_implemented, Toast.LENGTH_SHORT).show()
-        }
+//        val findPWButton = findViewById<MaterialButton>(R.id.findPWButton)
+//        findPWButton.setOnClickListener {
+//            // TODO - find PW (is implemented on server?)
+//            Toast.makeText(this, R.string.not_implemented, Toast.LENGTH_SHORT).show()
+//        }
 
         loginButton.setOnClickListener {
             val id = IDTextField.text.toString().trim()
@@ -83,7 +83,9 @@ class SignInActivity : AppCompatActivity() {
                 return@setOnClickListener
             }
             // send login request to the server
-            sendLoginRequest(id, password)
+            lifecycleScope.launch {
+                sendLoginRequest(id, password)
+            }
         }
 
         // move to sign up activity
@@ -94,7 +96,7 @@ class SignInActivity : AppCompatActivity() {
         }
     }
 
-    fun sendLoginRequest(id: String, password: String) {
+    suspend fun sendLoginRequest(id: String, password: String) {
         /**
          * send login request to the server with given id and password
          * @id : id
@@ -102,32 +104,55 @@ class SignInActivity : AppCompatActivity() {
          **/
         val request = LogInRequest(id = id, password = password)
 
-        RetrofitInstance.api.logIn(request)
-            .enqueue(object : retrofit2.Callback<LogInResponse> {
-                override fun onResponse(
-                    call: Call<LogInResponse>,
-                    response: retrofit2.Response<LogInResponse>
-                ) {
-                    if (response.isSuccessful) {
-                        CoroutineScope(Dispatchers.IO).launch {
-                            applicationContext.cookieDataStore.edit { prefs ->
-                                prefs[CookieKeys.USERNAME] = id
-                            }
-                        }
-                        val intent = Intent(this@SignInActivity, MainActivity::class.java)
-                        finishAffinity()
-                        startActivity(intent)
-                    } else {
-                        val result = response.errorBody()?.string()
-                        val message = Gson().fromJson(result, LogInResponse::class.java).message
-                        Log.e("Sign In", "response with ${response.code()}: $message")
-                        Toast.makeText(this@SignInActivity, R.string.on_login_unsuccessful, Toast.LENGTH_SHORT).show()
+        try {
+            val response = RetrofitInstance.api.logIn(request)
+            if(response.isSuccessful) {
+                CoroutineScope(Dispatchers.IO).launch {
+                    applicationContext.cookieDataStore.edit { prefs ->
+                        prefs[CookieKeys.USERNAME] = id
                     }
                 }
+                val intent = Intent(this@SignInActivity, MainActivity::class.java)
+                finishAffinity()
+                startActivity(intent)
+            } else {
+                val result = response.errorBody()?.string()
+                val message = Gson().fromJson(result, LogInResponse::class.java).message
+                Log.e("Sign In", "response with ${response.code()}: $message")
+                Toast.makeText(this@SignInActivity, R.string.on_login_unsuccessful, Toast.LENGTH_SHORT).show()
+            }
+        } catch (e: Exception) {
+            Log.e("Sign In", "exception on api call")
+            e.printStackTrace()
+            Toast.makeText(this@SignInActivity, R.string.on_api_failure, Toast.LENGTH_SHORT).show()
+        }
 
-                override fun onFailure(call: Call<LogInResponse>, t: Throwable) {
-                    Toast.makeText(this@SignInActivity, R.string.on_api_failure, Toast.LENGTH_SHORT).show()
-                }
-            })
+//        RetrofitInstance.api.logIn(request)
+//            .enqueue(object : retrofit2.Callback<LogInResponse> {
+//                override fun onResponse(
+//                    call: Call<LogInResponse>,
+//                    response: retrofit2.Response<LogInResponse>
+//                ) {
+//                    if (response.isSuccessful) {
+//                        CoroutineScope(Dispatchers.IO).launch {
+//                            applicationContext.cookieDataStore.edit { prefs ->
+//                                prefs[CookieKeys.USERNAME] = id
+//                            }
+//                        }
+//                        val intent = Intent(this@SignInActivity, MainActivity::class.java)
+//                        finishAffinity()
+//                        startActivity(intent)
+//                    } else {
+//                        val result = response.errorBody()?.string()
+//                        val message = Gson().fromJson(result, LogInResponse::class.java).message
+//                        Log.e("Sign In", "response with ${response.code()}: $message")
+//                        Toast.makeText(this@SignInActivity, R.string.on_login_unsuccessful, Toast.LENGTH_SHORT).show()
+//                    }
+//                }
+//
+//                override fun onFailure(call: Call<LogInResponse>, t: Throwable) {
+//                    Toast.makeText(this@SignInActivity, R.string.on_api_failure, Toast.LENGTH_SHORT).show()
+//                }
+//            })
     }
 }

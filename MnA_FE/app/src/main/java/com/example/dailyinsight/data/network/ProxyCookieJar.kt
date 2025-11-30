@@ -4,6 +4,7 @@ import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.stringPreferencesKey
+import com.example.dailyinsight.data.datastore.CookieKeys
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.first
@@ -42,6 +43,7 @@ class ProxyCookieJar(
 
         val accessToken = prefs[stringPreferencesKey("access_token")]
         val refreshToken = prefs[stringPreferencesKey("refresh_token")]
+        val csrfToken = prefs[CookieKeys.CSRF_TOKEN]
 
         val cookies = mutableListOf<Cookie>()
 
@@ -62,6 +64,19 @@ class ProxyCookieJar(
             cookies.add(
                 Cookie.Builder()
                     .name("refresh_token")
+                    .value(it)
+                    .domain(url.host)
+                    .path("/")
+                    .httpOnly()
+                    .secure()
+                    .build()
+            )
+        }
+
+        csrfToken?.let {
+            cookies.add(
+                Cookie.Builder()
+                    .name("csrftoken")
                     .value(it)
                     .domain(url.host)
                     .path("/")
