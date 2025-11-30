@@ -1,4 +1,4 @@
-# **Iteration 4 Demo of Daily Insight**
+# **Iteration 5 Demo of Daily Insight**
 
 ## 1. Implemented Features
 
@@ -17,7 +17,7 @@
 ```bash
 git clone https://github.com/swsnu/swpp-2025-project-team-12.git
 cd swpp-2025-project-team-12
-git checkout iteration-3-demo
+git checkout iteration-5-demo
 ```
 
 Project structure overview:
@@ -109,4 +109,5 @@ https://www.youtube.com/shorts/7CM9Mn3g1Og
 
 
 ---
+
 
