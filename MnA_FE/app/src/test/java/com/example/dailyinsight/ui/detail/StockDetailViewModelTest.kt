@@ -1,18 +1,16 @@
 package com.example.dailyinsight.ui.detail
 
+import com.example.dailyinsight.MainDispatcherRule
 import com.example.dailyinsight.data.Repository
 import com.example.dailyinsight.data.dto.*
 import com.example.dailyinsight.ui.common.LoadResult
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.advanceUntilIdle
-import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runTest
-import kotlinx.coroutines.test.setMain
-import org.junit.After
 import org.junit.Assert.*
 import org.junit.Before
+import org.junit.Rule
 import org.junit.Test
 import org.mockito.kotlin.mock
 import org.mockito.kotlin.whenever
@@ -22,18 +20,19 @@ import java.io.IOException
 @ExperimentalCoroutinesApi
 class StockDetailViewModelTest {
 
+    @get:Rule
+    val mainDispatcherRule = MainDispatcherRule()
+
     private lateinit var repository: Repository
     private val testDispatcher = UnconfinedTestDispatcher()
 
     @Before
     fun setup() {
-        Dispatchers.setMain(testDispatcher)
         repository = mock()
     }
 
-    @After
-    fun tearDown() {
-        Dispatchers.resetMain()
+    private fun createViewModel(): StockDetailViewModel {
+        return StockDetailViewModel(repository, testDispatcher)
     }
 
     private fun createStockDetail(
@@ -101,7 +100,7 @@ class StockDetailViewModelTest {
         whenever(repository.getStockReport(ticker)).thenReturn(stockDetail)
         whenever(repository.getStockOverview(ticker)).thenReturn(stockOverview)
         
-        val viewModel = StockDetailViewModel(repository)
+        val viewModel = createViewModel()
         viewModel.load(ticker)
         advanceUntilIdle()
         
@@ -117,7 +116,7 @@ class StockDetailViewModelTest {
         whenever(repository.getStockReport(ticker)).thenAnswer { throw exception }
         whenever(repository.getStockOverview(ticker)).thenAnswer { throw exception }
         
-        val viewModel = StockDetailViewModel(repository)
+        val viewModel = createViewModel()
         viewModel.load(ticker)
         advanceUntilIdle()
         
@@ -128,7 +127,7 @@ class StockDetailViewModelTest {
 
     @Test
     fun initialState_isEmpty() {
-        val viewModel = StockDetailViewModel(repository)
+        val viewModel = createViewModel()
         assertTrue(viewModel.state.value is LoadResult.Empty)
         assertTrue(viewModel.priceState.value is LoadResult.Empty)
         assertTrue(viewModel.overviewState.value is LoadResult.Empty)
@@ -144,7 +143,7 @@ class StockDetailViewModelTest {
         whenever(repository.getStockReport(ticker)).thenReturn(detail)
         whenever(repository.getStockOverview(ticker)).thenReturn(overview)
         
-        val viewModel = StockDetailViewModel(repository)
+        val viewModel = createViewModel()
         viewModel.load(ticker)
         advanceUntilIdle()
         
@@ -166,7 +165,7 @@ class StockDetailViewModelTest {
         whenever(repository.getStockReport(ticker)).thenReturn(detail)
         whenever(repository.getStockOverview(ticker)).thenReturn(overview)
         
-        val viewModel = StockDetailViewModel(repository)
+        val viewModel = createViewModel()
         viewModel.load(ticker)
         advanceUntilIdle()
         
@@ -180,7 +179,7 @@ class StockDetailViewModelTest {
         whenever(repository.getStockReport(any())).thenAnswer { throw IOException("Timeout") }
         whenever(repository.getStockOverview(any())).thenAnswer { throw IOException("Timeout") }
         
-        val viewModel = StockDetailViewModel(repository)
+        val viewModel = createViewModel()
         viewModel.load("005930")
         advanceUntilIdle()
         
@@ -196,7 +195,7 @@ class StockDetailViewModelTest {
         whenever(repository.getStockReport("")).thenReturn(detail)
         whenever(repository.getStockOverview("")).thenReturn(overview)
         
-        val viewModel = StockDetailViewModel(repository)
+        val viewModel = createViewModel()
         viewModel.load("")
         advanceUntilIdle()
         
@@ -211,7 +210,7 @@ class StockDetailViewModelTest {
         whenever(repository.getStockReport(ticker)).thenReturn(detail)
         whenever(repository.getStockOverview(ticker)).thenReturn(overview)
         
-        val viewModel = StockDetailViewModel(repository)
+        val viewModel = createViewModel()
         viewModel.load(ticker)
         advanceUntilIdle()
         
@@ -222,9 +221,87 @@ class StockDetailViewModelTest {
 
     @Test
     fun viewModel_canBeRecreated() {
-        val vm1 = StockDetailViewModel(repository)
-        val vm2 = StockDetailViewModel(repository)
+        val vm1 = createViewModel()
+        val vm2 = createViewModel()
         assertNotNull(vm1)
         assertNotNull(vm2)
+    }
+
+    // ===== Price Chart Tests =====
+
+    @Test
+    fun load_withHistory_updatesPriceStateToSuccess() = runTest {
+        val ticker = "005930"
+        val detail = createStockDetail(ticker, hasHistory = true, historySize = 5)
+        val overview = createStockOverview(ticker)
+        whenever(repository.getStockReport(ticker)).thenReturn(detail)
+        whenever(repository.getStockOverview(ticker)).thenReturn(overview)
+
+        val viewModel = createViewModel()
+        viewModel.load(ticker)
+        advanceUntilIdle()
+
+        assertTrue(viewModel.priceState.value is LoadResult.Success)
+    }
+
+    @Test
+    fun load_withEmptyHistory_handlesPriceChartGracefully() = runTest {
+        val ticker = "005930"
+        val detail = createStockDetail(ticker, hasHistory = true, historySize = 0)
+        val overview = createStockOverview(ticker)
+        whenever(repository.getStockReport(ticker)).thenReturn(detail)
+        whenever(repository.getStockOverview(ticker)).thenReturn(overview)
+
+        val viewModel = createViewModel()
+        viewModel.load(ticker)
+        advanceUntilIdle()
+
+        // 빈 히스토리도 성공으로 처리
+        assertTrue(viewModel.priceState.value is LoadResult.Success)
+    }
+
+    @Test
+    fun load_withNullHistory_handlesPriceChartGracefully() = runTest {
+        val ticker = "005930"
+        val detail = createStockDetail(ticker, hasHistory = false)
+        val overview = createStockOverview(ticker)
+        whenever(repository.getStockReport(ticker)).thenReturn(detail)
+        whenever(repository.getStockOverview(ticker)).thenReturn(overview)
+
+        val viewModel = createViewModel()
+        viewModel.load(ticker)
+        advanceUntilIdle()
+
+        // null 히스토리도 성공으로 처리 (빈 차트)
+        assertTrue(viewModel.priceState.value is LoadResult.Success)
+    }
+
+    @Test
+    fun load_reportError_updatesPriceStateToError() = runTest {
+        val ticker = "005930"
+        whenever(repository.getStockReport(ticker)).thenAnswer { throw IOException("Error") }
+        whenever(repository.getStockOverview(ticker)).thenReturn(createStockOverview(ticker))
+
+        val viewModel = createViewModel()
+        viewModel.load(ticker)
+        advanceUntilIdle()
+
+        assertTrue(viewModel.priceState.value is LoadResult.Error)
+    }
+
+    @Test
+    fun load_overviewError_stateStillSuccess() = runTest {
+        val ticker = "005930"
+        val detail = createStockDetail(ticker)
+        whenever(repository.getStockReport(ticker)).thenReturn(detail)
+        whenever(repository.getStockOverview(ticker)).thenAnswer { throw IOException("Overview error") }
+
+        val viewModel = createViewModel()
+        viewModel.load(ticker)
+        advanceUntilIdle()
+
+        // report는 성공, overview만 실패
+        assertTrue(viewModel.state.value is LoadResult.Success)
+        assertTrue(viewModel.overviewState.value is LoadResult.Error)
     }
 }

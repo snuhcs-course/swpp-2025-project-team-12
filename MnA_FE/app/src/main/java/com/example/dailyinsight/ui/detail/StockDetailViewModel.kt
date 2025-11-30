@@ -9,6 +9,7 @@ import com.example.dailyinsight.data.dto.StockDetailDto
 import com.example.dailyinsight.data.dto.StockOverviewDto
 import com.example.dailyinsight.di.ServiceLocator
 import com.example.dailyinsight.ui.common.LoadResult
+import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
@@ -27,7 +28,8 @@ data class ChartUi(
 data class PriceChartUi(val chart: ChartUi)
 
 class StockDetailViewModel(
-    private val repo: Repository = ServiceLocator.repository
+    private val repo: Repository = ServiceLocator.repository,
+    private val defaultDispatcher: CoroutineDispatcher = Dispatchers.Default
 ) : ViewModel() {
 
     // 1) 종목 상세 원본 상태
@@ -54,7 +56,7 @@ class StockDetailViewModel(
                 .onSuccess { detail ->
                     _state.value = LoadResult.Success(detail)
                     // 백그라운드에서 차트 데이터 가공
-                    val chartResult = withContext(Dispatchers.Default) {
+                    val chartResult = withContext(defaultDispatcher) {
                         runCatching { buildPriceChart(detail.history.orEmpty()) }
                     }
 
