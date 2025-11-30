@@ -358,13 +358,19 @@ class APIView(viewsets.ViewSet):
                 kosdaq_data = {}
                 as_of = None
 
+                # UAT 모드면 데이터 날짜를 asOf로 사용
+                uat_date = get_uat_date()
+
                 if kospi_file:
                     data = s3.get_json(kospi_file["Key"])
                     kospi_data = {
                         "value": round(data.get("close", 0), 2),
                         "changePct": round(data.get("change_percent", 0), 2),
                     }
-                    as_of = data.get("fetched_at") or str(kospi_file["LastModified"])
+                    if uat_date:
+                        as_of = data.get("date") or uat_date
+                    else:
+                        as_of = data.get("fetched_at") or str(kospi_file["LastModified"])
 
                 if kosdaq_file:
                     data = s3.get_json(kosdaq_file["Key"])
@@ -373,7 +379,10 @@ class APIView(viewsets.ViewSet):
                         "changePct": round(data.get("change_percent", 0), 2),
                     }
                     if not as_of:
-                        as_of = data.get("fetched_at") or str(kosdaq_file["LastModified"])
+                        if uat_date:
+                            as_of = data.get("date") or uat_date
+                        else:
+                            as_of = data.get("fetched_at") or str(kosdaq_file["LastModified"])
 
                 return ok(
                     {"kospi": kospi_data, "kosdaq": kosdaq_data, "asOf": as_of, "source": "s3"}
