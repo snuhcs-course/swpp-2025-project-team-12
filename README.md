@@ -34,7 +34,7 @@ swpp-2025-project-team-12/
 ### 2.2 Backend Setup (Django)
 
 1. Create a virtual environment and activate it:
-
+example is conda, but we recommend using venv
 ```bash
 cd MnA_BE
 conda create -n dailyinsight python=3.10
@@ -109,5 +109,6 @@ https://www.youtube.com/shorts/7CM9Mn3g1Og
 
 
 ---
+
 
 
