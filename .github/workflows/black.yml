@@ -1,11 +1,26 @@
-name: black-action
-on: [push, pull_request]
+name: Python Formatting
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
 jobs:
-  linter_name:
-    name: runner / black formatter
+  build:
+
     runs-on: ubuntu-latest
+
     steps:
-      - uses: actions/checkout@v4
-      - uses: rickstaa/action-black@v1
-        with:
-          black_args: "MnA_BE/apps -l 100 --check --diff --color"
+    - uses: actions/checkout@v3
+    - name: Set up Python 3.10
+      uses: actions/setup-python@v3
+      with:
+        python-version: "3.10"
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install black==23.1.0
+    - name: Formatting with black
+      run: |
+        black MnA_BE/apps -l 100 --check --diff --color
