@@ -10,6 +10,8 @@ import okhttp3.ResponseBody.Companion.toResponseBody
 import okhttp3.Protocol
 import okhttp3.JavaNetCookieJar
 import android.util.Log
+import androidx.datastore.core.DataStore
+import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.edit
 import kotlinx.coroutines.runBlocking
 import retrofit2.Retrofit
@@ -18,8 +20,10 @@ import java.net.CookieManager
 import java.net.CookiePolicy
 import java.net.HttpURLConnection
 import com.example.dailyinsight.data.datastore.cookieDataStore
+import com.example.dailyinsight.data.datastore.CookieKeys
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import java.net.Proxy
 import java.util.concurrent.Executors
@@ -30,8 +34,8 @@ import kotlinx.coroutines.launch
  * Base URL: http://10.0.2.2:8000/ (for Android emulator)
  */
 object RetrofitInstance {
-    private const val BASE_URL = "http://ec2-13-124-209-234.ap-northeast-2.compute.amazonaws.com:8000/"
-    // private const val BASE_URL = "http://10.0.2.2:8000/"
+//    private const val BASE_URL = "http://ec2-13-124-209-234.ap-northeast-2.compute.amazonaws.com:8000/"
+     private const val BASE_URL = "http://10.0.2.2:8000/"
     // Toggle: true = 1st tab network calls return mock responses
 
 
@@ -56,7 +60,7 @@ object RetrofitInstance {
         client = OkHttpClient.Builder()
             .cookieJar(cookieJar)
             .addInterceptor(AuthInterceptor(context.applicationContext))
-            .apply { addInterceptor(logging)}
+            .addInterceptor(CsrfInterceptor(context.cookieDataStore))
             .addInterceptor(logging)
             .build()
 
@@ -84,6 +88,25 @@ object RetrofitInstance {
             return response
         }
     }
+
+    private class CsrfInterceptor(private val dataStore: DataStore<Preferences>) : Interceptor {
+        override fun intercept(chain: Interceptor.Chain): Response {
+
+            val prefs = runBlocking { dataStore.data.first() }
+            val csrfToken = prefs[CookieKeys.CSRF_TOKEN]
+            Log.d("csrf interceptor", "csrf: ${csrfToken.toString()}")
+
+            val original = chain.request()
+            val builder = original.newBuilder()
+
+            if (csrfToken != null && original.method != "GET") {
+                builder.addHeader("X-CSRFToken", csrfToken)
+            }
+
+            return chain.proceed(builder.build())
+        }
+    }
+
 
 
 //    val cookieManager = CookieManager()

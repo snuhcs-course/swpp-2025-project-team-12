@@ -5,6 +5,7 @@ from .style import urlpatterns as style_urls
 
 
 urlpatterns = [
+    path("csrf", UserView.as_view({"get": "get_csrf_token"}), name="get_csrf_token"),
     path("login", UserView.as_view({"post": "login"}), name="login"),
     path("logout", UserView.as_view({"post": "logout"}), name="logout"),
     path("signup", UserView.as_view({"post": "signup"}), name="signup"),

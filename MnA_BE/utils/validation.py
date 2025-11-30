@@ -4,6 +4,9 @@ import re
 def raise_if_password_is_none(password:str):
     if password is None:
         raise Exception("Password cannot be None")
+def raise_if_password_too_long(password:str, length):
+    if len(password) > length:
+        raise Exception(f"Password cannot be longer than {length} characters")
 
 def raise_if_password_too_short(password:str, length):
     if len(password) < length:
@@ -32,6 +35,7 @@ def raise_if_name_is_too_long(name:str, length):
 ### Main parts ###
 def validate_password(password:str):
     raise_if_password_is_none(password)
+    raise_if_password_too_long(20)
     raise_if_password_too_short(password, 8)
     raise_if_password_has_not_lowercase(password)
     raise_if_password_has_not_uppercase(password)

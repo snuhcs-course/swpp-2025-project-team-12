@@ -72,7 +72,7 @@ interface ApiService {
 
     // ============ Authentication ============
     @GET("user/csrf")
-    fun setCsrf(): Call<CsrfResponse>
+    suspend fun setCsrf(): Response<CsrfResponse>
 
     @POST("user/login")
     suspend fun logIn(
