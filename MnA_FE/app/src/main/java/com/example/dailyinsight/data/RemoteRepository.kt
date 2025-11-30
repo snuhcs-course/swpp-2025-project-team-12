@@ -15,7 +15,7 @@ import com.example.dailyinsight.data.database.StockDetailDao
 import com.google.gson.Gson
 import com.example.dailyinsight.data.dto.PortfolioRequest
 import com.example.dailyinsight.data.database.FavoriteTicker
-
+import com.example.dailyinsight.data.dto.PortfolioResponse
 class RemoteRepository(
     private val api: ApiService,
     private val briefingDao: BriefingDao,
@@ -29,17 +29,29 @@ class RemoteRepository(
     }
 
     // 2. 네트워크 호출 -> DB 저장 (ViewModel이 호출)
-    override suspend fun fetchAndSaveBriefing(offset: Int, clear: Boolean): String? = coroutineScope {
+    override suspend fun fetchAndSaveBriefing(
+        offset: Int,
+        clear: Boolean,
+        industry: String?,
+        min: Int?,
+        max: Int?
+    ): String? = coroutineScope {
         try {
-            // [백업] DB를 지우기 전에, 현재 내가 찜한 종목들의 Ticker를 미리 가져옵니다.
-            // (BriefingDao에 getFavoriteTickers() 함수가 있어야 합니다)
+            // 1. [백업] 로컬 즐겨찾기 상태 백업
             val savedFavorites = briefingDao.getFavoriteTickers().toSet()
-            // (1) 목록 가져오기 (10개씩)
-            val response = api.getBriefingList(limit = 10, offset = offset, sort = null)
+            // 2. API 호출
+            val response = api.getBriefingList(
+                limit = 10,
+                offset = offset,
+                sort = null, // (기본 정렬 사용)
+                industry = industry,
+                min = min,
+                max = max
+            )
             val items = response.items
             //  저장 시점의 기준 시간 (순서 보장용)
             val baseTime = System.currentTimeMillis()
-            //  2. getStockReport 호출 없이, 받은 데이터로 바로 Entity 생성
+            //  getStockReport 호출 없이, 받은 데이터로 바로 Entity 생성
             val entities = items.mapIndexed { index, item ->
 
                 //  3. String -> Number 안전 변환
@@ -91,31 +103,87 @@ class RemoteRepository(
 
     //  즐겨찾기 토글 (Optimistic Update: DB 먼저 -> 서버 나중)
     override suspend fun toggleFavorite(ticker: String, isActive: Boolean): Boolean {
-        //  로컬 DB 즉시 반영 (화면이 바로 바뀜)
-        //briefingDao.updateFavorite(ticker, isActive)
-        /*
+        /// A. 로컬 DB 즉시 반영 (UX 우선)
+        if (isActive) { briefingDao.insertFavorite(FavoriteTicker(ticker))
+        } else { briefingDao.deleteFavorite(ticker) }
+        briefingDao.syncFavorites() // 화면 갱신용
+        // B. 서버 동기화 (로그인 상태라면 전송)
+        // (여기서는 예외 처리를 꼼꼼히 해서 앱이 죽지 않게 함)
         try {
-            // 2. 현재 나의 모든 즐겨찾기 목록을 가져옴
-            val currentFavorites = briefingDao.getFavoriteTickers().toMutableSet()
-
-            // (혹시 모를 DB 갱신 시차 고려, 확실하게 처리)
-            if (isActive) currentFavorites.add(ticker)
-            else currentFavorites.remove(ticker)
-
-            // 3. 서버에 통째로 전송 (SetPortfolio)
-            // (주의: PortfolioRequest가 { "portfolio": ["005930", "000660"] } 형태여야 함)
-            api.setPortfolio(PortfolioRequest(currentFavorites))
+            // 현재 찜 목록 전체를 가져옴
+            val currentList = briefingDao.getFavoriteTickers().toSet()
+            // 서버 전송 (Set<String> 형태)
+            val response = api.setPortfolio(PortfolioRequest(currentList))
+            if (!response.isSuccessful) {
+                // Log.e("Repo", "서버 저장 실패: ${response.code()}")
+                // 실패해도 로컬은 유지 (다음 동기화 때 맞춰짐)
+            }
         } catch (e: Exception) {
             e.printStackTrace()
-            // 실패하면? 나중에 다시 동기화하거나 조용히 넘어감 (UX 방해 X)
-        }*/
-        if (isActive) {
-            briefingDao.insertFavorite(FavoriteTicker(ticker))
-        } else {
-            briefingDao.deleteFavorite(ticker)
         }
-        // 화면 갱신을 위해 동기화
-        briefingDao.syncFavorites()
         return true
+    }
+
+    // 서버의 관심 목록을 가져와서 로컬 DB와 동기화
+    override suspend fun syncFavorites() {
+        try {
+            // 1. 서버에 요청
+            val response = api.getPortfolio()
+            if (response.isSuccessful) {
+                val serverList = response.body()?.portfolio ?: emptyList()
+                // 2. 로컬 DB 업데이트 (Transaction 느낌으로)
+                briefingDao.clearAllFavorites() // 기존 거 다 지우고
+                if (serverList.isNotEmpty()) {
+                    val entities = serverList.map { FavoriteTicker(it) }
+                    briefingDao.insertFavorites(entities) // 서버 거 다 넣고
+                }
+                // 3. DB에 없는 관심 종목 데이터 채워넣기 (Missing Data Fetching)
+                // (이게 없으면 소형주 관심종목이 화면에 안 뜹니다!)
+                val baseTime = System.currentTimeMillis()
+
+                // 서버 목록 중 로컬 DB(briefing_cards)에 없는 놈들 찾기
+                val missingTickers = serverList.filter { ticker ->
+                    briefingDao.getCard(ticker) == null
+                }
+
+                if (missingTickers.isNotEmpty()) {
+                    // 없는 놈들만 API 찔러서 정보 가져옴 (병렬 처리)
+                    val missingCards = coroutineScope {
+                        missingTickers.map { ticker ->
+                            async {
+                                try {
+                                    // 상세 정보 API 활용 (가격 등 정보 획득)
+                                    val detail = api.getStockReport(ticker)
+                                    BriefingCardCache(
+                                        ticker = ticker,
+                                        name = detail.name ?: "",
+                                        price = detail.current?.price ?: 0L,
+                                        change = detail.current?.change ?: 0L,
+                                        changeRate = detail.current?.changeRate ?: 0.0,
+                                        headline = null, // 요약은 없을 수 있음
+                                        label = null,
+                                        confidence = null,
+                                        fetchedAt = baseTime, // 정렬 순서는 뒤쪽으로
+                                        isFavorite = true // 당연히 찜한 상태
+                                    )
+                                } catch (e: Exception) {
+                                    null // 실패 시 건너뜀
+                                }
+                            }
+                        }.awaitAll().filterNotNull()
+                    }
+
+                    // DB에 추가
+                    if (missingCards.isNotEmpty()) {
+                        briefingDao.insertCards(missingCards)
+                    }
+                }
+
+                // 4. 마지막으로 화면 갱신 (별표 색칠)
+                briefingDao.syncFavorites()
+            }
+        } catch (e: Exception) {
+            e.printStackTrace() // 실패하면 로컬 데이터 유지 (건드리지 않음)
+        }
     }
 }

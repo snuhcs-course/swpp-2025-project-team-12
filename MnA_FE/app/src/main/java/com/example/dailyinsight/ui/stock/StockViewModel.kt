@@ -30,89 +30,152 @@ class StockViewModel(
 
     private val _isFavoriteMode = MutableStateFlow(false)
 
+    // 선택된 산업들 (Set)
+    private var selectedIndustries: Set<String> = emptySet()
+
+    // 1. 필터 상태를 한 곳에서 관리하는 데이터 클래스
+    data class FilterState(
+        val size: SizeFilter = SizeFilter.ALL,
+        val industries: Set<String> = emptySet(),
+        val sort: String = "market_cap",
+        val isFavMode: Boolean = false
+    )
+
+    // 2. 상태 관리 Flow
+    private val _filterState = MutableStateFlow(FilterState())
+
     // DB 데이터 + 관심 필터 결합
-    val briefingList = kotlinx.coroutines.flow.combine(
-        repo.getBriefingFlow(),
-        _isFavoriteMode
-    ) { list, isFavMode ->
-        list.filter { item ->
-            val matchFavorite = !isFavMode || item.isFavorite
-            matchFavorite
+    val briefingList = combine(
+        repo.getBriefingFlow(),_filterState
+    ) { list, state ->
+        // 🚨 화면에 보여줄 때의 최종 필터링 (AND 조건)
+        var result = list
+        // [관심 모드] 켜져있으면 '별표 친 것'만 남김
+        if (state.isFavMode) {
+            result = result.filter { it.isFavorite }
         }
+        // (참고: 산업/규모 필터링은 이미 API 호출 시점에 적용되어 DB에 들어옴.
+        //  하지만 '살아남은 다른 찜 목록'을 가리고 싶다면 여기서 추가 필터링 가능.
+        //  현재는 DB에 industry 정보가 없으므로 로컬 필터링 불가능 -> API 결과 신뢰)
+        result
     }.map { entities -> entities.map { it.toDto() } }
         .asLiveData()
 
     init {
-        refresh(SizeFilter.ALL, "market_cap") // 초기 데이터 로드 (전체 보기, 시총순)
+        loadData(reset = true) // 초기 데이터 로드 -
+        //  로그인 상태라면 서버 관심 목록 동기화 (비로그인이면 401 에러 나거나 무시됨 -> 안전)
+        viewModelScope.launch(Dispatchers.IO) { repo.syncFavorites() }
     }
-    //  새로고침 (offset = 0, DB 초기화)
     //  별표 클릭 시 호출
     fun toggleFavorite(item: RecommendationDto, isActive: Boolean) {
         viewModelScope.launch(Dispatchers.IO) {
-            // DB 업데이트 & 서버 전송
-            repo.toggleFavorite(item.ticker, isActive)
+            repo.toggleFavorite(item.ticker, isActive) // DB 업데이트 & 서버 전송
         }
     }
 
     //  "관심" 칩을 눌렀을 때 호출
     fun setFavoriteMode(enabled: Boolean) {
-        _isFavoriteMode.value = enabled
-        // 관심 모드일 때는 서버 페이징을 할 필요가 없으므로(로컬 DB 필터링)
-        // 추가적인 fetch는 하지 않아도 됩니다.
+        _filterState.value = _filterState.value.copy(isFavMode = enabled)
+        // 모드 변경 시에도 데이터 갱신 (필요 시)
+        loadData(reset = true)
     }
 
-    // 산업 필터 업데이트
-    fun updateIndustryFilter(industry: String?) {
-        //_currentIndustry.value = industry
-        // 산업 변경 시에는 서버 데이터를 다시 긁어와야 할 수도 있음
-        //refresh(industry = industry)
+    fun setSizeFilter(size: SizeFilter) {
+        _filterState.value = _filterState.value.copy(size = size)
+        loadData(reset = true)
     }
+
+    fun setIndustryFilter(industries: Set<String>) {
+        _filterState.value = _filterState.value.copy(industries = industries)
+        loadData(reset = true)
+    }
+
+    fun setSort(sort: String) {
+        _filterState.value = _filterState.value.copy(sort = sort)
+        loadData(reset = true)
+    }
+
     fun refresh(filter: SizeFilter = sizeFilterMode, sort: String? = currentSort) {
-        /*
-        if (_isFavoriteMode.value) {
-            isLoading.set(false)
-            return
-        }*/
+        // 관심 모드 켜져있으면 -> 서버 호출 안 함 (로컬 DB에 있는 것만 보여줌)
         if (isLoading.getAndSet(true)) return
         viewModelScope.launch {
             // 상태 업데이트
             sizeFilterMode = filter
             currentSort = sort
-            currentOffset = filter.startOffset
-            //_currentIndustry.value = industry // 상태 동기화
-            // 첫 페이지 로드 (DB 클리어)
-            val asOf = repo.fetchAndSaveBriefing(offset = currentOffset, clear = true)
+            currentOffset = 0 // 필터링 시 offset은 항상 0부터 시작 (페이징은 서버가 함)
+            // 1. 산업 파라미터 변환 ("IT|건설|화학")
+            val industryParam = if (selectedIndustries.isEmpty()) null
+            else selectedIndustries.joinToString("|")
+            // 2. 규모 파라미터 변환 (Enum -> Int)
+            val minParam = filter.minRank
+            val maxParam = filter.maxRank
+            // 3. API 호출 / 첫 페이지 로드 (DB 클리어
+            val asOf = repo.fetchAndSaveBriefing(
+                offset = currentOffset,
+                clear = true,
+                industry = industryParam,
+                min = minParam,
+                max = maxParam
+            )
             if (asOf != null) { _asOfTime.value = asOf }
             isLoading.set(false)
         }
     }
 
-    //  무한 스크롤 (다음 페이지 로드)
-    fun loadNextPage() {
-        //if (_isFavoriteMode.value) return
-        if (isLoading.getAndSet(true)) return // 이미 로딩 중이면 무시
-        // 필터 제한선 체크 (예: 대형주는 100개까지만)
-        val limit = sizeFilterMode.endOffset
-        if (limit != null && currentOffset + 10 >= limit) {
-            isLoading.set(false)
-            return
-        }
+    private fun loadData(reset: Boolean) {
+        if (isLoading.getAndSet(true)) return
+
         viewModelScope.launch {
-            // 다음 페이지 (offset 증가)
-            currentOffset += 10
-            val asOf = repo.fetchAndSaveBriefing(offset = currentOffset, clear = false)
-            // 다음 페이지 로드 시에도 시간이 오면 업데이트, 안 오면 유지
-            if (asOf != null) { _asOfTime.value = asOf }
+            val state = _filterState.value
+            if (reset) { currentOffset = 0 }
+
+            // 산업 파라미터 변환
+            val industryParam = if (state.industries.isEmpty()) null
+            else state.industries.joinToString("|")
+
+            // API 호출 (DB 갱신)
+            val asOf = repo.fetchAndSaveBriefing(
+                offset = currentOffset,
+                clear = reset,
+                industry = industryParam,
+                min = state.size.minRank,
+                max = state.size.maxRank
+            )
+
+            if (asOf != null) _asOfTime.value = asOf
             isLoading.set(false)
         }
     }
-    fun refreshSortOnly(sort: String) {
-        refresh(sizeFilterMode, sort)
-    }
-    // 외부에서 현재 필터 상태 확인용
-    fun getCurrentFilterMode(): SizeFilter = sizeFilterMode
 
-    enum class SizeFilter(val startOffset: Int, val endOffset: Int?) {
-        ALL(0, null), LARGE(0, 100), MID(100, 300), SMALL(300, null)
+    // 무한 스크롤
+    fun loadNextPage() {
+        if (isLoading.get()) return
+
+        val state = _filterState.value
+        val limit = state.size.maxRank
+
+        // 제한선 체크
+        if (limit != null && currentOffset + 10 >= limit) return
+
+        currentOffset += 10
+        loadData(reset = false) // 추가 로드
+    }
+
+    fun getCurrentFilterState() = _filterState.value
+
+    // 기존 호환용 (Fragment에서 호출)
+    fun refreshSortOnly(sort: String) = setSort(sort)
+    fun refresh() = loadData(reset = true)
+    fun getCurrentFilterMode() = _filterState.value.size
+    fun updateIndustryFilter(industries: Set<String>) {
+        // _filterState.value = _filterState.value.copy(industries = industries)
+        // loadData(reset = true)
+        // 위 코드가 주석 처리되어 있고 아래 setIndustryFilter를 호출하는지 확인 필요
+        setIndustryFilter(industries)
+    }
+    fun getCurrentIndustries(): Set<String> = _filterState.value.industries
+
+    enum class SizeFilter(val minRank: Int?, val maxRank: Int?) {
+        ALL(null, null), LARGE(0, 100), MID(100, 300), SMALL(300, null)
     }
 }
