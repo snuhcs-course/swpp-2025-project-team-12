@@ -8,6 +8,18 @@ from datetime import timezone
 from S3 import _get_env, debug_print
 from S3.client_factory import S3ClientFactory
 
+# UAT 날짜 유틸리티 import
+try:
+    from utils.uat_date import get_uat_date, is_date_on_or_before, extract_date_from_key
+except ImportError:
+    # utils.uat_date가 없으면 UAT 모드 비활성화
+    def get_uat_date():
+        return None
+    def is_date_on_or_before(key, uat_date):
+        return False
+    def extract_date_from_key(key):
+        return None
+
 
 class BaseBucket:
     """
@@ -16,6 +28,7 @@ class BaseBucket:
     변경점:
     - S3 Client 생성 책임은 S3ClientFactory 로 분리
     - BaseBucket 은 "이미 만들어진 client + bucket_name" 을 사용
+    - UAT 모드: UAT_DATE 환경변수 설정 시 해당 날짜 데이터만 반환
     """
 
     _client = None
@@ -89,10 +102,42 @@ class BaseBucket:
         return self._client.list_objects_v2(Bucket=self._bucket, Prefix=prefix)
 
     def get_latest_object(self, prefix: str):
+        """
+        prefix 내 최신 객체 반환.
+        
+        UAT 모드(UAT_DATE 환경변수 설정 시):
+            해당 날짜 이전의 가장 최근 객체 반환
+        
+        일반 모드:
+            LastModified 기준 최신 객체 반환
+        """
         paginator = self._client.get_paginator("list_objects_v2")
-        latest = None
         pages = paginator.paginate(Bucket=self._bucket, Prefix=prefix)
-
+        
+        uat_date = get_uat_date()
+        
+        if uat_date:
+            # UAT 모드: 해당 날짜 이전의 가장 최근 데이터
+            matching_objects = []
+            for page in pages:
+                for obj in page.get("Contents", []):
+                    if is_date_on_or_before(obj["Key"], uat_date):
+                        matching_objects.append(obj)
+            
+            if not matching_objects:
+                debug_print(f"[UAT] No objects found on or before {uat_date} in prefix {prefix}")
+                return None
+            
+            # 날짜 기준 가장 최근 것 선택
+            def get_date(obj):
+                return extract_date_from_key(obj["Key"]) or ""
+            
+            latest = max(matching_objects, key=get_date)
+            debug_print(f"[UAT] Using object on or before {uat_date}: {latest['Key']}")
+            return latest
+        
+        # 일반 모드: 기존 로직
+        latest = None
         for page in pages:
             for obj in page.get("Contents", []):
                 if latest is None:
@@ -103,6 +148,22 @@ class BaseBucket:
         return latest
 
     def check_source(self, prefix: str):
+        """
+        prefix 내 최신 데이터 소스 확인.
+        
+        UAT 모드: UAT_DATE 반환
+        일반 모드: 파일명에서 날짜 추출 또는 LastModified
+        """
+        uat_date = get_uat_date()
+        
+        if uat_date:
+            # UAT 모드: 해당 날짜 객체가 존재하는지 확인
+            obj = self.get_latest_object(prefix)
+            if obj:
+                return {"ok": True, "latest": uat_date}
+            return {"ok": False, "latest": None}
+        
+        # 일반 모드: 기존 로직
         obj = self.get_latest_object(prefix)
 
         if not obj:

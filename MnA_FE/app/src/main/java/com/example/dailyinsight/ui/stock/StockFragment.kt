@@ -22,6 +22,12 @@ import com.google.android.material.bottomsheet.BottomSheetDialog
 import android.widget.CheckBox
 import android.widget.LinearLayout
 import android.widget.Button
+import com.example.dailyinsight.ui.start.StartActivity
+import com.example.dailyinsight.data.datastore.cookieDataStore
+import com.example.dailyinsight.data.datastore.CookieKeys
+import kotlinx.coroutines.flow.first
+import android.content.Intent
+import android.widget.Toast
 
 class StockFragment : Fragment(R.layout.fragment_stock) {
 
@@ -51,11 +57,33 @@ class StockFragment : Fragment(R.layout.fragment_stock) {
                 findNavController().navigate(action)
             },
             onFavoriteClick = { item, isActive ->
-                //  뷰모델에 토글 요청
-                viewModel.toggleFavorite(item, isActive)
-                // (옵션) 토스트 메시지
-                val msg = if (isActive) "관심 종목에 추가되었습니다." else "관심 종목에서 해제되었습니다."
-                //Toast.makeText(context, msg, Toast.LENGTH_SHORT).show()
+                // 1. 비동기로 로그인 상태 확인
+                viewLifecycleOwner.lifecycleScope.launch {
+                    // DataStore에서 액세스 토큰 가져오기
+                    val prefs = requireContext().cookieDataStore.data.first()
+                    val accessToken = prefs[CookieKeys.ACCESS_TOKEN]
+                    val isLoggedIn = !accessToken.isNullOrEmpty()
+
+                    if (isLoggedIn) {
+                        // ✅ 로그인 유저: 정상적으로 즐겨찾기 토글
+                        viewModel.toggleFavorite(item, isActive)
+                        // (옵션) 토스트 메시지
+                        val msg = if (isActive) "관심 종목에 추가되었습니다." else "관심 종목에서 해제되었습니다."
+                        Toast.makeText(context, msg, Toast.LENGTH_SHORT).show()
+                    } else {
+                        // 🚫 비로그인 유저: 로그인 화면으로 납치
+                        Toast.makeText(requireContext(), "로그인이 필요한 서비스입니다.", Toast.LENGTH_SHORT).show()
+
+                        // 로그인 화면(StartActivity)으로 이동
+                        val intent = Intent(requireContext(), StartActivity::class.java)
+                        startActivity(intent)
+
+                        // 🚨 [중요] UI 원상복구 (이미 눌려서 노란색 된 별을 다시 회색으로)
+                        // (데이터 변경 없이 UI만 리프레시해서 체크박스를 원래대로 돌림)
+                        adapter.notifyDataSetChanged()
+                    }
+                }
+
             }
         )
 
@@ -74,7 +102,7 @@ class StockFragment : Fragment(R.layout.fragment_stock) {
             val checkedId = checkedIds.firstOrNull()
             when (checkedId) {
                 R.id.chipSize -> {
-                    viewModel.refresh() // 현재 설정된 필터(대/중/소) 유지하며 새로고침
+                    //viewModel.refresh() // 현재 설정된 필터(대/중/소) 유지하며 새로고침
                 }
                 //R.id.chipInterest -> viewModel.refreshSortOnly("favorites")
                 else -> {}
@@ -124,7 +152,7 @@ class StockFragment : Fragment(R.layout.fragment_stock) {
                     binding.tvTime.text = "${formatDate(timeStr)}"
                 } else {
                     // 시간이 아직 안 왔으면 현재 시간 표시 (임시)
-                    val now = SimpleDateFormat("yyyy년 M월 d일 HH:mm", Locale.KOREA).format(Date())
+                    val now = SimpleDateFormat("yyyy년 M월 d일", Locale.KOREA).format(Date())
                     binding.tvTime.text = "$now 기준"
                 }
             }
@@ -139,40 +167,26 @@ class StockFragment : Fragment(R.layout.fragment_stock) {
             viewModel.setFavoriteMode(isChecked)
         }
 
-        binding.chipGroup.setOnCheckedStateChangeListener { group, checkedIds ->
+        binding.chipGroup.setOnCheckedStateChangeListener { _, checkedIds ->
             val checkedId = checkedIds.firstOrNull()
-            // 관심 버튼은 이 그룹 로직에서 제외 (위에서 따로 처리함)
-            if (checkedId == R.id.chipInterest) return@setOnCheckedStateChangeListener
-
-            // 규모 칩 텍스트 복구
-            if (checkedId != R.id.chipSize) {
-                restoreFilterUI() // "규모 ▼" or "대형주 ▼" 복구
-            }
+            // UI 텍스트 복구
+            if (checkedId != R.id.chipSize) binding.chipSize.text = "규모 ▼"
+            if (checkedId != R.id.chipIndustry) binding.chipIndustry.text = "산업 ▼"
             when (checkedId) {
-                // 1. 관심 버튼 -> 로컬 필터링 모드 ON
-                R.id.chipInterest -> {
-                    viewModel.setFavoriteMode(true)
+                R.id.chipSize -> {
+                    // 팝업은 clickListener에서 처리하므로 여기선 무시하거나,
+                    // 현재 선택된 규모로 다시 갱신하고 싶다면:
+                    val currentSize = viewModel.getCurrentFilterState().size
+                    viewModel.setSizeFilter(currentSize)
                 }
-                // 나머지 버튼들은 서버 API 호출
-                else -> {
-                    viewModel.setFavoriteMode(false) // 관심 모드 끄기
-                    when (checkedId) {
-                        R.id.chipSize -> {
-                            // 팝업 메뉴는 OnClickListener에서 처리하므로 여기선 패스하거나 refresh()
-                            // viewModel.refresh()
-                        }
-                    }
-                }
+                R.id.chipIndustry -> { /* 바텀시트에서 처리 */ }
+                else -> viewModel.setSort("market_cap") // 선택 해제 시 기본
             }
             restoreFilterUI()
         }
-        binding.chipIndustry.setOnClickListener {
-            showIndustryBottomSheet()
-        }
-        // 규모 버튼 클릭 시 팝업
-        binding.chipSize.setOnClickListener {
-            showSizePopupMenu(binding.chipSize)
-        }
+        // 3. 팝업 및 바텀시트
+        binding.chipSize.setOnClickListener { showSizePopupMenu(binding.chipSize) }
+        binding.chipIndustry.setOnClickListener { showIndustryBottomSheet() }
     }
 
     private fun showSizePopupMenu(anchor: View) {
@@ -180,69 +194,19 @@ class StockFragment : Fragment(R.layout.fragment_stock) {
         popup.menuInflater.inflate(R.menu.menu_stock_size, popup.menu) // 메뉴 리소스 필요
 
         popup.setOnMenuItemClickListener { item ->
-            // 메뉴 선택 시 '규모' 칩을 체크 상태로 변경
-            if (!binding.chipSize.isChecked) {
-                binding.chipSize.isChecked = true
-            }
+            binding.chipSize.text = "${item.title} ▼"
+            if (!binding.chipSize.isChecked) binding.chipSize.isChecked = true
+
             when (item.itemId) {
-                R.id.option_all -> {
-                    viewModel.refresh(StockViewModel.SizeFilter.ALL)
-                    binding.chipSize.text = "전체 ▼"
-                }
-                R.id.option_large -> {
-                    viewModel.refresh(StockViewModel.SizeFilter.LARGE)
-                    binding.chipSize.text = "대형주 ▼"
-                }
-                R.id.option_mid -> {
-                    viewModel.refresh(StockViewModel.SizeFilter.MID)
-                    binding.chipSize.text = "중형주 ▼"
-                }
-                R.id.option_small -> {
-                    viewModel.refresh(StockViewModel.SizeFilter.SMALL)
-                    binding.chipSize.text = "소형주 ▼"
-                }
+                R.id.option_all -> viewModel.setSizeFilter(StockViewModel.SizeFilter.ALL)
+                R.id.option_large -> viewModel.setSizeFilter(StockViewModel.SizeFilter.LARGE)
+                R.id.option_mid -> viewModel.setSizeFilter(StockViewModel.SizeFilter.MID)
+                R.id.option_small -> viewModel.setSizeFilter(StockViewModel.SizeFilter.SMALL)
             }
             true
         }
         popup.show()
     }
-
-    /* 산업 분류 팝업 메뉴 (Enum 활용)
-    private fun showIndustryPopupMenu(anchor: View) {
-        val popup = android.widget.PopupMenu(requireContext(), anchor)
-
-        // 1. '전체' 옵션 수동 추가
-        popup.menu.add(0, 0, 0, "전체 산업")
-
-        // 2. Enum을 돌면서 메뉴 항목 자동 생성
-        Tag.values().forEachIndexed { index, tag ->
-            // itemId를 index + 1로 설정 (0은 전체)
-            popup.menu.add(0, index + 1, index + 1, tag.korean)
-        }
-
-        popup.setOnMenuItemClickListener { item ->
-            // 버튼 체크 상태 강제 적용
-            if (!binding.chipIndustry.isChecked) {
-                binding.chipIndustry.isChecked = true
-            }
-
-            if (item.itemId == 0) {
-                // 전체 선택 시
-                binding.chipIndustry.text = "산업 ▼"
-                // viewModel.refresh(industry = null) -> 2단계 구현
-                android.widget.Toast.makeText(context, "전체 산업 선택됨", android.widget.Toast.LENGTH_SHORT).show()
-            } else {
-                // 특정 산업 선택 시
-                val selectedTag = Tag.values()[item.itemId - 1]
-                binding.chipIndustry.text = "${selectedTag.korean} ▼"
-
-                // viewModel.refresh(industry = selectedTag) -> 2단계 구현
-                android.widget.Toast.makeText(context, "${selectedTag.korean} 선택됨 (2단계 구현 예정)", android.widget.Toast.LENGTH_SHORT).show()
-            }
-            true
-        }
-        popup.show()
-    } */
 
     // 바텀 시트 구현
     private fun showIndustryBottomSheet() {
@@ -286,9 +250,10 @@ class StockFragment : Fragment(R.layout.fragment_stock) {
                 binding.chipIndustry.isChecked = true
             }
 
-            // 3. 데이터 갱신 요청 (2단계에서 구현할 API 호출 부분)
-            // viewModel.refresh(industryFilter = selectedIndustries.toList())
-            android.widget.Toast.makeText(context, "${selectedIndustries.size}개 산업 필터 적용", android.widget.Toast.LENGTH_SHORT).show()
+            //  ViewModel에 산업 필터 변경 요청 (주석 해제 및 연결)
+            val industryStrings = selectedIndustries.map { it.korean }.toSet()
+            viewModel.setIndustryFilter(industryStrings) // Set<Tag> 전달
+            Toast.makeText(context, "${selectedIndustries.size}개 산업 필터 적용", android.widget.Toast.LENGTH_SHORT).show()
 
             dialog.dismiss()
         }
@@ -298,8 +263,8 @@ class StockFragment : Fragment(R.layout.fragment_stock) {
 
     private fun formatDate(dateStr: String): String {
         return try {
-            val parser = SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault())
-            val formatter = SimpleDateFormat("yyyy년 M월 d일 HH:mm", Locale.KOREA)
+            val parser = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
+            val formatter = SimpleDateFormat("yyyy년 M월 d일", Locale.KOREA)
             val date = parser.parse(dateStr)
             date?.let { formatter.format(it) } ?: dateStr
         } catch (e: Exception) {
@@ -317,6 +282,21 @@ class StockFragment : Fragment(R.layout.fragment_stock) {
             else -> "전체 ▼"
         }
         binding.chipSize.text = text
+        //  산업 버튼 복구
+        val industries = viewModel.getCurrentIndustries()
+        if (industries.isEmpty()) {
+            binding.chipIndustry.text = "산업 ▼"
+            binding.chipIndustry.isChecked = false
+        } else {
+            binding.chipIndustry.text = "산업 (${industries.size}) ▼"
+            binding.chipIndustry.isChecked = true
+
+            // (선택 사항) 바텀 시트용 임시 변수도 동기화
+            // selectedIndustries.clear()
+            // industries.forEach { name ->
+            //     Tag.values().find { it.korean == name }?.let { selectedIndustries.add(it) }
+            // }
+        }
     }
 
     override fun onDestroyView() {

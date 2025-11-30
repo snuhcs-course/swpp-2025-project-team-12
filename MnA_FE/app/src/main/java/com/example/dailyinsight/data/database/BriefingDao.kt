@@ -43,4 +43,16 @@ interface BriefingDao {
     //  현재 즐겨찾기된 Ticker 목록 (서버 전송용)
     @Query("SELECT ticker FROM briefing_cards WHERE isFavorite = 1")
     suspend fun getFavoriteTickers(): List<String>
+
+    // 즐겨찾기 테이블 싹 비우기 (로그아웃 하거나 서버랑 맞출 때 사용)
+    @Query("DELETE FROM favorite_tickers")
+    suspend fun clearAllFavorites()
+
+    // 리스트 통째로 넣기
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insertFavorites(items: List<FavoriteTicker>)
+
+    //  특정 종목이 이미 DB에 있는지 확인용
+    @Query("SELECT * FROM briefing_cards WHERE ticker = :ticker")
+    suspend fun getCard(ticker: String): BriefingCardCache?
 }

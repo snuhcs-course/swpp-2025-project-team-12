@@ -28,7 +28,10 @@ interface ApiService {
     suspend fun getBriefingList(
         @Query("limit") limit: Int,
         @Query("offset") offset: Int,
-        @Query("sort") sort: String? = null
+        @Query("sort") sort: String? = null,
+        @Query("industry") industry: String? = null, // 예: "전기.전자|은행"
+        @Query("min") min: Int? = null,              // 시총 순위 시작 (0 = 1등)
+        @Query("max") max: Int? = null               // 시총 순위 끝
     ): BriefingListResponse
 
     @GET("api/company-list")
@@ -48,6 +51,10 @@ interface ApiService {
     suspend fun getStockReport(
         @Path("ticker") ticker: String
     ): StockDetailDto
+
+    //  내 관심 종목 가져오기
+    @GET("user/info/portfolio")
+    suspend fun getPortfolio(): Response<PortfolioResponse>
 
     // ======================================
 
@@ -72,7 +79,7 @@ interface ApiService {
 
     // ============ Authentication ============
     @GET("user/csrf")
-    fun setCsrf(): Call<CsrfResponse>
+    suspend fun setCsrf(): Response<CsrfResponse>
 
     @POST("user/login")
     suspend fun logIn(
