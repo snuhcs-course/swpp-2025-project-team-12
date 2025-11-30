@@ -51,11 +51,11 @@ class ProfileFragment : Fragment() {
             val intent = Intent(requireContext(), ChangeNameActivity::class.java)
             startActivity(intent)
         }
-
+        /*
         binding.favorite.setOnClickListener {
             val intent = Intent(requireContext(), FavoriteListActivity::class.java)
             startActivity(intent)
-        }
+        }*/
 
         binding.changePasswordButton.setOnClickListener {
             val intent = Intent(requireContext(), ChangePasswordActivity::class.java)
@@ -88,7 +88,7 @@ class ProfileFragment : Fragment() {
                 binding.loginButton.visibility = View.GONE
                 binding.userName.visibility = View.VISIBLE
                 binding.changeNameButton.visibility = View.VISIBLE
-                binding.favorite.visibility = View.VISIBLE
+                //binding.favorite.visibility = View.VISIBLE
                 binding.divider.visibility = View.VISIBLE
                 binding.changePasswordButton.visibility = View.VISIBLE
                 binding.logoutButton.visibility = View.VISIBLE
@@ -98,7 +98,7 @@ class ProfileFragment : Fragment() {
                 binding.loginButton.visibility = View.VISIBLE
                 binding.userName.visibility = View.GONE
                 binding.changeNameButton.visibility = View.GONE
-                binding.favorite.visibility = View.GONE
+                //binding.favorite.visibility = View.GONE
                 binding.divider.visibility = View.GONE
                 binding.changePasswordButton.visibility = View.GONE
                 binding.logoutButton.visibility = View.GONE
