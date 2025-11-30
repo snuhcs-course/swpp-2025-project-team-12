@@ -18,6 +18,15 @@ from apps.api.constants import *
 import json
 import pandas as pd
 
+# UAT 날짜 고정 유틸리티 import
+try:
+    from utils.uat_date import get_uat_date, matches_uat_date
+except ImportError:
+    def get_uat_date():
+        return None
+    def matches_uat_date(key, uat_date):
+        return False
+
 
 def safe_float(value):
     """문자열이나 숫자를 안전하게 float로 변환"""
@@ -37,6 +46,37 @@ def safe_int(value):
         return int(float(value))
     except (ValueError, TypeError):
         return None
+
+
+# ============================================================================
+# Helper: UAT 모드 지원 indices 조회
+# ============================================================================
+
+
+def get_indices_files_filtered(s3, prefix):
+    """
+    S3에서 indices 파일 목록 조회 (UAT 모드 지원)
+    
+    Returns:
+        list: 필터링된 파일 목록 (UAT 모드면 해당 날짜만, 아니면 전체)
+    """
+    response = s3.get_list_v2(prefix)
+    
+    if "Contents" not in response:
+        return []
+    
+    files = response["Contents"]
+    uat_date = get_uat_date()
+    
+    if uat_date:
+        # UAT 모드: 특정 날짜 파일만 필터링
+        files = [f for f in files if matches_uat_date(f["Key"], uat_date)]
+        if files:
+            debug_print(f"[UAT] Found {len(files)} indices files for date {uat_date}")
+        else:
+            debug_print(f"[UAT] No indices data found for date {uat_date}")
+    
+    return files
 
 
 # ============================================================================
@@ -234,6 +274,9 @@ class APIView(viewsets.ViewSet):
             "last_loaded": str(last_loaded) if last_loaded else None,
         }
 
+        # UAT 모드 정보 추가
+        uat_date = get_uat_date()
+
         return ok(
             {
                 "api": "ok",
@@ -241,6 +284,8 @@ class APIView(viewsets.ViewSet):
                 "db": db_status,
                 "cache": cache_status,
                 "asOf": iso_now(),
+                "uat_mode": uat_date is not None,
+                "uat_date": uat_date,
             }
         )
 
@@ -282,17 +327,21 @@ class APIView(viewsets.ViewSet):
         if INDICES_SOURCE == "s3":
             try:
                 s3 = FinanceBucket()
-                response = s3.get_list_v2(S3_PREFIX_INDICES)
+                
+                # UAT 모드 지원 파일 조회
+                files = get_indices_files_filtered(s3, S3_PREFIX_INDICES)
 
-                if "Contents" not in response:
+                if not files:
+                    uat_date = get_uat_date()
+                    msg = f"No indices data for UAT date {uat_date}" if uat_date else "No indices data in S3"
                     return degraded(
-                        "No indices data in S3",
+                        msg,
                         source="s3",
                         kospi=MOCK_INDICES.get("kospi", {"value": 2500, "changePct": 0}),
                         kosdaq=MOCK_INDICES.get("kosdaq", {"value": 750, "changePct": 0}),
                     )
 
-                files = sorted(response["Contents"], key=lambda x: x["LastModified"], reverse=True)
+                files = sorted(files, key=lambda x: x["LastModified"], reverse=True)
 
                 kospi_file = None
                 kosdaq_file = None
@@ -309,13 +358,19 @@ class APIView(viewsets.ViewSet):
                 kosdaq_data = {}
                 as_of = None
 
+                # UAT 모드면 데이터 날짜를 asOf로 사용
+                uat_date = get_uat_date()
+
                 if kospi_file:
                     data = s3.get_json(kospi_file["Key"])
                     kospi_data = {
                         "value": round(data.get("close", 0), 2),
                         "changePct": round(data.get("change_percent", 0), 2),
                     }
-                    as_of = data.get("fetched_at") or str(kospi_file["LastModified"])
+                    if uat_date:
+                        as_of = data.get("date") or uat_date
+                    else:
+                        as_of = data.get("fetched_at") or str(kospi_file["LastModified"])
 
                 if kosdaq_file:
                     data = s3.get_json(kosdaq_file["Key"])
@@ -324,7 +379,10 @@ class APIView(viewsets.ViewSet):
                         "changePct": round(data.get("change_percent", 0), 2),
                     }
                     if not as_of:
-                        as_of = data.get("fetched_at") or str(kosdaq_file["LastModified"])
+                        if uat_date:
+                            as_of = data.get("date") or uat_date
+                        else:
+                            as_of = data.get("fetched_at") or str(kosdaq_file["LastModified"])
 
                 return ok(
                     {"kospi": kospi_data, "kosdaq": kosdaq_data, "asOf": as_of, "source": "s3"}
@@ -705,17 +763,17 @@ class APIView(viewsets.ViewSet):
                 if div is not None:
                     dividend["yield"] = round(div, 2)
 
-            # 3) 실시간 지수 정보 가져오기
+            # 3) 실시간 지수 정보 가져오기 (UAT 모드 지원)
             indices_snippet = None
             if INDICES_SOURCE == "s3":
                 try:
                     s3 = FinanceBucket()
-                    response = s3.get_list_v2(S3_PREFIX_INDICES)
+                    
+                    # UAT 모드 지원 파일 조회
+                    files = get_indices_files_filtered(s3, S3_PREFIX_INDICES)
 
-                    if "Contents" in response:
-                        files = sorted(
-                            response["Contents"], key=lambda x: x["LastModified"], reverse=True
-                        )
+                    if files:
+                        files = sorted(files, key=lambda x: x["LastModified"], reverse=True)
 
                         kospi_file = None
                         kosdaq_file = None
