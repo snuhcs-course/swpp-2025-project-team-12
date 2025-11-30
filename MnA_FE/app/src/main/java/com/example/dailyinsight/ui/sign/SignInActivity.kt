@@ -2,9 +2,11 @@ package com.example.dailyinsight.ui.sign
 
 import android.content.Intent
 import android.os.Bundle
+import android.util.Log
 import android.view.inputmethod.EditorInfo
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.widget.addTextChangedListener
 import androidx.datastore.preferences.core.edit
 import androidx.lifecycle.lifecycleScope
 import com.example.dailyinsight.MainActivity
@@ -18,6 +20,7 @@ import com.example.dailyinsight.ui.start.StartActivity
 import com.google.android.material.appbar.MaterialToolbar
 import com.google.android.material.button.MaterialButton
 import com.google.android.material.textfield.TextInputEditText
+import com.google.android.material.textfield.TextInputLayout
 import kotlinx.coroutines.launch
 import retrofit2.Call
 import com.google.gson.Gson
@@ -34,9 +37,14 @@ class SignInActivity : AppCompatActivity() {
             finish()
         }
 
+        val IDText = findViewById<TextInputLayout>(R.id.IDText)
+        val PWText = findViewById<TextInputLayout>(R.id.PWText)
         val IDTextField = findViewById<TextInputEditText>(R.id.IDTextField)
         val PWTextField = findViewById<TextInputEditText>(R.id.PWTextField)
         val loginButton = findViewById<MaterialButton>(R.id.loginButton)
+
+        IDText.error = null
+        PWText.error = null
 
         PWTextField.setOnEditorActionListener { v, actionId, _ ->
             if (actionId == EditorInfo.IME_ACTION_DONE) {
@@ -47,26 +55,37 @@ class SignInActivity : AppCompatActivity() {
             }
         }
 
-        val findPWButton = findViewById<MaterialButton>(R.id.findPWButton)
-        findPWButton.setOnClickListener {
-            // TODO - find PW (is implemented on server?)
-            Toast.makeText(this, "find PW feature not implemented yet", Toast.LENGTH_SHORT).show()
+        IDTextField.addTextChangedListener {
+            IDText.error = null
         }
+        PWTextField.addTextChangedListener {
+            PWText.error = null
+        }
+
+//        val findPWButton = findViewById<MaterialButton>(R.id.findPWButton)
+//        findPWButton.setOnClickListener {
+//            // TODO - find PW (is implemented on server?)
+//            Toast.makeText(this, R.string.not_implemented, Toast.LENGTH_SHORT).show()
+//        }
 
         loginButton.setOnClickListener {
             val id = IDTextField.text.toString().trim()
             val password = PWTextField.text.toString().trim()
             // check if all fields are provided
             if(id.isEmpty()) {
-                Toast.makeText(this, "please enter id", Toast.LENGTH_SHORT).show()
+//                Toast.makeText(this, R.string.id_required, Toast.LENGTH_SHORT).show()
+                IDText.error = getString(R.string.id_required)
                 return@setOnClickListener
             }
             if(password.isEmpty()) {
-                Toast.makeText(this, "please enter password", Toast.LENGTH_SHORT).show()
+//                Toast.makeText(this, R.string.password_required, Toast.LENGTH_SHORT).show()
+                PWText.error = getString(R.string.password_required)
                 return@setOnClickListener
             }
             // send login request to the server
-            sendLoginRequest(id, password)
+            lifecycleScope.launch {
+                sendLoginRequest(id, password)
+            }
         }
 
         // move to sign up activity
@@ -77,7 +96,7 @@ class SignInActivity : AppCompatActivity() {
         }
     }
 
-    fun sendLoginRequest(id: String, password: String) {
+    suspend fun sendLoginRequest(id: String, password: String) {
         /**
          * send login request to the server with given id and password
          * @id : id
@@ -85,32 +104,55 @@ class SignInActivity : AppCompatActivity() {
          **/
         val request = LogInRequest(id = id, password = password)
 
-        RetrofitInstance.api.logIn(request)
-            .enqueue(object : retrofit2.Callback<LogInResponse> {
-                override fun onResponse(
-                    call: Call<LogInResponse>,
-                    response: retrofit2.Response<LogInResponse>
-                ) {
-                    if (response.isSuccessful) {
-                        CoroutineScope(Dispatchers.IO).launch {
-                            applicationContext.cookieDataStore.edit { prefs ->
-                                prefs[CookieKeys.USERNAME] = id
-                            }
-                        }
-                        val intent = Intent(this@SignInActivity, MainActivity::class.java)
-                        finishAffinity()
-                        startActivity(intent)
-                    } else {
-                        val result = response.errorBody()?.string()
-                        val message = Gson().fromJson(result, LogInResponse::class.java).message
-                        Toast.makeText(this@SignInActivity, message, Toast.LENGTH_SHORT).show()
+        try {
+            val response = RetrofitInstance.api.logIn(request)
+            if(response.isSuccessful) {
+                CoroutineScope(Dispatchers.IO).launch {
+                    applicationContext.cookieDataStore.edit { prefs ->
+                        prefs[CookieKeys.USERNAME] = id
                     }
                 }
+                val intent = Intent(this@SignInActivity, MainActivity::class.java)
+                finishAffinity()
+                startActivity(intent)
+            } else {
+                val result = response.errorBody()?.string()
+                val message = Gson().fromJson(result, LogInResponse::class.java).message
+                Log.e("Sign In", "response with ${response.code()}: $message")
+                Toast.makeText(this@SignInActivity, R.string.on_login_unsuccessful, Toast.LENGTH_SHORT).show()
+            }
+        } catch (e: Exception) {
+            Log.e("Sign In", "exception on api call")
+            e.printStackTrace()
+            Toast.makeText(this@SignInActivity, R.string.on_api_failure, Toast.LENGTH_SHORT).show()
+        }
 
-                override fun onFailure(call: Call<LogInResponse>, t: Throwable) {
-                    Toast.makeText(this@SignInActivity, "failed to login", Toast.LENGTH_SHORT)
-                        .show()
-                }
-            })
+//        RetrofitInstance.api.logIn(request)
+//            .enqueue(object : retrofit2.Callback<LogInResponse> {
+//                override fun onResponse(
+//                    call: Call<LogInResponse>,
+//                    response: retrofit2.Response<LogInResponse>
+//                ) {
+//                    if (response.isSuccessful) {
+//                        CoroutineScope(Dispatchers.IO).launch {
+//                            applicationContext.cookieDataStore.edit { prefs ->
+//                                prefs[CookieKeys.USERNAME] = id
+//                            }
+//                        }
+//                        val intent = Intent(this@SignInActivity, MainActivity::class.java)
+//                        finishAffinity()
+//                        startActivity(intent)
+//                    } else {
+//                        val result = response.errorBody()?.string()
+//                        val message = Gson().fromJson(result, LogInResponse::class.java).message
+//                        Log.e("Sign In", "response with ${response.code()}: $message")
+//                        Toast.makeText(this@SignInActivity, R.string.on_login_unsuccessful, Toast.LENGTH_SHORT).show()
+//                    }
+//                }
+//
+//                override fun onFailure(call: Call<LogInResponse>, t: Throwable) {
+//                    Toast.makeText(this@SignInActivity, R.string.on_api_failure, Toast.LENGTH_SHORT).show()
+//                }
+//            })
     }
 }

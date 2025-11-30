@@ -7,6 +7,8 @@ import android.view.View
 import android.view.ViewGroup
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.ViewModelProvider
+import androidx.lifecycle.lifecycleScope
+import com.example.dailyinsight.R
 import com.example.dailyinsight.databinding.FragmentProfileBinding
 import com.example.dailyinsight.ui.sign.SignInActivity
 import com.example.dailyinsight.ui.userinfo.ChangeNameActivity
@@ -14,6 +16,7 @@ import com.example.dailyinsight.ui.userinfo.ChangePasswordActivity
 import com.example.dailyinsight.ui.userinfo.FavoriteListActivity
 import com.example.dailyinsight.ui.userinfo.WithdrawActivity
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
+import kotlinx.coroutines.launch
 
 class ProfileFragment : Fragment() {
 
@@ -61,12 +64,13 @@ class ProfileFragment : Fragment() {
 
         binding.logoutButton.setOnClickListener {
             MaterialAlertDialogBuilder(requireContext())
-                .setTitle("정말 로그아웃 하시겠습니까?")
-                .setPositiveButton("네") { dialog, which ->
-                    // TODO - perform logout
-                    viewModel.logout()
+                .setTitle(R.string.logout_dialog_title)
+                .setPositiveButton(R.string.yes_button) { dialog, which ->
+                    lifecycleScope.launch {
+                        viewModel.logout()
+                    }
                 }
-                .setNegativeButton("아니오") { dialog, which ->
+                .setNegativeButton(R.string.no_button) { dialog, which ->
                     return@setNegativeButton
                 }
                 .show()

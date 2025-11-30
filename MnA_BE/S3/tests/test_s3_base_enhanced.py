@@ -1,7 +1,6 @@
 # S3/tests/test_s3_base_enhanced.py
 """
-S3 Base 클라이언트 추가 테스트 (base.py 누락 부분)
-목표: 56% → 95%+ 커버리지
+S3 Base 클라이언트 테스트
 """
 
 from django.test import TestCase
@@ -72,10 +71,10 @@ class S3ClientGetTests(TestCase):
         mock_s3.get_object.return_value = {"Body": body_mock}
         
         client = BaseBucket()
-        result = client.get("test-bucket", "test-key")
+        result = client.get("test-key")
         
         self.assertEqual(result, b"test content")
-        mock_s3.get_object.assert_called_once_with(Bucket="test-bucket", Key="test-key")
+        mock_s3.get_object.assert_called_once_with(Bucket=client._bucket, Key="test-key")
     
     @patch('S3.base.boto3.client')
     def test_get_exception(self, mock_boto_client):
@@ -89,7 +88,7 @@ class S3ClientGetTests(TestCase):
         client = BaseBucket()
         
         with self.assertRaises(Exception) as context:
-            client.get("test-bucket", "test-key")
+            client.get("test-key")
         
         self.assertIn("Couldn't get object", str(context.exception))
 
@@ -106,9 +105,9 @@ class S3ClientDeleteTests(TestCase):
         mock_boto_client.return_value = mock_s3
         
         client = BaseBucket()
-        client.delete("test-bucket", "test-key")
+        client.delete("test-key")
         
-        mock_s3.delete_object.assert_called_once_with(Bucket="test-bucket", Key="test-key")
+        mock_s3.delete_object.assert_called_once_with(Bucket=client._bucket, Key="test-key")
     
     @patch('S3.base.boto3.client')
     def test_delete_exception(self, mock_boto_client):
@@ -122,7 +121,7 @@ class S3ClientDeleteTests(TestCase):
         client = BaseBucket()
         
         with self.assertRaises(Exception) as context:
-            client.delete("test-bucket", "test-key")
+            client.delete("test-key")
         
         self.assertIn("Couldn't delete object", str(context.exception))
 
@@ -140,7 +139,7 @@ class S3ClientPutFileTests(TestCase):
         mock_boto_client.return_value = mock_s3
         
         client = BaseBucket()
-        client.put_file("test-bucket", "test-key", "/path/to/file.json")
+        client.put_file("test-key", "/path/to/file.json")
         
         mock_s3.put_object.assert_called_once()
         call_kwargs = mock_s3.put_object.call_args[1]
@@ -156,7 +155,7 @@ class S3ClientPutFileTests(TestCase):
         mock_boto_client.return_value = mock_s3
         
         client = BaseBucket()
-        client.put_file("test-bucket", "test-key", "/path/to/file.unknown")
+        client.put_file("test-key", "/path/to/file.unknown")
         
         mock_s3.put_object.assert_called_once()
         call_kwargs = mock_s3.put_object.call_args[1]
@@ -173,7 +172,7 @@ class S3ClientPutFileTests(TestCase):
         client = BaseBucket()
         
         with self.assertRaises(Exception) as context:
-            client.put_file("test-bucket", "test-key", "/nonexistent/file.txt")
+            client.put_file("test-key", "/nonexistent/file.txt")
         
         self.assertIn("Couldn't put object", str(context.exception))
 
@@ -199,7 +198,7 @@ class S3ClientGetLatestObjectTests(TestCase):
         paginator_mock.paginate.return_value = [{"Contents": [obj]}]
         
         client = BaseBucket()
-        latest = client.get_latest_object("test-bucket", "data/")
+        latest = client.get_latest_object("data/")
         
         self.assertEqual(latest["Key"], "data/2025-01-01.json")
     
@@ -231,7 +230,7 @@ class S3ClientGetLatestObjectTests(TestCase):
         paginator_mock.paginate.return_value = [{"Contents": objs}]
         
         client = BaseBucket()
-        latest = client.get_latest_object("test-bucket", "data/")
+        latest = client.get_latest_object("data/")
         
         self.assertEqual(latest["Key"], "data/2025-01-03.json")
     
@@ -248,7 +247,7 @@ class S3ClientGetLatestObjectTests(TestCase):
         paginator_mock.paginate.return_value = [{"Contents": []}]
         
         client = BaseBucket()
-        latest = client.get_latest_object("test-bucket", "data/")
+        latest = client.get_latest_object("data/")
         
         self.assertIsNone(latest)
 
@@ -274,7 +273,7 @@ class S3ClientCheckSourceTests(TestCase):
         paginator_mock.paginate.return_value = [{"Contents": [obj]}]
         
         client = BaseBucket()
-        result = client.check_source("test-bucket", "data/")
+        result = client.check_source("data/")
         
         self.assertTrue(result["ok"])
         self.assertEqual(result["latest"], "2025-01-01")
@@ -297,7 +296,7 @@ class S3ClientCheckSourceTests(TestCase):
         paginator_mock.paginate.return_value = [{"Contents": [obj]}]
         
         client = BaseBucket()
-        result = client.check_source("test-bucket", "data/")
+        result = client.check_source("data/")
         
         self.assertTrue(result["ok"])
         self.assertEqual(result["latest"], "2025-01-05")
@@ -315,7 +314,7 @@ class S3ClientCheckSourceTests(TestCase):
         paginator_mock.paginate.return_value = [{"Contents": []}]
         
         client = BaseBucket()
-        result = client.check_source("test-bucket", "data/")
+        result = client.check_source("data/")
         
         self.assertFalse(result["ok"])
         self.assertIsNone(result["latest"])
@@ -338,10 +337,10 @@ class S3ClientGetJsonTests(TestCase):
         mock_s3.get_object.return_value = {"Body": body_mock}
         
         client = BaseBucket()
-        result = client.get_json("test-bucket", "data")
+        result = client.get_json("data.json")
         
         self.assertEqual(result, json_data)
-        mock_s3.get_object.assert_called_once_with(Bucket="test-bucket", Key="data.json")
+        mock_s3.get_object.assert_called_once_with(Bucket=client._bucket, Key="data.json")
 
 
 class S3ClientGetLatestJsonTests(TestCase):
@@ -370,7 +369,7 @@ class S3ClientGetLatestJsonTests(TestCase):
         mock_s3.get_object.return_value = {"Body": body_mock}
         
         client = BaseBucket()
-        result_json, result_time = client.get_latest_json("test-bucket", "data/")
+        result_json, result_time = client.get_latest_json("data/")
         
         self.assertEqual(result_json, json_data)
         self.assertIsNotNone(result_time)
@@ -388,7 +387,7 @@ class S3ClientGetLatestJsonTests(TestCase):
         paginator_mock.paginate.return_value = [{"Contents": []}]
         
         client = BaseBucket()
-        result_json, result_time = client.get_latest_json("test-bucket", "data/")
+        result_json, result_time = client.get_latest_json("data/")
         
         self.assertIsNone(result_json)
         self.assertIsNone(result_time)
@@ -411,7 +410,7 @@ class S3ClientGetLatestJsonTests(TestCase):
         paginator_mock.paginate.return_value = [{"Contents": [obj]}]
         
         client = BaseBucket()
-        result_json, result_time = client.get_latest_json("test-bucket", "data/")
+        result_json, result_time = client.get_latest_json("data/")
         
         self.assertIsNone(result_json)
         self.assertIsNone(result_time)
@@ -436,7 +435,7 @@ class S3ClientGetImageUrlTests(TestCase):
         }
         
         client = BaseBucket()
-        result = client.get_image_url("test-bucket", "image-key")
+        result = client.get_image_url("image-key")
         
         self.assertTrue(result.startswith("data:image/png;base64,"))
     
@@ -453,7 +452,7 @@ class S3ClientGetImageUrlTests(TestCase):
         mock_s3.get_object.return_value = {"Body": body_mock}
         
         client = BaseBucket()
-        result = client.get_image_url("test-bucket", "image-key")
+        result = client.get_image_url("image-key")
         
         self.assertTrue(result.startswith("data:application/octet-stream;base64,"))
     
@@ -469,7 +468,7 @@ class S3ClientGetImageUrlTests(TestCase):
         client = BaseBucket()
         
         with self.assertRaises(Exception) as context:
-            client.get_image_url("test-bucket", "image-key")
+            client.get_image_url("image-key")
         
         self.assertIn("Couldn't get image", str(context.exception))
 
@@ -488,7 +487,7 @@ class S3ClientPutImageTests(TestCase):
         image_url = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg=="
         
         client = BaseBucket()
-        client.put_image("test-bucket", "image-key", image_url)
+        client.put_image("image-key", image_url)
         
         mock_s3.put_object.assert_called_once()
         call_kwargs = mock_s3.put_object.call_args[1]
@@ -505,7 +504,7 @@ class S3ClientPutImageTests(TestCase):
         client = BaseBucket()
         
         with self.assertRaises(Exception) as context:
-            client.put_image("test-bucket", "image-key", "invalid-image-url")
+            client.put_image("image-key", "invalid-image-url")
         
         # S3 base.py가 모든 에러를 Couldn't put image로 래핑함
         self.assertIn("Couldn't put image", str(context.exception))
@@ -521,7 +520,7 @@ class S3ClientPutImageTests(TestCase):
         client = BaseBucket()
         
         with self.assertRaises(Exception) as context:
-            client.put_image("test-bucket", "image-key", "data:image/png;base64,invalid!!!")
+            client.put_image("image-key", "data:image/png;base64,invalid!!!")
         
         # S3 base.py가 모든 에러를 Couldn't put image로 래핑함
         self.assertIn("Couldn't put image", str(context.exception))
@@ -540,6 +539,6 @@ class S3ClientPutImageTests(TestCase):
         client = BaseBucket()
         
         with self.assertRaises(Exception) as context:
-            client.put_image("test-bucket", "image-key", image_url)
+            client.put_image("image-key", image_url)
         
         self.assertIn("Couldn't put image", str(context.exception))

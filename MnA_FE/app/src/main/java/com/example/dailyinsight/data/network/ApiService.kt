@@ -22,14 +22,17 @@ interface ApiService {
     @GET("health")
     suspend fun health(): ApiResponse<HealthResponse>
 
-    // ============ Recommendations ============
-    @GET("/api/recommendations/today/")
-    suspend fun getTodayRecommendations(): ApiResponse<List<RecommendationDto>>
-
-    @GET("api/recommendations/history/")
-    suspend fun getStockRecommendations(): ApiResponse<Map<String, List<RecommendationDto>>>
-
     // ============ Stock Briefing & Stock Details ============
+
+    @GET("api/company-list")
+    suspend fun getBriefingList(
+        @Query("limit") limit: Int,
+        @Query("offset") offset: Int,
+        @Query("sort") sort: String? = null
+    ): BriefingListResponse
+
+    @GET("api/company-list")
+    suspend fun getStockList(): ApiResponse<List<RecommendationDto>>
 
     @GET("marketindex/api/overview/{ticker}")
     suspend fun getStockBriefing(): LLMSummaryResponse
@@ -72,14 +75,14 @@ interface ApiService {
     fun setCsrf(): Call<CsrfResponse>
 
     @POST("user/login")
-    fun logIn(
+    suspend fun logIn(
         @Body request: LogInRequest
-    ): Call<LogInResponse>
+    ): Response<UserApiResponse>
 
     @POST("user/signup")
-    fun signUp(
+    suspend fun signUp(
         @Body request: SignUpRequest
-    ): Call<SignUpResponse>
+    ): Response<UserApiResponse>
 
     @POST("user/style/")
     fun setStyle(
@@ -93,22 +96,22 @@ interface ApiService {
 
     // ============ Auto Login ============
     @GET("user/info/name")
-    fun getName(): Call<UserNameResponse>
+    suspend fun getName(): Response<UserNameResponse>
 
     // ============ User Info ============
     @POST("user/logout")
-    fun logOut(): Call<UserProfileResponse>
+    suspend fun logOut(): Response<UserApiResponse>
 
     @DELETE("user/withdraw")
-    fun withdraw(): Call<UserProfileResponse>
+    suspend fun withdraw(): Response<UserApiResponse>
 
     @POST("user/info/name")
-    fun changeName(
+    suspend fun changeName(
         @Body request: ChangeNameRequest
-    ): Call<UserProfileResponse>
+    ): Response<UserApiResponse>
 
     @PUT("user/info/password")
-    fun changePassword(
+    suspend fun changePassword(
         @Body password: ChangePasswordRequest
-    ): Call<UserProfileResponse>
+    ): Response<UserApiResponse>
 }

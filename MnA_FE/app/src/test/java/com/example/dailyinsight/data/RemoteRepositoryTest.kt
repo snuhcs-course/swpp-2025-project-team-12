@@ -1,213 +1,201 @@
 package com.example.dailyinsight.data
 
-import com.example.dailyinsight.data.dto.ApiResponse
-import com.example.dailyinsight.data.dto.RecommendationDto
-import com.example.dailyinsight.data.dto.StockDetailDto
+import com.example.dailyinsight.data.database.BriefingCardCache
+import com.example.dailyinsight.data.database.BriefingDao
+import com.example.dailyinsight.data.database.StockDetailCache
+import com.example.dailyinsight.data.database.StockDetailDao
+import com.example.dailyinsight.data.dto.*
 import com.example.dailyinsight.data.network.ApiService
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.*
 import org.junit.Before
 import org.junit.Test
-import org.mockito.kotlin.mock
-import org.mockito.kotlin.whenever
+import org.mockito.kotlin.*
 import java.io.IOException
 
+@ExperimentalCoroutinesApi
 class RemoteRepositoryTest {
 
+    private lateinit var api: ApiService
+    private lateinit var briefingDao: BriefingDao
+    private lateinit var stockDetailDao: StockDetailDao
     private lateinit var repository: RemoteRepository
-    private lateinit var mockApiService: ApiService
 
     @Before
     fun setup() {
-        mockApiService = mock()
-        repository = RemoteRepository(mockApiService)
+        api = mock()
+        briefingDao = mock()
+        stockDetailDao = mock()
+        repository = RemoteRepository(api, briefingDao, stockDetailDao)
     }
 
-    // ===== getTodayRecommendations Tests =====
+    // ===== getBriefingFlow Tests =====
 
     @Test
-    fun getTodayRecommendations_success_returnsData() = runTest {
-        // Given: API returns recommendations wrapped in ApiResponse
-        val mockRecommendations = listOf(
-            RecommendationDto(
-                ticker = "005930",
-                name = "삼성전자",
-                price = 72000,
-                change = -100,
-                changeRate = -0.14,
-                headline = "Strong earnings"
-            ),
-            RecommendationDto(
-                ticker = "000660",
-                name = "SK하이닉스",
-                price = 150000,
-                change = 2000,
-                changeRate = 1.35,
-                headline = "Tech rally"
-            )
+    fun getBriefingFlow_returnsFlowFromDao() = runTest {
+        val cachedItems = listOf(
+            createBriefingCardCache("005930", "삼성전자"),
+            createBriefingCardCache("000660", "SK하이닉스")
         )
-        val apiResponse = ApiResponse(data = mockRecommendations)
-        whenever(mockApiService.getTodayRecommendations()).thenReturn(apiResponse)
+        whenever(briefingDao.getAllCards()).thenReturn(flowOf(cachedItems))
 
-        // When: Get today's recommendations
-        val result = repository.getTodayRecommendations()
+        val result = repository.getBriefingFlow().first()
 
-        // Then: Should return API data
         assertEquals(2, result.size)
         assertEquals("삼성전자", result[0].name)
         assertEquals("SK하이닉스", result[1].name)
     }
 
     @Test
-    fun getTodayRecommendations_emptyResponse_returnsEmptyList() = runTest {
-        // Given: API returns empty list wrapped in ApiResponse
-        val apiResponse = ApiResponse(data = emptyList<RecommendationDto>())
-        whenever(mockApiService.getTodayRecommendations()).thenReturn(apiResponse)
+    fun getBriefingFlow_returnsEmptyListWhenDaoEmpty() = runTest {
+        whenever(briefingDao.getAllCards()).thenReturn(flowOf(emptyList()))
 
-        // When: Get today's recommendations
-        val result = repository.getTodayRecommendations()
+        val result = repository.getBriefingFlow().first()
 
-        // Then: Should return empty list
         assertTrue(result.isEmpty())
     }
 
-    @Test
-    fun getTodayRecommendations_nullData_returnsEmptyList() = runTest {
-        // Given: API returns null data
-        val apiResponse = ApiResponse(data = null as List<RecommendationDto>?)
-        whenever(mockApiService.getTodayRecommendations()).thenReturn(apiResponse as ApiResponse<List<RecommendationDto>>)
-
-        // When: Get today's recommendations
-        val result = repository.getTodayRecommendations()
-
-        // Then: Should return empty list
-        assertTrue(result.isEmpty())
-    }
-
-    // ===== getStockRecommendations Tests =====
+    // ===== getStockReport Tests =====
 
     @Test
-    fun getStockRecommendations_success_returnsMap() = runTest {
-        // Given: API returns recommendations map wrapped in ApiResponse
-        val mockMap = mapOf(
-            "오늘" to listOf(
-                RecommendationDto(
-                    ticker = "005930",
-                    name = "삼성전자",
-                    price = 72000,
-                    change = -100,
-                    changeRate = -0.14,
-                    headline = "Good performance"
-                )
-            ),
-            "어제" to listOf(
-                RecommendationDto(
-                    ticker = "000660",
-                    name = "SK하이닉스",
-                    price = 150000,
-                    change = 2000,
-                    changeRate = 1.35,
-                    headline = "Better outlook"
-                )
-            )
-        )
-        val apiResponse = ApiResponse(data = mockMap)
-        whenever(mockApiService.getStockRecommendations()).thenReturn(apiResponse)
+    fun getStockReport_returnsCachedDataWhenAvailable() = runTest {
+        val cached = createStockDetailCache("005930")
+        whenever(stockDetailDao.getDetail("005930")).thenReturn(cached)
 
-        // When: Get stock recommendations
-        val result = repository.getStockRecommendations()
+        val result = repository.getStockReport("005930")
 
-        // Then: Should return map with data
-        assertEquals(2, result.size)
-        assertTrue(result.containsKey("오늘"))
-        assertTrue(result.containsKey("어제"))
-        assertEquals(1, result["오늘"]?.size)
-        assertEquals("삼성전자", result["오늘"]?.get(0)?.name)
-    }
-
-    @Test
-    fun getStockRecommendations_emptyMap_returnsEmptyMap() = runTest {
-        // Given: API returns empty map wrapped in ApiResponse
-        val apiResponse = ApiResponse(data = emptyMap<String, List<RecommendationDto>>())
-        whenever(mockApiService.getStockRecommendations()).thenReturn(apiResponse)
-
-        // When: Get stock recommendations
-        val result = repository.getStockRecommendations()
-
-        // Then: Should return empty map
-        assertTrue(result.isEmpty())
-    }
-
-    @Test
-    fun getStockRecommendations_nullData_returnsEmptyMap() = runTest {
-        // Given: API returns null data
-        val apiResponse = ApiResponse(data = null as Map<String, List<RecommendationDto>>?)
-        whenever(mockApiService.getStockRecommendations()).thenReturn(apiResponse as ApiResponse<Map<String, List<RecommendationDto>>>)
-
-        // When: Get stock recommendations
-        val result = repository.getStockRecommendations()
-
-        // Then: Should return empty map
-        assertTrue(result.isEmpty())
-    }
-
-    // ===== getStockDetail Tests =====
-
-    @Test
-    fun getStockDetail_success_returnsDetail() = runTest {
-        // Given: API returns stock detail wrapped in ApiResponse
-        val mockDetail = StockDetailDto(
-            ticker = "005930",
-            name = "삼성전자",
-            price = 72000
-        )
-        val apiResponse = ApiResponse(data = mockDetail)
-        whenever(mockApiService.getStockDetail("005930")).thenReturn(apiResponse)
-
-        // When: Get stock detail
-        val result = repository.getStockDetail("005930")
-
-        // Then: Should return detail data
         assertEquals("005930", result.ticker)
-        assertEquals("삼성전자", result.name)
-        assertEquals(72000L, result.price)
+        verify(api, never()).getStockReport(any())
     }
 
     @Test
-    fun getStockDetail_nullData_throwsException() = runTest {
-        // Given: API returns null data
-        val apiResponse = ApiResponse(data = null as StockDetailDto?)
-        whenever(mockApiService.getStockDetail("005930")).thenReturn(apiResponse as ApiResponse<StockDetailDto>)
+    fun getStockReport_fetchesFromApiWhenNotCached() = runTest {
+        val apiResponse = createStockDetailDto("005930")
+        whenever(stockDetailDao.getDetail("005930")).thenReturn(null)
+        whenever(api.getStockReport("005930")).thenReturn(apiResponse)
 
-        // When/Then: Should throw NoSuchElementException
+        val result = repository.getStockReport("005930")
+
+        assertEquals("005930", result.ticker)
+        verify(api).getStockReport("005930")
+        verify(stockDetailDao).insertDetail(any())
+    }
+
+    @Test
+    fun getStockReport_savesToCacheAfterApiFetch() = runTest {
+        val apiResponse = createStockDetailDto("005930")
+        whenever(stockDetailDao.getDetail("005930")).thenReturn(null)
+        whenever(api.getStockReport("005930")).thenReturn(apiResponse)
+
+        repository.getStockReport("005930")
+
+        verify(stockDetailDao).insertDetail(argThat { ticker == "005930" })
+    }
+
+    @Test
+    fun getStockReport_throwsExceptionOnApiError() = runTest {
+        whenever(stockDetailDao.getDetail("005930")).thenReturn(null)
+        whenever(api.getStockReport("005930")).thenAnswer { throw IOException("Network error") }
+
         try {
-            repository.getStockDetail("005930")
-            fail("Should throw NoSuchElementException")
-        } catch (e: NoSuchElementException) {
-            assertTrue(e.message?.contains("005930") == true)
+            repository.getStockReport("005930")
+            fail("Expected IOException")
+        } catch (e: IOException) {
+            assertEquals("Network error", e.message)
         }
     }
 
+    // ===== getStockOverview Tests =====
+
     @Test
-    fun getStockDetail_differentTickers_returnsDifferentData() = runTest {
-        // Given: API returns different data for different tickers
-        val detail1 = StockDetailDto(ticker = "005930", name = "삼성전자", price = 72000)
-        val detail2 = StockDetailDto(ticker = "000660", name = "SK하이닉스", price = 150000)
-        
-        val apiResponse1 = ApiResponse(data = detail1)
-        val apiResponse2 = ApiResponse(data = detail2)
-        
-        whenever(mockApiService.getStockDetail("005930")).thenReturn(apiResponse1)
-        whenever(mockApiService.getStockDetail("000660")).thenReturn(apiResponse2)
+    fun getStockOverview_returnsApiResponse() = runTest {
+        val overview = StockOverviewDto(
+            asOfDate = "2024-01-01",
+            summary = "테스트 요약",
+            fundamental = "펀더멘털 분석",
+            technical = "기술적 분석",
+            news = listOf("뉴스1", "뉴스2")
+        )
+        whenever(api.getStockOverview("005930")).thenReturn(overview)
 
-        // When: Get different stock details
-        val result1 = repository.getStockDetail("005930")
-        val result2 = repository.getStockDetail("000660")
+        val result = repository.getStockOverview("005930")
 
-        // Then: Should return different data
-        assertEquals("삼성전자", result1.name)
-        assertEquals("SK하이닉스", result2.name)
-        assertEquals(72000L, result1.price)
-        assertEquals(150000L, result2.price)
+        assertEquals("테스트 요약", result.summary)
+        assertEquals("펀더멘털 분석", result.fundamental)
     }
+
+    @Test
+    fun getStockOverview_throwsExceptionOnApiError() = runTest {
+        whenever(api.getStockOverview("005930")).thenAnswer { throw IOException("Network error") }
+
+        try {
+            repository.getStockOverview("005930")
+            fail("Expected IOException")
+        } catch (e: IOException) {
+            assertEquals("Network error", e.message)
+        }
+    }
+
+    // ===== Helper Functions =====
+
+    private fun createBriefingCardCache(ticker: String, name: String) = BriefingCardCache(
+        ticker = ticker,
+        name = name,
+        price = 70000L,
+        change = 1000L,
+        changeRate = 1.5,
+        headline = "테스트 요약",
+        label = null,
+        confidence = null,
+        fetchedAt = System.currentTimeMillis()
+    )
+
+    private fun createStockDetailDto(ticker: String) = StockDetailDto(
+        ticker = ticker,
+        name = "테스트 주식",
+        current = CurrentData(
+            price = 72000,
+            change = -100,
+            changeRate = -0.14,
+            marketCap = 1000000,
+            date = "2024-01-01"
+        ),
+        valuation = ValuationData(
+            peTtm = 15.5,
+            priceToBook = 1.2,
+            bps = 60000
+        ),
+        dividend = DividendData(
+            `yield` = 2.5
+        ),
+        financials = FinancialsData(
+            eps = 4800,
+            dps = 1800,
+            roe = 8.0
+        ),
+        history = listOf(
+            HistoryItem(date = "2024-01-01", close = 71000.0),
+            HistoryItem(date = "2024-01-02", close = 72000.0)
+        ),
+        profile = ProfileData(
+            explanation = "테스트 회사 설명"
+        ),
+        asOf = "2024-01-01"
+    )
+
+    private fun createStockDetailCache(ticker: String) = StockDetailCache(
+        ticker = ticker,
+        json = """
+            {
+                "ticker": "$ticker",
+                "name": "캐시된 주식",
+                "current": {"price": 72000},
+                "history": []
+            }
+        """.trimIndent(),
+        fetchedAt = System.currentTimeMillis()
+    )
 }

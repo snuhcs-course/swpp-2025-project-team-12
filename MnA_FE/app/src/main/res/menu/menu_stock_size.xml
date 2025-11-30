@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+    <item
+        android:id="@+id/option_all"
+        android:title="전체" />
+    <item
+        android:id="@+id/option_large"
+        android:title="대형주 (Top 100)" />
+    <item
+        android:id="@+id/option_mid"
+        android:title="중형주 (Top 101~300)" />
+    <item
+        android:id="@+id/option_small"
+        android:title="소형주 (Top 301~)" />
+</menu>

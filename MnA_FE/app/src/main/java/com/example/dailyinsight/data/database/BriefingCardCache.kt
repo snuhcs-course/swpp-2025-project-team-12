@@ -2,23 +2,30 @@ package com.example.dailyinsight.data.database
 
 import androidx.room.Entity
 import androidx.room.PrimaryKey
-import androidx.room.TypeConverters
-
-@Entity(tableName = "briefing_card_cache")
-@TypeConverters(BriefingListConverter::class)
+import com.example.dailyinsight.data.dto.RecommendationDto
+@Entity(tableName = "briefing_cards")
 data class BriefingCardCache(
-    @PrimaryKey val filterKey: String, // 예: "ALL", "SECTOR_IT", "SECTOR_의류" 등
-    val items: List<BriefingCardItem>, // 리스트 카드들
-    val lastFetched: Long              // 마지막 갱신 시각
-)
-
-data class BriefingCardItem(
-    val symbol: String,
+    @PrimaryKey
+    val ticker: String,
     val name: String,
-    val summary: String,
-    val price: Double?,
-    val change: Double?,   // 절대값
-    val changePct: Double?,// %
-    val sector: String?,
-    val asOf: String?      // "2025-10-24" 등 (원본 그대로)
-)
+    val price: Long,
+    val change: Long,
+    val changeRate: Double,
+    val headline: String?,   // overview의 summary
+    val label: String?,      // overview의 label (상승/하락/중립)
+    val confidence: Double?, // overview의 confidence
+    val fetchedAt: Long,      // 저장된 시간 (정렬용)
+    val isFavorite: Boolean = false
+){ //  UI 객체로 변환하는 함수
+    fun toDto(): RecommendationDto {
+        return RecommendationDto(
+            ticker = ticker,
+            name = name,
+            price = price,
+            change = change,
+            changeRate = changeRate,
+            headline = headline,
+            isFavorite = isFavorite
+        )
+    }
+}

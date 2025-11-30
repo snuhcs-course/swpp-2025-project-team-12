@@ -3,16 +3,19 @@ package com.example.dailyinsight.ui.start
 import android.content.Context
 import android.content.Intent
 import android.os.Bundle
+import android.util.Log
 import android.widget.Toast
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
+import androidx.lifecycle.lifecycleScope
 import com.example.dailyinsight.MainActivity
 import com.example.dailyinsight.R
 import com.example.dailyinsight.data.dto.UserNameResponse
 import com.example.dailyinsight.data.network.RetrofitInstance
 import com.google.gson.Gson
+import kotlinx.coroutines.launch
 import retrofit2.Call
 import retrofit2.Response
 
@@ -22,25 +25,27 @@ class SplashActivity : AppCompatActivity() {
 //        setContentView(R.layout.activity_splash)
 
         RetrofitInstance.init(this)
+        lifecycleScope.launch {
+            validateCookies()
+        }
+    }
 
-        RetrofitInstance.api.getName()
-            .enqueue(object : retrofit2.Callback<UserNameResponse> {
-                override fun onResponse(
-                    call: Call<UserNameResponse>,
-                    response: Response<UserNameResponse>
-                ) {
-                    if(response.isSuccessful) {
-                        navigateToMain()
-                    } else {
-//                        Toast.makeText(this@SplashActivity, "login needed", Toast.LENGTH_SHORT).show()
-                        navigateToLogin()
-                    }
-                }
-                override fun onFailure(call: Call<UserNameResponse>, t: Throwable) {
-                    Toast.makeText(this@SplashActivity, "failed to reach server", Toast.LENGTH_SHORT).show()
-                    navigateToLogin()
-                }
-            })
+    private suspend fun validateCookies() {
+        try {
+            val response = RetrofitInstance.api.getName()
+
+            if (response.isSuccessful) {
+                navigateToMain()
+            } else {
+                navigateToLogin()
+            }
+
+        } catch (e: Exception) {
+            Log.e("splash", "getName")
+            e.printStackTrace()
+            Toast.makeText(this, R.string.on_api_failure, Toast.LENGTH_SHORT).show()
+            navigateToLogin()
+        }
     }
 
     private fun navigateToMain() {

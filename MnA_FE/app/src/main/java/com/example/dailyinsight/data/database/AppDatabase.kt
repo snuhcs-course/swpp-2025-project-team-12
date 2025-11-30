@@ -10,21 +10,21 @@ import androidx.room.TypeConverters
     entities = [
         CachedHistory::class,         // 차트 1년치
         BriefingCardCache::class,     // 브리핑 리스트
-        OverviewCache::class          // 상세 표
+        StockDetailCache::class, // 상세 정보 캐시 테이블
+        FavoriteTicker::class
     ],
-    version = 2,
+    version = 6,
     exportSchema = false
 )
 @TypeConverters(
-    StockHistoryConverter::class,
-    BriefingListConverter::class,
-    OverviewConverter::class
+    StockHistoryConverter::class
 )
 abstract class AppDatabase : RoomDatabase() {
 
     abstract fun historyCacheDao(): HistoryCacheDao
     abstract fun briefingDao(): BriefingDao
-    abstract fun overviewDao(): OverviewDao
+
+    abstract fun stockDetailDao(): StockDetailDao
 
     companion object {
         // @Volatile: 이 변수가 모든 스레드에 즉시 공유되도록 보장
@@ -38,7 +38,8 @@ abstract class AppDatabase : RoomDatabase() {
                     context.applicationContext,
                     AppDatabase::class.java,
                     "daily_insight_database"
-                ).build()
+                ).fallbackToDestructiveMigration() // DB 버전 변경 시 기존 데이터 삭제 후 재생성
+                .build()
                 INSTANCE = instance
                 instance
             }

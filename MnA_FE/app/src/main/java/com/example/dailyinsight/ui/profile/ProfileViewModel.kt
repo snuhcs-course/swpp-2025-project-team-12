@@ -3,9 +3,11 @@ package com.example.dailyinsight.ui.profile
 import android.app.Activity
 import android.content.Context
 import android.content.Intent
+import android.util.Log
 import android.widget.Toast
 import androidx.datastore.preferences.core.edit
 import androidx.lifecycle.*
+import com.example.dailyinsight.R
 import com.example.dailyinsight.data.datastore.CookieKeys
 import com.example.dailyinsight.data.datastore.cookieDataStore
 import com.example.dailyinsight.data.dto.LogInResponse
@@ -31,35 +33,28 @@ class ProfileViewModel(private val context: Context) : ViewModel() {
         .map { prefs -> prefs[CookieKeys.USERNAME] ?: "Guest" }
         .asLiveData()
 
-    fun logout() {
-        RetrofitInstance.api.logOut()
-            .enqueue(object : retrofit2.Callback<UserProfileResponse> {
-                override fun onResponse(
-                    request: Call<UserProfileResponse?>,
-                    response: Response<UserProfileResponse?>
-                ) {
-                    if(response.isSuccessful) {
-                        Toast.makeText(context, "로그아웃 되었습니다", Toast.LENGTH_SHORT).show()
-                        viewModelScope.launch {
-                            context.cookieDataStore.edit { it.clear() }
-                        }
-                        val intent = Intent(context, StartActivity::class.java)
-                        context.startActivity(intent)
-                        if(context is Activity) {
-                            context.finishAffinity()
-                        }
-                    } else {
-                        val result = response.errorBody()?.string()
-                        val message = Gson().fromJson(result, LogInResponse::class.java).message
-                        Toast.makeText(context, message, Toast.LENGTH_SHORT).show()
-                    }
+    suspend fun logout() {
+        try {
+            val response = RetrofitInstance.api.logOut()
+            if(response.isSuccessful) {
+                Toast.makeText(context, R.string.on_logout_successful, Toast.LENGTH_SHORT).show()
+                RetrofitInstance.cookieJar.clear()
+                val intent = Intent(context, StartActivity::class.java)
+                context.startActivity(intent)
+                if(context is Activity) {
+                    context.finishAffinity()
                 }
-
-                override fun onFailure(call: Call<UserProfileResponse>, t: Throwable) {
-                    Toast.makeText(context, "Please check network connection", Toast.LENGTH_SHORT)
-                        .show()
-                }
-            })
+            } else {
+                val result = response.errorBody()?.string()
+                val message = Gson().fromJson(result, LogInResponse::class.java).message
+                Log.e("logout", "response with ${response.code()}: $message")
+                Toast.makeText(context, R.string.on_logout_unsuccessful, Toast.LENGTH_SHORT).show()
+            }
+        } catch (e: Exception) {
+            Log.e("logout", "exception on api call")
+            e.printStackTrace()
+            Toast.makeText(context, R.string.on_api_failure, Toast.LENGTH_SHORT).show()
+        }
     }
 }
 

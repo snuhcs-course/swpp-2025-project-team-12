@@ -1,29 +1,34 @@
 import io
 import traceback
+from datetime import timezone
 
 import pandas as pd
 
-from datetime import timezone
-
 from S3 import _get_env, debug_print
 from S3.base import BaseBucket
+from S3.client_factory import S3ClientFactory
 
 
 class FinanceBucket(BaseBucket):
     """
-    Boto3 S3 래퍼: 기존 HEAD의 메서드들을 유지/보강.
-    - ENV 키 지원: FINANCE_IAM_ACCESS_KEY_ID / FINANCE_AWS_ACCESS_KEY_ID
-                    IAM_SECRET_KEY   / AWS_SECRET_ACCESS_KEY
-                    AWS_REGION (선택)
+    Finance 전용 S3 버킷 래퍼.
+
+    변경점:
+    - S3 Client 생성은 S3ClientFactory.for_finance() 에 위임
+    - bucket_name 은 FINANCE_BUCKET_NAME ENV 기본 사용
     """
 
-    def __init__(
-        self,
-        access_key = _get_env("FINANCE_IAM_ACCESS_KEY_ID", "FINANCE_AWS_ACCESS_KEY_ID"),
-        secret_key = _get_env("FINANCE_IAM_SECRET_KEY", "FINANCE_AWS_SECRET_ACCESS_KEY"),
-        bucket_name = _get_env("FINANCE_BUCKET_NAME")
-    ):
-        super().__init__(access_key, secret_key, bucket_name)
+    def __init__(self, client=None, bucket_name: str | None = None):
+        try:
+            if client is None:
+                client = S3ClientFactory.for_finance()
+            if bucket_name is None:
+                bucket_name = _get_env("FINANCE_BUCKET_NAME")
+
+            super().__init__(client=client, bucket_name=bucket_name)
+        except Exception:
+            debug_print(traceback.format_exc())
+            raise
 
     # --- pandas helpers ---
 
@@ -45,20 +50,21 @@ class FinanceBucket(BaseBucket):
                     return pd.read_csv(io.BytesIO(data))
         except Exception:
             debug_print(traceback.format_exc())
-            raise Exception(f"S3 ERROR: Couldn't load DataFrame from s3://{self._bucket}/{key}")
+            raise Exception(
+                f"S3 ERROR: Couldn't load DataFrame from s3://{self._bucket}/{key}"
+            )
 
     def get_latest_parquet_df(self, prefix):
-        # 수정: bucket 인자 추가
         latest = self.get_latest_object(prefix)
 
-        if not latest: return None, None
+        if not latest:
+            return None, None
 
         data = self.get(latest["Key"])
         df = pd.read_parquet(io.BytesIO(data))
         ts = latest["LastModified"].astimezone(timezone.utc).isoformat()
 
         return df, ts
-
 
     def put_dataframe(self, key: str, df: pd.DataFrame) -> None:
         """
@@ -97,4 +103,6 @@ class FinanceBucket(BaseBucket):
                 )
         except Exception:
             debug_print(traceback.format_exc())
-            raise Exception(f"S3 ERROR: Couldn't write DataFrame to s3://{self._bucket}/{key}")
+            raise Exception(
+                f"S3 ERROR: Couldn't write DataFrame to s3://{self._bucket}/{key}"
+            )

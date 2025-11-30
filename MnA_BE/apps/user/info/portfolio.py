@@ -1,32 +1,65 @@
 from django.http import JsonResponse
-from rest_framework import viewsets
+from rest_framework import viewsets, serializers
 from rest_framework.decorators import action
+from drf_yasg.utils import swagger_auto_schema
+from drf_yasg import openapi
 from decorators import *
 import json
 
-class PortfolioView(viewsets.ViewSet):
 
-    @action(detail=True, methods=['get'])
+# ============================================================================
+# Serializers
+# ============================================================================
+
+
+class PortfolioResponseSerializer(serializers.Serializer):
+    portfolio = serializers.ListField(child=serializers.CharField())
+
+
+class PortfolioRequestSerializer(serializers.Serializer):
+    portfolio = serializers.ListField(
+        child=serializers.CharField(), help_text="List of stock tickers"
+    )
+
+
+class PortfolioMessageResponseSerializer(serializers.Serializer):
+    message = serializers.CharField()
+
+
+# ============================================================================
+# Views
+# ============================================================================
+
+
+class PortfolioView(viewsets.ViewSet):
+    """
+    User Portfolio Views - Get and update user's stock portfolio
+    """
+
+    @swagger_auto_schema(
+        operation_description="Get user's stock portfolio (requires authentication)",
+        responses={200: PortfolioResponseSerializer()},
+    )
+    @action(detail=True, methods=["get"])
     @default_error_handler
     @require_auth
     def get(self, request, user):
-        """
-        GET: get user's portfolio. (check user by cookie)
-        """
+        return JsonResponse({"portfolio": user.portfolio}, status=200)
 
-        if request.method == "GET":
-            ### GET ###
-
-            return JsonResponse({"portfolio": user.portfolio}, status=200)
-
-    @action(detail=True, methods=['post'])
+    @swagger_auto_schema(
+        operation_description="Update user's stock portfolio (requires authentication)",
+        request_body=PortfolioRequestSerializer,
+        responses={
+            200: PortfolioMessageResponseSerializer(),
+            400: openapi.Response(description="Invalid input"),
+            500: openapi.Response(description="Save failed"),
+        },
+    )
+    @action(detail=True, methods=["post"])
     @default_error_handler
     @require_auth
     def post(self, request, user):
-        """
-        POST: change user's portfolio.
-        """
-        body = json.loads(request.body.decode('utf-8'))
+        body = json.loads(request.body.decode("utf-8"))
         portfolio = body.get("portfolio")
 
         if portfolio is None:

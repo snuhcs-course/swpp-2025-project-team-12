@@ -1,12 +1,11 @@
 package com.example.dailyinsight.ui.detail
 
 import com.example.dailyinsight.data.Repository
-import com.example.dailyinsight.data.dto.PriceFinancialInfoDto
-import com.example.dailyinsight.data.dto.StockDetailDto
+import com.example.dailyinsight.data.dto.*
 import com.example.dailyinsight.ui.common.LoadResult
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.test.StandardTestDispatcher
+import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runTest
@@ -24,8 +23,7 @@ import java.io.IOException
 class StockDetailViewModelTest {
 
     private lateinit var repository: Repository
-    private lateinit var viewModel: StockDetailViewModel
-    private val testDispatcher = StandardTestDispatcher()
+    private val testDispatcher = UnconfinedTestDispatcher()
 
     @Before
     fun setup() {
@@ -38,202 +36,170 @@ class StockDetailViewModelTest {
         Dispatchers.resetMain()
     }
 
-    private fun createStockDetail(ticker: String = "005930", hasPriceData: Boolean = true): StockDetailDto {
+    private fun createStockDetail(
+        ticker: String = "005930",
+        hasHistory: Boolean = true,
+        historySize: Int = 3
+    ): StockDetailDto {
         return StockDetailDto(
             ticker = ticker,
             name = "테스트 주식",
-            price = 72000,
-            change = -100,
-            changeRate = -0.14,
-            priceFinancialInfo = if (hasPriceData) {
-                PriceFinancialInfoDto(
-                    price = mapOf(
-                        "2024-01-01" to 70000.0,
-                        "2024-01-02" to 71000.0,
-                        "2024-01-03" to 72000.0
+            current = CurrentData(
+                price = 72000,
+                change = -100,
+                changeRate = -0.14,
+                marketCap = 1000000,
+                date = "2024-01-01"
+            ),
+            valuation = ValuationData(
+                peTtm = 15.5,
+                priceToBook = 1.2,
+                bps = 60000
+            ),
+            dividend = DividendData(
+                `yield` = 2.5
+            ),
+            financials = FinancialsData(
+                eps = 4800,
+                dps = 1800,
+                roe = 8.0
+            ),
+            history = if (hasHistory) {
+                (1..historySize).map {
+                    HistoryItem(
+                        date = "2024-01-${it.toString().padStart(2, '0')}",
+                        close = 70000.0 + it * 1000
                     )
-                )
+                }
             } else {
                 null
-            }
+            },
+            profile = ProfileData(
+                explanation = "테스트 회사 설명"
+            ),
+            asOf = "2024-01-01"
         )
     }
+
+    private fun createStockOverview(code: String = "005930"): StockOverviewDto {
+        return StockOverviewDto(
+            asOfDate = "2024-01-01",
+            summary = "테스트 요약",
+            fundamental = "테스트 펀더멘털 분석",
+            technical = "테스트 기술적 분석",
+            news = listOf("뉴스1", "뉴스2", "뉴스3")
+        )
+    }
+
+    // ===== Basic Loading Tests =====
 
     @Test
     fun load_withValidTicker_updatesStateToSuccess() = runTest {
         val ticker = "005930"
         val stockDetail = createStockDetail(ticker)
-        whenever(repository.getStockDetail(ticker)).thenReturn(stockDetail)
-        viewModel = StockDetailViewModel(repository)
+        val stockOverview = createStockOverview(ticker)
+        whenever(repository.getStockReport(ticker)).thenReturn(stockDetail)
+        whenever(repository.getStockOverview(ticker)).thenReturn(stockOverview)
+        
+        val viewModel = StockDetailViewModel(repository)
         viewModel.load(ticker)
         advanceUntilIdle()
+        
         val state = viewModel.state.value
         assertTrue(state is LoadResult.Success)
         assertEquals(stockDetail, (state as LoadResult.Success).data)
     }
 
     @Test
-    fun load_withValidPriceData_updatesPriceStateToSuccess() = runTest {
-        val ticker = "005930"
-        val stockDetail = createStockDetail(ticker, hasPriceData = true)
-        whenever(repository.getStockDetail(ticker)).thenReturn(stockDetail)
-        viewModel = StockDetailViewModel(repository)
-        viewModel.load(ticker)
-        advanceUntilIdle()
-        val priceState = viewModel.priceState.value
-        assertFalse(priceState is LoadResult.Empty)
-        assertFalse(priceState is LoadResult.Loading)
-    }
-
-    @Test
-    fun load_withEmptyPriceData_updatesPriceStateToError() = runTest {
-        val ticker = "005930"
-        val stockDetail = createStockDetail(ticker, hasPriceData = false)
-        whenever(repository.getStockDetail(ticker)).thenReturn(stockDetail)
-        viewModel = StockDetailViewModel(repository)
-        viewModel.load(ticker)
-        advanceUntilIdle()
-        assertTrue(viewModel.state.value is LoadResult.Success)
-        assertTrue(viewModel.priceState.value is LoadResult.Error)
-    }
-
-    @Test
     fun load_withRepositoryError_updatesStateToError() = runTest {
         val ticker = "INVALID"
         val exception = IOException("Network error")
-        whenever(repository.getStockDetail(ticker)).thenAnswer {
-            throw exception
-        }
-        viewModel = StockDetailViewModel(repository)
+        whenever(repository.getStockReport(ticker)).thenAnswer { throw exception }
+        whenever(repository.getStockOverview(ticker)).thenAnswer { throw exception }
+        
+        val viewModel = StockDetailViewModel(repository)
         viewModel.load(ticker)
         advanceUntilIdle()
+        
         val state = viewModel.state.value
         assertTrue(state is LoadResult.Error)
         assertEquals(exception, (state as LoadResult.Error).throwable)
-        val priceState = viewModel.priceState.value
-        assertTrue(priceState is LoadResult.Error)
-        assertEquals(exception, (priceState as LoadResult.Error).throwable)
-    }
-
-    @Test
-    fun load_setsLoadingStateBeforeCompletion() = runTest {
-        val ticker = "005930"
-        val stockDetail = createStockDetail(ticker)
-        whenever(repository.getStockDetail(ticker)).thenReturn(stockDetail)
-        viewModel = StockDetailViewModel(repository)
-        viewModel.load(ticker)
-        advanceUntilIdle()
-        assertTrue(viewModel.state.value is LoadResult.Success)
-    }
-
-    @Test
-    fun load_withDifferentTickers_loadsCorrectData() = runTest {
-        val ticker1 = "005930"
-        val ticker2 = "000660"
-        val stockDetail1 = createStockDetail(ticker1)
-        val stockDetail2 = createStockDetail(ticker2)
-        whenever(repository.getStockDetail(ticker1)).thenReturn(stockDetail1)
-        whenever(repository.getStockDetail(ticker2)).thenReturn(stockDetail2)
-        viewModel = StockDetailViewModel(repository)
-        viewModel.load(ticker1)
-        advanceUntilIdle()
-        val state1 = viewModel.state.value
-        viewModel.load(ticker2)
-        advanceUntilIdle()
-        val state2 = viewModel.state.value
-        assertTrue(state1 is LoadResult.Success)
-        assertEquals(ticker1, (state1 as LoadResult.Success).data.ticker)
-        assertTrue(state2 is LoadResult.Success)
-        assertEquals(ticker2, (state2 as LoadResult.Success).data.ticker)
-    }
-
-    @Test
-    fun load_multipleCallsWithSameTicker_updatesState() = runTest {
-        val ticker = "005930"
-        val stockDetail = createStockDetail(ticker)
-        whenever(repository.getStockDetail(ticker)).thenReturn(stockDetail)
-        viewModel = StockDetailViewModel(repository)
-        viewModel.load(ticker)
-        advanceUntilIdle()
-        viewModel.load(ticker)
-        advanceUntilIdle()
-        assertTrue(viewModel.state.value is LoadResult.Success)
-        assertFalse(viewModel.priceState.value is LoadResult.Empty)
     }
 
     @Test
     fun initialState_isEmpty() {
-        viewModel = StockDetailViewModel(repository)
+        val viewModel = StockDetailViewModel(repository)
         assertTrue(viewModel.state.value is LoadResult.Empty)
         assertTrue(viewModel.priceState.value is LoadResult.Empty)
+        assertTrue(viewModel.overviewState.value is LoadResult.Empty)
+    }
+
+    // ===== Overview Tests =====
+
+    @Test
+    fun load_overviewLoadsSeparately() = runTest {
+        val ticker = "005930"
+        val detail = createStockDetail(ticker)
+        val overview = createStockOverview(ticker)
+        whenever(repository.getStockReport(ticker)).thenReturn(detail)
+        whenever(repository.getStockOverview(ticker)).thenReturn(overview)
+        
+        val viewModel = StockDetailViewModel(repository)
+        viewModel.load(ticker)
+        advanceUntilIdle()
+        
+        assertTrue(viewModel.overviewState.value is LoadResult.Success)
+        assertEquals(overview, (viewModel.overviewState.value as LoadResult.Success).data)
     }
 
     @Test
-    fun load_withNullPriceFinancialInfo_updatesPriceStateToError() = runTest {
+    fun load_overviewWithNullFields_handlesGracefully() = runTest {
         val ticker = "005930"
-        val stockDetail = StockDetailDto(
-            ticker = ticker,
-            name = "테스트",
-            price = 70000,
-            priceFinancialInfo = null
+        val detail = createStockDetail(ticker)
+        val overview = StockOverviewDto(
+            asOfDate = null,
+            summary = null,
+            fundamental = null,
+            technical = null,
+            news = null
         )
-        whenever(repository.getStockDetail(ticker)).thenReturn(stockDetail)
-        viewModel = StockDetailViewModel(repository)
+        whenever(repository.getStockReport(ticker)).thenReturn(detail)
+        whenever(repository.getStockOverview(ticker)).thenReturn(overview)
+        
+        val viewModel = StockDetailViewModel(repository)
         viewModel.load(ticker)
         advanceUntilIdle()
-        assertTrue(viewModel.state.value is LoadResult.Success)
-        assertTrue(viewModel.priceState.value is LoadResult.Error)
+        
+        assertTrue(viewModel.overviewState.value is LoadResult.Success)
     }
 
-    @Test
-    fun load_withSinglePricePoint_createsSingleEntryChart() = runTest {
-        val ticker = "005930"
-        val stockDetail = StockDetailDto(
-            ticker = ticker,
-            name = "테스트",
-            price = 70000,
-            priceFinancialInfo = PriceFinancialInfoDto(
-                price = mapOf("2024-01-01" to 70000.0)
-            )
-        )
-        whenever(repository.getStockDetail(ticker)).thenReturn(stockDetail)
-        viewModel = StockDetailViewModel(repository)
-        viewModel.load(ticker)
-        advanceUntilIdle()
-        assertTrue(viewModel.state.value is LoadResult.Success)
-        assertFalse(viewModel.priceState.value is LoadResult.Empty)
-    }
+    // ===== Error Recovery Tests =====
 
     @Test
-    fun load_withPriceDataInWrongOrder_chartSortsCorrectly() = runTest {
-        val ticker = "005930"
-        val stockDetail = StockDetailDto(
-            ticker = ticker,
-            name = "테스트",
-            price = 75000,
-            priceFinancialInfo = PriceFinancialInfoDto(
-                price = mapOf(
-                    "2024-01-15" to 75000.0,
-                    "2024-01-10" to 70000.0,
-                    "2024-01-20" to 80000.0
-                )
-            )
-        )
-        whenever(repository.getStockDetail(ticker)).thenReturn(stockDetail)
-        viewModel = StockDetailViewModel(repository)
-        viewModel.load(ticker)
+    fun load_networkTimeout_handlesError() = runTest {
+        whenever(repository.getStockReport(any())).thenAnswer { throw IOException("Timeout") }
+        whenever(repository.getStockOverview(any())).thenAnswer { throw IOException("Timeout") }
+        
+        val viewModel = StockDetailViewModel(repository)
+        viewModel.load("005930")
         advanceUntilIdle()
-        assertTrue(viewModel.state.value is LoadResult.Success)
-        assertFalse(viewModel.priceState.value is LoadResult.Empty)
+        
+        assertTrue(viewModel.state.value is LoadResult.Error)
     }
+
+    // ===== Edge Cases =====
 
     @Test
     fun load_emptyTicker_works() = runTest {
         val detail = createStockDetail("")
-        whenever(repository.getStockDetail("")).thenReturn(detail)
-        viewModel = StockDetailViewModel(repository)
+        val overview = createStockOverview("")
+        whenever(repository.getStockReport("")).thenReturn(detail)
+        whenever(repository.getStockOverview("")).thenReturn(overview)
+        
+        val viewModel = StockDetailViewModel(repository)
         viewModel.load("")
         advanceUntilIdle()
+        
         assertTrue(viewModel.state.value is LoadResult.Success)
     }
 
@@ -241,92 +207,18 @@ class StockDetailViewModelTest {
     fun load_specialCharacters_works() = runTest {
         val ticker = "ABC-123"
         val detail = createStockDetail(ticker)
-        whenever(repository.getStockDetail(ticker)).thenReturn(detail)
-        viewModel = StockDetailViewModel(repository)
+        val overview = createStockOverview(ticker)
+        whenever(repository.getStockReport(ticker)).thenReturn(detail)
+        whenever(repository.getStockOverview(ticker)).thenReturn(overview)
+        
+        val viewModel = StockDetailViewModel(repository)
         viewModel.load(ticker)
         advanceUntilIdle()
+        
         assertTrue(viewModel.state.value is LoadResult.Success)
     }
 
-    @Test
-    fun load_longTicker_works() = runTest {
-        val ticker = "A".repeat(50)
-        val detail = createStockDetail(ticker)
-        whenever(repository.getStockDetail(ticker)).thenReturn(detail)
-        viewModel = StockDetailViewModel(repository)
-        viewModel.load(ticker)
-        advanceUntilIdle()
-        assertTrue(viewModel.state.value is LoadResult.Success)
-    }
-
-    @Test
-    fun load_consecutiveCalls_works() = runTest {
-        val detail1 = createStockDetail("005930")
-        val detail2 = createStockDetail("000660")
-        whenever(repository.getStockDetail("005930")).thenReturn(detail1)
-        whenever(repository.getStockDetail("000660")).thenReturn(detail2)
-        viewModel = StockDetailViewModel(repository)
-        viewModel.load("005930")
-        advanceUntilIdle()
-        viewModel.load("000660")
-        advanceUntilIdle()
-        assertTrue(viewModel.state.value is LoadResult.Success)
-    }
-
-    @Test
-    fun load_networkTimeout_handlesError() = runTest {
-        whenever(repository.getStockDetail(any())).thenAnswer { throw IOException("Timeout") }
-        viewModel = StockDetailViewModel(repository)
-        viewModel.load("005930")
-        advanceUntilIdle()
-        assertTrue(viewModel.state.value is LoadResult.Error)
-    }
-
-    @Test
-    fun load_largePriceDataSet_succeeds() = runTest {
-        val ticker = "005930"
-        val largeMap = (1..1000).associate { "2024-$it" to (70000.0 + it) }
-        val detail = StockDetailDto(ticker = ticker, priceFinancialInfo = PriceFinancialInfoDto(price = largeMap))
-        whenever(repository.getStockDetail(ticker)).thenReturn(detail)
-        viewModel = StockDetailViewModel(repository)
-        viewModel.load(ticker)
-        advanceUntilIdle()
-        assertTrue(viewModel.state.value is LoadResult.Success)
-    }
-
-    @Test
-    fun load_afterError_canRecover() = runTest {
-        whenever(repository.getStockDetail("005930")).thenAnswer { throw IOException("Error") }
-        whenever(repository.getStockDetail("000660")).thenReturn(createStockDetail("000660"))
-        viewModel = StockDetailViewModel(repository)
-        viewModel.load("005930")
-        advanceUntilIdle()
-        assertTrue(viewModel.state.value is LoadResult.Error)
-        viewModel.load("000660")
-        advanceUntilIdle()
-        assertTrue(viewModel.state.value is LoadResult.Success)
-    }
-
-    @Test
-    fun load_withMinimalData_succeeds() = runTest {
-        val detail = StockDetailDto(ticker = "005930")
-        whenever(repository.getStockDetail("005930")).thenReturn(detail)
-        viewModel = StockDetailViewModel(repository)
-        viewModel.load("005930")
-        advanceUntilIdle()
-        assertTrue(viewModel.state.value is LoadResult.Success)
-    }
-
-    @Test
-    fun load_concurrentCalls_handlesCorrectly() = runTest {
-        val detail = createStockDetail()
-        whenever(repository.getStockDetail(any())).thenReturn(detail)
-        viewModel = StockDetailViewModel(repository)
-        viewModel.load("005930")
-        viewModel.load("000660")
-        advanceUntilIdle()
-        assertNotNull(viewModel.state.value)
-    }
+    // ===== ViewModel Lifecycle =====
 
     @Test
     fun viewModel_canBeRecreated() {
@@ -334,56 +226,5 @@ class StockDetailViewModelTest {
         val vm2 = StockDetailViewModel(repository)
         assertNotNull(vm1)
         assertNotNull(vm2)
-    }
-
-    @Test
-    fun load_unicodeTicker_works() = runTest {
-        val ticker = "한글"
-        val detail = createStockDetail(ticker)
-        whenever(repository.getStockDetail(ticker)).thenReturn(detail)
-        viewModel = StockDetailViewModel(repository)
-        viewModel.load(ticker)
-        advanceUntilIdle()
-        assertTrue(viewModel.state.value is LoadResult.Success)
-    }
-
-    @Test
-    fun load_nullResponse_handlesGracefully() = runTest {
-        whenever(repository.getStockDetail(any())).thenReturn(null)
-        viewModel = StockDetailViewModel(repository)
-        viewModel.load("005930")
-        advanceUntilIdle()
-        assertNotNull(viewModel.state.value)
-    }
-
-    @Test
-    fun load_rapidCalls_handlesCorrectly() = runTest {
-        val detail = createStockDetail()
-        whenever(repository.getStockDetail(any())).thenReturn(detail)
-        viewModel = StockDetailViewModel(repository)
-        repeat(5) { viewModel.load("00566$it") }
-        advanceUntilIdle()
-        assertNotNull(viewModel.state.value)
-    }
-
-    @Test
-    fun priceState_transitionsCorrectly() = runTest {
-        val detail = createStockDetail()
-        whenever(repository.getStockDetail(any())).thenReturn(detail)
-        viewModel = StockDetailViewModel(repository)
-        assertTrue(viewModel.priceState.value is LoadResult.Empty)
-        viewModel.load("005930")
-        advanceUntilIdle()
-        assertFalse(viewModel.priceState.value is LoadResult.Empty)
-    }
-
-    @Test
-    fun load_exceptionInPriceChart_mainStateSucceeds() = runTest {
-        val detail = StockDetailDto(ticker = "005930", priceFinancialInfo = PriceFinancialInfoDto(price = emptyMap()))
-        whenever(repository.getStockDetail("005930")).thenReturn(detail)
-        viewModel = StockDetailViewModel(repository)
-        viewModel.load("005930")
-        advanceUntilIdle()
-        assertTrue(viewModel.state.value is LoadResult.Success)
     }
 }

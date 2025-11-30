@@ -1,7 +1,6 @@
 # decorators/tests/test_decorators.py
 """
 decorators 모듈 종합 테스트
-목표: 100% 커버리지
 """
 
 from django.test import TestCase, RequestFactory
