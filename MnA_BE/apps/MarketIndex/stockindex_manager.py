@@ -22,8 +22,10 @@ from botocore.exceptions import ClientError
 try:
     from utils.uat_date import get_uat_date
 except ImportError:
+
     def get_uat_date():
         return None
+
 
 # S3 설정
 S3_BUCKET_NAME = "swpp-12-bucket"
@@ -38,7 +40,7 @@ class StockindexManager:
     Manages KOSPI and KOSDAQ data in both S3 and local storage.
     Designed to run at 3:35 PM KST after market close.
     Provides comprehensive query and analysis methods.
-    
+
     UAT Mode: When UAT_DATE env is set, queries return data
     on or before that date instead of the latest.
     """
@@ -72,21 +74,21 @@ class StockindexManager:
     def _get_target_date(self, data: Dict) -> Optional[str]:
         """
         Get target date based on UAT mode.
-        
+
         UAT mode: returns the most recent date on or before UAT_DATE
         Normal mode: returns the latest date
-        
+
         Args:
             data: Dictionary with date strings as keys
-            
+
         Returns:
             Target date string or None if no valid date found
         """
         if not data:
             return None
-            
+
         uat_date = get_uat_date()
-        
+
         if uat_date:
             # UAT 모드: 해당 날짜 이전의 가장 최근 데이터
             valid_dates = [d for d in data.keys() if d <= uat_date]
@@ -389,7 +391,7 @@ class StockindexManager:
     def get_latest(self) -> Dict:
         """
         Get the latest data for both indices from local storage.
-        
+
         UAT mode: Returns data on or before UAT_DATE
         Normal mode: Returns the most recent data
         """
@@ -411,7 +413,7 @@ class StockindexManager:
         Args:
             index_type: 'KOSPI' or 'KOSDAQ'
             days: Number of days (default: 30)
-            
+
         UAT mode: Returns data up to UAT_DATE
         Normal mode: Returns the most recent N days
         """
@@ -424,7 +426,7 @@ class StockindexManager:
             return []
 
         uat_date = get_uat_date()
-        
+
         if uat_date:
             # UAT 모드: UAT 날짜 이전의 데이터만 필터링
             valid_dates = [d for d in data.keys() if d <= uat_date]
@@ -432,7 +434,7 @@ class StockindexManager:
         else:
             # 일반 모드: 최신 N일
             sorted_dates = sorted(data.keys(), reverse=True)[:days]
-        
+
         # oldest to newest
         sorted_dates.reverse()
 
@@ -441,7 +443,7 @@ class StockindexManager:
     def get_summary(self) -> Dict:
         """
         Get summary statistics for KOSPI and KOSDAQ from local storage.
-        
+
         UAT mode: Calculates statistics based on data up to UAT_DATE
         Normal mode: Uses all available data
         """
@@ -457,10 +459,10 @@ class StockindexManager:
                     valid_data = {d: v for d, v in data.items() if d <= uat_date}
                 else:
                     valid_data = data
-                
+
                 if not valid_data:
                     continue
-                
+
                 # Last 30 days
                 sorted_dates = sorted(valid_data.keys(), reverse=True)[:30]
                 prices = [valid_data[d]["close"] for d in sorted_dates]
@@ -468,7 +470,9 @@ class StockindexManager:
                 latest = valid_data[sorted_dates[0]]
 
                 # Calculate 52-week high/low if we have enough data
-                sorted_all = sorted(valid_data.keys(), reverse=True)[:252]  # ~1 year of trading days
+                sorted_all = sorted(valid_data.keys(), reverse=True)[
+                    :252
+                ]  # ~1 year of trading days
                 year_prices = (
                     [valid_data[d]["close"] for d in sorted_all] if len(sorted_all) > 0 else prices
                 )

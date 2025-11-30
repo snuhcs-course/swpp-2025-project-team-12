@@ -22,8 +22,10 @@ import pandas as pd
 try:
     from utils.uat_date import get_uat_date, matches_uat_date
 except ImportError:
+
     def get_uat_date():
         return None
+
     def matches_uat_date(key, uat_date):
         return False
 
@@ -56,18 +58,18 @@ def safe_int(value):
 def get_indices_files_filtered(s3, prefix):
     """
     S3에서 indices 파일 목록 조회 (UAT 모드 지원)
-    
+
     Returns:
         list: 필터링된 파일 목록 (UAT 모드면 해당 날짜만, 아니면 전체)
     """
     response = s3.get_list_v2(prefix)
-    
+
     if "Contents" not in response:
         return []
-    
+
     files = response["Contents"]
     uat_date = get_uat_date()
-    
+
     if uat_date:
         # UAT 모드: 특정 날짜 파일만 필터링
         files = [f for f in files if matches_uat_date(f["Key"], uat_date)]
@@ -75,7 +77,7 @@ def get_indices_files_filtered(s3, prefix):
             debug_print(f"[UAT] Found {len(files)} indices files for date {uat_date}")
         else:
             debug_print(f"[UAT] No indices data found for date {uat_date}")
-    
+
     return files
 
 
@@ -327,13 +329,17 @@ class APIView(viewsets.ViewSet):
         if INDICES_SOURCE == "s3":
             try:
                 s3 = FinanceBucket()
-                
+
                 # UAT 모드 지원 파일 조회
                 files = get_indices_files_filtered(s3, S3_PREFIX_INDICES)
 
                 if not files:
                     uat_date = get_uat_date()
-                    msg = f"No indices data for UAT date {uat_date}" if uat_date else "No indices data in S3"
+                    msg = (
+                        f"No indices data for UAT date {uat_date}"
+                        if uat_date
+                        else "No indices data in S3"
+                    )
                     return degraded(
                         msg,
                         source="s3",
@@ -430,14 +436,14 @@ class APIView(viewsets.ViewSet):
                 "min",
                 openapi.IN_QUERY,
                 description="Minimum rank (by capacity)",
-                type=openapi.TYPE_STRING
+                type=openapi.TYPE_STRING,
             ),
             openapi.Parameter(
                 "max",
                 openapi.IN_QUERY,
                 description="Maximum rank (by capacity)",
-                type=openapi.TYPE_STRING
-            )
+                type=openapi.TYPE_STRING,
+            ),
         ],
         responses={200: CompanyListResponseSerializer()},
     )
@@ -445,12 +451,13 @@ class APIView(viewsets.ViewSet):
     @default_error_handler
     def get_company_list(self, request):
         limit, offset = get_pagination(request, default_limit=10, max_limit=100)
-        market      = request.GET.get("market", None)
-        industry    = request.GET.get("industry", "")
-        min_rank    = int(request.GET.get("min", 0))
-        max_rank    = int(request.GET.get("max", 0))
+        market = request.GET.get("market", None)
+        industry = request.GET.get("industry", "")
+        min_rank = int(request.GET.get("min", 0))
+        max_rank = int(request.GET.get("max", 0))
 
-        if market: market = market.upper()
+        if market:
+            market = market.upper()
 
         df = store.get_data("instant_df")
         if df is None:
@@ -461,10 +468,12 @@ class APIView(viewsets.ViewSet):
         latest_date = df["date"].max()
         df_latest = df[df["date"] == latest_date]
 
-        if max_rank == 0: max_rank = len(df_latest)
+        if max_rank == 0:
+            max_rank = len(df_latest)
         max_rank = min(max_rank, len(df_latest))
-        if min_rank > max_rank: raise ValueError("min cannot be greater than max")
-        df_latest = df_latest.iloc[min_rank:max_rank + 1]
+        if min_rank > max_rank:
+            raise ValueError("min cannot be greater than max")
+        df_latest = df_latest.iloc[min_rank : max_rank + 1]
 
         # if market is set, filter by market
         if market and "market" in df_latest.columns:
@@ -473,7 +482,7 @@ class APIView(viewsets.ViewSet):
         df_latest = df_latest[df_latest["industry"].str.contains(industry)]
 
         total = len(df_latest)
-        page_df = df_latest.iloc[offset: offset + limit]
+        page_df = df_latest.iloc[offset : offset + limit]
 
         tags = set()
         for idx, row in page_df.iterrows():
@@ -768,7 +777,7 @@ class APIView(viewsets.ViewSet):
             if INDICES_SOURCE == "s3":
                 try:
                     s3 = FinanceBucket()
-                    
+
                     # UAT 모드 지원 파일 조회
                     files = get_indices_files_filtered(s3, S3_PREFIX_INDICES)
 
