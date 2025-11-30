@@ -14,12 +14,12 @@ import kotlinx.coroutines.flow.Flow
 import com.google.gson.JsonElement
 import com.google.gson.JsonParser
 
-class MarketIndexRepository {
-
-    // ServiceLocator에서 의존성 주입
-    private val apiService: ApiService = ServiceLocator.api
-    private val gson = Gson()
+class MarketIndexRepository(
+    private val apiService: ApiService = ServiceLocator.api,
     private val historyCacheDao: HistoryCacheDao = ServiceLocator.historyCacheDao
+) {
+    private val gson = Gson()
+
     // ----- 외부 노출 API -----
 
     suspend fun getMarketData(): Map<String, StockIndexData> {

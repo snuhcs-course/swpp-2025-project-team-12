@@ -2,6 +2,7 @@ package com.example.dailyinsight.data
 
 import com.example.dailyinsight.data.database.BriefingCardCache
 import com.example.dailyinsight.data.database.BriefingDao
+import com.example.dailyinsight.data.database.FavoriteTicker
 import com.example.dailyinsight.data.database.StockDetailCache
 import com.example.dailyinsight.data.database.StockDetailDao
 import com.example.dailyinsight.data.dto.*
@@ -56,6 +57,108 @@ class RemoteRepositoryTest {
         val result = repository.getBriefingFlow().first()
 
         assertTrue(result.isEmpty())
+    }
+
+    // ===== fetchAndSaveBriefing Tests =====
+
+    @Test
+    fun fetchAndSaveBriefing_successWithClear_clearsAndInsertsData() = runTest {
+        val response = createBriefingListResponse()
+        whenever(api.getBriefingList(limit = 10, offset = 0, sort = null)).thenReturn(response)
+        whenever(briefingDao.getFavoriteTickers()).thenReturn(emptyList())
+
+        val result = repository.fetchAndSaveBriefing(offset = 0, clear = true)
+
+        assertEquals("2024-01-01", result)
+        verify(briefingDao).clearAll()
+        verify(briefingDao).insertCards(any())
+        verify(briefingDao).syncFavorites()
+    }
+
+    @Test
+    fun fetchAndSaveBriefing_successWithoutClear_doesNotClearData() = runTest {
+        val response = createBriefingListResponse()
+        whenever(api.getBriefingList(limit = 10, offset = 10, sort = null)).thenReturn(response)
+        whenever(briefingDao.getFavoriteTickers()).thenReturn(emptyList())
+
+        val result = repository.fetchAndSaveBriefing(offset = 10, clear = false)
+
+        assertEquals("2024-01-01", result)
+        verify(briefingDao, never()).clearAll()
+        verify(briefingDao).insertCards(any())
+    }
+
+    @Test
+    fun fetchAndSaveBriefing_preservesFavorites() = runTest {
+        val response = createBriefingListResponse()
+        whenever(api.getBriefingList(limit = 10, offset = 0, sort = null)).thenReturn(response)
+        whenever(briefingDao.getFavoriteTickers()).thenReturn(listOf("005930"))
+
+        repository.fetchAndSaveBriefing(offset = 0, clear = true)
+
+        verify(briefingDao).insertCards(argThat { cards ->
+            cards.any { it.ticker == "005930" && it.isFavorite }
+        })
+    }
+
+    @Test
+    fun fetchAndSaveBriefing_emptyResponse_doesNotInsert() = runTest {
+        val emptyResponse = BriefingListResponse(
+            items = emptyList(),
+            total = 0,
+            limit = 10,
+            offset = 0,
+            source = null,
+            asOf = "2024-01-01"
+        )
+        whenever(api.getBriefingList(limit = 10, offset = 0, sort = null)).thenReturn(emptyResponse)
+        whenever(briefingDao.getFavoriteTickers()).thenReturn(emptyList())
+
+        val result = repository.fetchAndSaveBriefing(offset = 0, clear = false)
+
+        assertEquals("2024-01-01", result)
+        verify(briefingDao, never()).insertCards(any())
+    }
+
+    @Test
+    fun fetchAndSaveBriefing_apiError_returnsNull() = runTest {
+        whenever(api.getBriefingList(any(), any(), anyOrNull())).thenAnswer { throw IOException("Network error") }
+        whenever(briefingDao.getFavoriteTickers()).thenReturn(emptyList())
+
+        val result = repository.fetchAndSaveBriefing(offset = 0, clear = false)
+
+        assertNull(result)
+    }
+
+    @Test
+    fun fetchAndSaveBriefing_handlesNullValues() = runTest {
+        val response = BriefingListResponse(
+            items = listOf(
+                BriefingItemDto(
+                    ticker = "005930",
+                    name = "삼성전자",
+                    close = null,
+                    change = null,
+                    changeRate = null,
+                    summary = "요약",
+                    overview = null
+                )
+            ),
+            total = 1,
+            limit = 10,
+            offset = 0,
+            source = null,
+            asOf = "2024-01-01"
+        )
+        whenever(api.getBriefingList(limit = 10, offset = 0, sort = null)).thenReturn(response)
+        whenever(briefingDao.getFavoriteTickers()).thenReturn(emptyList())
+
+        val result = repository.fetchAndSaveBriefing(offset = 0, clear = false)
+
+        assertNotNull(result)
+        verify(briefingDao).insertCards(argThat { cards ->
+            cards[0].price == 0L && cards[0].change == 0L && cards[0].changeRate == 0.0
+        })
     }
 
     // ===== getStockReport Tests =====
@@ -139,6 +242,37 @@ class RemoteRepositoryTest {
         }
     }
 
+    // ===== toggleFavorite Tests =====
+
+    @Test
+    fun toggleFavorite_addFavorite_insertsFavoriteAndSyncs() = runTest {
+        val result = repository.toggleFavorite("005930", isActive = true)
+
+        assertTrue(result)
+        verify(briefingDao).insertFavorite(argThat<FavoriteTicker> { ticker == "005930" })
+        verify(briefingDao).syncFavorites()
+    }
+
+    @Test
+    fun toggleFavorite_removeFavorite_deletesFavoriteAndSyncs() = runTest {
+        val result = repository.toggleFavorite("005930", isActive = false)
+
+        assertTrue(result)
+        verify(briefingDao).deleteFavorite("005930")
+        verify(briefingDao).syncFavorites()
+    }
+
+    @Test
+    fun toggleFavorite_multipleTickers_worksIndependently() = runTest {
+        repository.toggleFavorite("005930", isActive = true)
+        repository.toggleFavorite("000660", isActive = true)
+        repository.toggleFavorite("005930", isActive = false)
+
+        verify(briefingDao, times(2)).insertFavorite(any())
+        verify(briefingDao, times(1)).deleteFavorite("005930")
+        verify(briefingDao, times(3)).syncFavorites()
+    }
+
     // ===== Helper Functions =====
 
     private fun createBriefingCardCache(ticker: String, name: String) = BriefingCardCache(
@@ -151,6 +285,34 @@ class RemoteRepositoryTest {
         label = null,
         confidence = null,
         fetchedAt = System.currentTimeMillis()
+    )
+
+    private fun createBriefingListResponse() = BriefingListResponse(
+        items = listOf(
+            BriefingItemDto(
+                ticker = "005930",
+                name = "삼성전자",
+                close = "72000",
+                change = "1000",
+                changeRate = "1.5",
+                summary = "삼성전자 요약",
+                overview = null
+            ),
+            BriefingItemDto(
+                ticker = "000660",
+                name = "SK하이닉스",
+                close = "150000",
+                change = "-2000",
+                changeRate = "-1.3",
+                summary = "SK하이닉스 요약",
+                overview = null
+            )
+        ),
+        total = 2,
+        limit = 10,
+        offset = 0,
+        source = "cache",
+        asOf = "2024-01-01"
     )
 
     private fun createStockDetailDto(ticker: String) = StockDetailDto(

@@ -14,9 +14,9 @@ import kotlinx.coroutines.launch
 import org.json.JSONObject
 import java.io.InputStream
 
-class MarketIndexViewModel : ViewModel() {
-
-    private val repository = MarketIndexRepository()
+class MarketIndexViewModel(
+    private val repository: MarketIndexRepository = MarketIndexRepository()
+) : ViewModel() {
 
     // LiveData to hold the fetched data
     private val _marketData = MutableLiveData<Map<String, StockIndexData>>()
