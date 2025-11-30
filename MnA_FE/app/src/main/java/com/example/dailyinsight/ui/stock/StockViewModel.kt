@@ -62,9 +62,13 @@ class StockViewModel(
         .asLiveData()
 
     init {
-        loadData(reset = true) // 초기 데이터 로드 -
+        refresh()
+        //loadData(reset = true) // 초기 데이터 로드 -
         //  로그인 상태라면 서버 관심 목록 동기화 (비로그인이면 401 에러 나거나 무시됨 -> 안전)
-        viewModelScope.launch(Dispatchers.IO) { repo.syncFavorites() }
+        viewModelScope.launch(Dispatchers.IO) {
+            repo.clearUserData()
+            repo.syncFavorites()
+        }
     }
     //  별표 클릭 시 호출
     fun toggleFavorite(item: RecommendationDto, isActive: Boolean) {

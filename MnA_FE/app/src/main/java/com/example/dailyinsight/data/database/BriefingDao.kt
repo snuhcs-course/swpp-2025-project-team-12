@@ -5,6 +5,7 @@ import androidx.room.Insert
 import androidx.room.OnConflictStrategy
 import androidx.room.Query
 import kotlinx.coroutines.flow.Flow
+import androidx.room.Transaction
 
 @Dao
 interface BriefingDao {
@@ -55,4 +56,16 @@ interface BriefingDao {
     //  특정 종목이 이미 DB에 있는지 확인용
     @Query("SELECT * FROM briefing_cards WHERE ticker = :ticker")
     suspend fun getCard(ticker: String): BriefingCardCache?
+
+    // 트랜잭션 함수 추가
+    // 지우고 다시 쓰는 동안에는 아무도 DB를 건드리지 못하게 잠급니다.
+    @Transaction
+    suspend fun replaceFavorites(items: List<FavoriteTicker>) {
+        clearAllFavorites()
+        insertFavorites(items)
+    }
+
+    // 모든 종목의 별표 해제 (로그아웃용)
+    @Query("UPDATE briefing_cards SET isFavorite = 0")
+    suspend fun uncheckAllFavorites()
 }
