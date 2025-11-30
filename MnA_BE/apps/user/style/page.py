@@ -13,10 +13,12 @@ PAGE_SIZE = 10
 # Serializers
 # ============================================================================
 
+
 class StyleItemSerializer(serializers.Serializer):
     interests = serializers.ListField(child=serializers.CharField())
     strategy = serializers.CharField()
     create_at = serializers.DateTimeField()
+
 
 class StylePageResponseSerializer(serializers.Serializer):
     style_page = StyleItemSerializer(many=True)
@@ -26,6 +28,7 @@ class StylePageResponseSerializer(serializers.Serializer):
 # Views
 # ============================================================================
 
+
 class StylePageView(viewsets.ViewSet):
     """
     Style Page Views - Paginated user interests history
@@ -34,13 +37,17 @@ class StylePageView(viewsets.ViewSet):
     @swagger_auto_schema(
         operation_description="Get paginated user interests history (requires authentication, 10 items per page)",
         manual_parameters=[
-            openapi.Parameter('page_index', openapi.IN_PATH, description="Page number (starts from 1)", type=openapi.TYPE_INTEGER, required=True),
+            openapi.Parameter(
+                "page_index",
+                openapi.IN_PATH,
+                description="Page number (starts from 1)",
+                type=openapi.TYPE_INTEGER,
+                required=True,
+            ),
         ],
-        responses={
-            200: StylePageResponseSerializer()
-        }
+        responses={200: StylePageResponseSerializer()},
     )
-    @action(detail=False, methods=['get'])
+    @action(detail=False, methods=["get"])
     @default_error_handler
     @require_auth
     def get_page(self, request, page_index, user):
@@ -51,8 +58,9 @@ class StylePageView(viewsets.ViewSet):
                 {
                     "interests": entry.interests,
                     "strategy": entry.strategy,
-                    "create_at": entry.create_at
-                } for entry in paginator.page(page_index).object_list
+                    "create_at": entry.create_at,
+                }
+                for entry in paginator.page(page_index).object_list
             ]
 
         except Exception as e:

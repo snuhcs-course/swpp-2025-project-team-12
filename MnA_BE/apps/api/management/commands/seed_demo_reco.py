@@ -6,6 +6,7 @@ from apps.api.models import RecommendationBatch, RecommendationItem
 
 KST = pytz.timezone("Asia/Seoul")
 
+
 class Command(BaseCommand):
     help = "Seed a demo recommendation batch with one item"
 
@@ -23,7 +24,7 @@ class Command(BaseCommand):
                 source="mock",
                 model_id="demo-seed",
                 as_of_utc=timezone.now(),
-                notes="iter2 demo seed"
+                notes="iter2 demo seed",
             ),
         )
 

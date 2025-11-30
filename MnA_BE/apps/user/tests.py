@@ -8,6 +8,7 @@ from unittest.mock import patch, MagicMock
 # Create your tests here.
 import os
 from dotenv import load_dotenv
+
 load_dotenv()
 
 from django.test import TestCase, Client
@@ -23,10 +24,7 @@ class UserViewsTest(TestCase):
         self.secret = os.environ.get("SECRET_KEY")
         self.password = bcrypt.hashpw(b"1234abcd!", bcrypt.gensalt()).decode("utf-8")
         self.user = User.objects.create(
-            id=1,
-            name="tester",
-            password=self.password,
-            refresh_token="refresh_token_abc"
+            id=1, name="tester", password=self.password, refresh_token="refresh_token_abc"
         )
 
     # Helper to create valid tokens -------------------
@@ -55,7 +53,9 @@ class UserViewsTest(TestCase):
     @patch("apps.user.views.make_refresh_token", return_value="refresh123")
     def test_signup_success(self, m1, m2, m3):
         body = {"id": "newuser", "password": "Passw0rd!"}
-        res = self.client.post(reverse("signup"), data=json.dumps(body), content_type="application/json")
+        res = self.client.post(
+            reverse("signup"), data=json.dumps(body), content_type="application/json"
+        )
         self.assertEqual(res.status_code, 201)
         self.assertIn("refresh_token", res.cookies)
         self.assertIn("access_token", res.cookies)
@@ -66,17 +66,23 @@ class UserViewsTest(TestCase):
 
     def test_signup_missing_fields(self):
         for body in [{}, {"id": "abc"}, {"password": "pw"}]:
-            res = self.client.post(reverse("signup"), data=json.dumps(body), content_type="application/json")
+            res = self.client.post(
+                reverse("signup"), data=json.dumps(body), content_type="application/json"
+            )
             self.assertEqual(res.status_code, 400)
 
     def test_signup_user_exists(self):
         body = {"id": self.user.name, "password": "1234abcd!"}
-        res = self.client.post(reverse("signup"), data=json.dumps(body), content_type="application/json")
+        res = self.client.post(
+            reverse("signup"), data=json.dumps(body), content_type="application/json"
+        )
         self.assertEqual(res.status_code, 409)
 
     def test_signup_wrong_password_format(self):
         body = {"id": "userx", "password": "short"}
-        res = self.client.post(reverse("signup"), data=json.dumps(body), content_type="application/json")
+        res = self.client.post(
+            reverse("signup"), data=json.dumps(body), content_type="application/json"
+        )
         self.assertEqual(res.status_code, 400)
 
     # -----------------------------
@@ -86,7 +92,9 @@ class UserViewsTest(TestCase):
     @patch("apps.user.views.make_refresh_token", return_value="refresh123")
     def test_login_success(self, m1, m2):
         body = {"id": "tester", "password": "1234abcd!"}
-        res = self.client.post(reverse("login"), data=json.dumps(body), content_type="application/json")
+        res = self.client.post(
+            reverse("login"), data=json.dumps(body), content_type="application/json"
+        )
         self.assertEqual(res.status_code, 200)
         self.assertEqual(res.json()["message"], "LOGIN SUCCESS")
         self.assertIn("access_token", res.cookies)
@@ -94,12 +102,16 @@ class UserViewsTest(TestCase):
 
     def test_login_wrong_password(self):
         body = {"id": "tester", "password": "wrongpw"}
-        res = self.client.post(reverse("login"), data=json.dumps(body), content_type="application/json")
+        res = self.client.post(
+            reverse("login"), data=json.dumps(body), content_type="application/json"
+        )
         self.assertEqual(res.status_code, 401)
 
     def test_login_user_not_found(self):
         body = {"id": "nouser", "password": "pw"}
-        res = self.client.post(reverse("login"), data=json.dumps(body), content_type="application/json")
+        res = self.client.post(
+            reverse("login"), data=json.dumps(body), content_type="application/json"
+        )
         self.assertEqual(res.status_code, 401)
 
     def test_login_invalid_json(self):

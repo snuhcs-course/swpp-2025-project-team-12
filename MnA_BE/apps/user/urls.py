@@ -5,12 +5,10 @@ from .style import urlpatterns as style_urls
 
 
 urlpatterns = [
-    path('login', UserView.as_view({ 'post': 'login' }) , name='login'),
-    path('logout', UserView.as_view({ 'post': 'logout' }), name='logout'),
-    path('signup', UserView.as_view({ 'post': 'signup' }), name='signup'),
-    path('withdraw', UserView.as_view({ 'delete': 'withdraw' }), name='withdraw'),
-
-    path('info/', include(info_urls)),
-
-    path('style/', include(style_urls)),
+    path("login", UserView.as_view({"post": "login"}), name="login"),
+    path("logout", UserView.as_view({"post": "logout"}), name="logout"),
+    path("signup", UserView.as_view({"post": "signup"}), name="signup"),
+    path("withdraw", UserView.as_view({"delete": "withdraw"}), name="withdraw"),
+    path("info/", include(info_urls)),
+    path("style/", include(style_urls)),
 ]

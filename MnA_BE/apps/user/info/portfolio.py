@@ -11,11 +11,16 @@ import json
 # Serializers
 # ============================================================================
 
+
 class PortfolioResponseSerializer(serializers.Serializer):
     portfolio = serializers.ListField(child=serializers.CharField())
 
+
 class PortfolioRequestSerializer(serializers.Serializer):
-    portfolio = serializers.ListField(child=serializers.CharField(), help_text="List of stock tickers")
+    portfolio = serializers.ListField(
+        child=serializers.CharField(), help_text="List of stock tickers"
+    )
+
 
 class PortfolioMessageResponseSerializer(serializers.Serializer):
     message = serializers.CharField()
@@ -25,6 +30,7 @@ class PortfolioMessageResponseSerializer(serializers.Serializer):
 # Views
 # ============================================================================
 
+
 class PortfolioView(viewsets.ViewSet):
     """
     User Portfolio Views - Get and update user's stock portfolio
@@ -32,11 +38,9 @@ class PortfolioView(viewsets.ViewSet):
 
     @swagger_auto_schema(
         operation_description="Get user's stock portfolio (requires authentication)",
-        responses={
-            200: PortfolioResponseSerializer()
-        }
+        responses={200: PortfolioResponseSerializer()},
     )
-    @action(detail=True, methods=['get'])
+    @action(detail=True, methods=["get"])
     @default_error_handler
     @require_auth
     def get(self, request, user):
@@ -48,14 +52,14 @@ class PortfolioView(viewsets.ViewSet):
         responses={
             200: PortfolioMessageResponseSerializer(),
             400: openapi.Response(description="Invalid input"),
-            500: openapi.Response(description="Save failed")
-        }
+            500: openapi.Response(description="Save failed"),
+        },
     )
-    @action(detail=True, methods=['post'])
+    @action(detail=True, methods=["post"])
     @default_error_handler
     @require_auth
     def post(self, request, user):
-        body = json.loads(request.body.decode('utf-8'))
+        body = json.loads(request.body.decode("utf-8"))
         portfolio = body.get("portfolio")
 
         if portfolio is None:

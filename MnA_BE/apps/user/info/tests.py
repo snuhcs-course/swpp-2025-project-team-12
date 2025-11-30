@@ -36,7 +36,9 @@ class PasswordViewTest(TestCase):
         """password 누락 → 400"""
         body = json.dumps({})
         res = self.client.put(
-            self.url, body, content_type="application/json",
+            self.url,
+            body,
+            content_type="application/json",
             HTTP_COOKIE=f"access_token={self.access_token}",
         )
         self.assertEqual(res.status_code, 400)
@@ -47,7 +49,9 @@ class PasswordViewTest(TestCase):
         """password 형식 불일치 → 400"""
         body = json.dumps({"password": "short"})
         res = self.client.put(
-            self.url, body, content_type="application/json",
+            self.url,
+            body,
+            content_type="application/json",
             HTTP_COOKIE=f"access_token={self.access_token}",
         )
         self.assertEqual(res.status_code, 400)
@@ -60,7 +64,9 @@ class PasswordViewTest(TestCase):
         new_pw = "ValidPass123!"
         body = json.dumps({"password": new_pw})
         res = self.client.put(
-            self.url, body, content_type="application/json",
+            self.url,
+            body,
+            content_type="application/json",
             HTTP_COOKIE=f"access_token={self.access_token}",
         )
         self.assertEqual(res.status_code, 200)
@@ -76,7 +82,9 @@ class PasswordViewTest(TestCase):
         with patch.object(User, "save", side_effect=Exception("DB fail")):
             body = json.dumps({"password": "ValidPass123!"})
             res = self.client.put(
-                self.url, body, content_type="application/json",
+                self.url,
+                body,
+                content_type="application/json",
                 HTTP_COOKIE=f"access_token={self.access_token}",
             )
             self.assertEqual(res.status_code, 500)
@@ -171,6 +179,7 @@ class NameViewTest(TestCase):
         self.assertIn("NAME UPDATE SUCCESS", res.json()["message"])
         self.user.refresh_from_db()
         self.assertEqual(self.user.name, new_name)
+
 
 class ProfileViewTest(TestCase):
     """Tests for profile_view (GET / POST / DELETE profile image)"""

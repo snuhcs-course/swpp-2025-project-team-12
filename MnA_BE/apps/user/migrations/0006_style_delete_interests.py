@@ -28,9 +28,7 @@ class Migration(migrations.Migration):
                 ("create_at", models.DateTimeField(auto_now_add=True)),
                 (
                     "user",
-                    models.ForeignKey(
-                        on_delete=django.db.models.deletion.CASCADE, to="user.user"
-                    ),
+                    models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to="user.user"),
                 ),
             ],
             options={
