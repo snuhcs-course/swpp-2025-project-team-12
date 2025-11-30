@@ -123,6 +123,12 @@ class RemoteRepository(
         }
         return true
     }
+    override suspend fun clearUserData() {
+        // 1. 찜 목록 테이블 비우기 (영구 저장소 초기화)
+        briefingDao.clearAllFavorites()
+        // 2. 현재 화면의 별표 모두 끄기
+        briefingDao.uncheckAllFavorites()
+    }
 
     // 서버의 관심 목록을 가져와서 로컬 DB와 동기화
     override suspend fun syncFavorites() {
@@ -132,11 +138,8 @@ class RemoteRepository(
             if (response.isSuccessful) {
                 val serverList = response.body()?.portfolio ?: emptyList()
                 // 2. 로컬 DB 업데이트 (Transaction 느낌으로)
-                briefingDao.clearAllFavorites() // 기존 거 다 지우고
-                if (serverList.isNotEmpty()) {
-                    val entities = serverList.map { FavoriteTicker(it) }
-                    briefingDao.insertFavorites(entities) // 서버 거 다 넣고
-                }
+                val entities = serverList.map { FavoriteTicker(it) }
+                briefingDao.replaceFavorites(entities) // 👈 clear + insert를 안전하게 수행
                 // 3. DB에 없는 관심 종목 데이터 채워넣기 (Missing Data Fetching)
                 // (이게 없으면 소형주 관심종목이 화면에 안 뜹니다!)
                 val baseTime = System.currentTimeMillis()

@@ -77,8 +77,7 @@ class StockFragment : Fragment(R.layout.fragment_stock) {
                         // 로그인 화면(StartActivity)으로 이동
                         val intent = Intent(requireContext(), StartActivity::class.java)
                         startActivity(intent)
-
-                        // 🚨 [중요] UI 원상복구 (이미 눌려서 노란색 된 별을 다시 회색으로)
+                        // UI 원상복구 (이미 눌려서 노란색 된 별을 다시 회색으로)
                         // (데이터 변경 없이 UI만 리프레시해서 체크박스를 원래대로 돌림)
                         adapter.notifyDataSetChanged()
                     }
@@ -138,6 +137,7 @@ class StockFragment : Fragment(R.layout.fragment_stock) {
             if (list.isEmpty()) {
                 binding.recycler.visibility = View.GONE
                 binding.tvEmptyMessage2.text = "조건에 맞는 종목이 없습니다."
+                binding.tvEmptyMessage2.visibility = View.VISIBLE
             } else {
                 binding.tvEmptyMessage2.visibility = View.GONE
                 binding.recycler.visibility = View.VISIBLE

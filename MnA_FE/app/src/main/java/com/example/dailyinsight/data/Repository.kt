@@ -23,4 +23,6 @@ interface Repository {
     suspend fun toggleFavorite(ticker: String, isActive: Boolean): Boolean
 
     suspend fun syncFavorites()
+
+    suspend fun clearUserData()
 }
