@@ -1,6 +1,7 @@
 # apps/user/views.py
 
 from django.http import JsonResponse
+from django.utils.decorators import method_decorator
 from django.views.decorators.http import require_POST
 from rest_framework import viewsets, serializers
 from rest_framework.decorators import action
@@ -13,7 +14,7 @@ from utils.token_handler import *
 from utils.validation import validate_password, validate_name
 from decorators import *
 from S3.base import BaseBucket
-from django.views.decorators.csrf import csrf_exempt
+from django.views.decorators.csrf import csrf_exempt, ensure_csrf_cookie
 import os
 import json
 
@@ -62,6 +63,12 @@ class UserView(viewsets.ModelViewSet):
     """
     User Views - Authentication and account management
     """
+
+    @action(detail=True, methods=["get"])
+    @method_decorator(ensure_csrf_cookie)
+    @default_error_handler
+    def get_csrf_token(self, request):
+        return JsonResponse({"message": "CSRF TOKEN SET"}, status=200)
 
     @swagger_auto_schema(
         operation_description="Authenticate user and issue JWT tokens (stored in HttpOnly cookies)",
