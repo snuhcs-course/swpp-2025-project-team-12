@@ -26,7 +26,7 @@
                 android:layout_height="?attr/actionBarSize"
                 android:elevation="0dp"
                 app:titleCentered="true"
-                app:title="프로필 편집"
+                app:title="아이디 변경"
                 app:navigationIcon="@drawable/arrow_back_24dp">
 
             </com.google.android.material.appbar.MaterialToolbar>
