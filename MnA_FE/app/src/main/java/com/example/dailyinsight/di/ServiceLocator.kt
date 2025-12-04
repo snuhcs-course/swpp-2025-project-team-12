@@ -33,7 +33,8 @@ object ServiceLocator {
         RemoteRepository(
             api,
             database.briefingDao(),
-            database.stockDetailDao()
+            database.stockDetailDao(),
+            appContext
         )
     }
 }

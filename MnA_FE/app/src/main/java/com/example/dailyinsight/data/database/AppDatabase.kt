@@ -13,7 +13,7 @@ import androidx.room.TypeConverters
         StockDetailCache::class, // 상세 정보 캐시 테이블
         FavoriteTicker::class
     ],
-    version = 6,
+    version = 9,
     exportSchema = false
 )
 @TypeConverters(

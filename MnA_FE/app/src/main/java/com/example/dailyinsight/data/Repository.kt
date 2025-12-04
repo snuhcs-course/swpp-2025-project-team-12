@@ -25,4 +25,6 @@ interface Repository {
     suspend fun syncFavorites()
 
     suspend fun clearUserData()
+
+    fun getFavoriteFlow(): Flow<List<BriefingCardCache>>
 }

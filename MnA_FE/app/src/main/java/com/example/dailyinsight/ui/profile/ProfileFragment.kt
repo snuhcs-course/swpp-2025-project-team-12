@@ -13,7 +13,6 @@ import com.example.dailyinsight.databinding.FragmentProfileBinding
 import com.example.dailyinsight.ui.sign.SignInActivity
 import com.example.dailyinsight.ui.userinfo.ChangeNameActivity
 import com.example.dailyinsight.ui.userinfo.ChangePasswordActivity
-import com.example.dailyinsight.ui.userinfo.FavoriteListActivity
 import com.example.dailyinsight.ui.userinfo.WithdrawActivity
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import kotlinx.coroutines.launch

@@ -19,5 +19,6 @@ data class BriefingItemDto(
     @SerializedName("change") val change: String?,
     @SerializedName("change_rate") val changeRate: String?,
     @SerializedName("summary") val summary: String? = null, // LLM summary
-    @SerializedName("overview") val overview: StockOverviewDto? // 우리는 overview가 필요함
+    @SerializedName("overview") val overview: StockOverviewDto?, // 우리는 overview가 필요함
+    @SerializedName("market_cap") val marketCap: Long?
 )

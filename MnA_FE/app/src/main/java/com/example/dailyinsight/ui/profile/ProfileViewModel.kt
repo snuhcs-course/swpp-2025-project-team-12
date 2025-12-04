@@ -21,7 +21,6 @@ import okhttp3.Callback
 import retrofit2.Call
 import retrofit2.Response
 
-
 class ProfileViewModel(private val context: Context) : ViewModel() {
 
     // 로그인 상태를 실시간으로 관찰
