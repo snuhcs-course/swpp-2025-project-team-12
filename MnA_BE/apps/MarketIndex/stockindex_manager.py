@@ -388,21 +388,39 @@ class StockindexManager:
             print(f"   S3: s3://{S3_BUCKET_NAME}/stock-indices/")
         return results
 
+    def _has_valid_ohlc(self, record: Dict) -> bool:
+        """Check if a record has valid (non-zero) OHLC data."""
+        return (
+            record.get("open", 0) > 0
+            and record.get("high", 0) > 0
+            and record.get("low", 0) > 0
+            and record.get("close", 0) > 0
+        )
+
     def get_latest(self) -> Dict:
         """
         Get the latest data for both indices from local storage.
+        Skips entries with invalid (zero) OHLC values.
 
         UAT mode: Returns data on or before UAT_DATE
-        Normal mode: Returns the most recent data
+        Normal mode: Returns the most recent data with valid OHLC
         """
         result = {}
+        uat_date = get_uat_date()
 
         for index in self.indices.keys():
             data = self._load_local_data(index)
             if data:
-                target_date = self._get_target_date(data)
-                if target_date:
-                    result[index] = data[target_date]
+                if uat_date:
+                    valid_dates = [d for d in data.keys() if d <= uat_date]
+                else:
+                    valid_dates = list(data.keys())
+
+                # Sort by date descending and find first entry with valid OHLC
+                for date in sorted(valid_dates, reverse=True):
+                    if self._has_valid_ohlc(data[date]):
+                        result[index] = data[date]
+                        break
 
         return result
 
