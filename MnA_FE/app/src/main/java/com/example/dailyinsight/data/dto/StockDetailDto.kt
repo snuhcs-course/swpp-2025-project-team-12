@@ -5,6 +5,7 @@ import com.google.gson.annotations.SerializedName
 data class StockDetailDto(
     @SerializedName("ticker") val ticker: String? = null,
     @SerializedName("name") val name: String? = null,
+    @SerializedName("industry") val industry: String? = null,
 
     // 1. "올해" 데이터 (헤더 + 올해 표)
     @SerializedName("current") val current: CurrentData? = null,

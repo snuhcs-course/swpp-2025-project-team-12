@@ -15,7 +15,10 @@ data class BriefingCardCache(
     val label: String?,      // overview의 label (상승/하락/중립)
     val confidence: Double?, // overview의 confidence
     val fetchedAt: Long,      // 저장된 시간 (정렬용)
-    val isFavorite: Boolean = false
+    val isFavorite: Boolean = false,
+    val marketCap: Long? = null, // 시가총액 (정렬용)
+    val rank: Int? = null, // 화면 표시 순서 (Null이면 화면 목록에선 빠지고, 관심 목록에만 존재)
+    val industry: String? = null,
 ){ //  UI 객체로 변환하는 함수
     fun toDto(): RecommendationDto {
         return RecommendationDto(

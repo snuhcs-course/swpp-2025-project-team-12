@@ -249,12 +249,10 @@ class StockFragment : Fragment(R.layout.fragment_stock) {
                 binding.chipIndustry.text = "산업 (${selectedIndustries.size}) ▼"
                 binding.chipIndustry.isChecked = true
             }
-
             //  ViewModel에 산업 필터 변경 요청 (주석 해제 및 연결)
             val industryStrings = selectedIndustries.map { it.korean }.toSet()
             viewModel.setIndustryFilter(industryStrings) // Set<Tag> 전달
             Toast.makeText(context, "${selectedIndustries.size}개 산업 필터 적용", android.widget.Toast.LENGTH_SHORT).show()
-
             dialog.dismiss()
         }
 
@@ -279,7 +277,8 @@ class StockFragment : Fragment(R.layout.fragment_stock) {
             StockViewModel.SizeFilter.LARGE -> "대형주 ▼"
             StockViewModel.SizeFilter.MID -> "중형주 ▼"
             StockViewModel.SizeFilter.SMALL -> "소형주 ▼"
-            else -> "전체 ▼"
+            StockViewModel.SizeFilter.ALL -> "전체 ▼"
+            else -> " "
         }
         binding.chipSize.text = text
         //  산업 버튼 복구
@@ -290,12 +289,6 @@ class StockFragment : Fragment(R.layout.fragment_stock) {
         } else {
             binding.chipIndustry.text = "산업 (${industries.size}) ▼"
             binding.chipIndustry.isChecked = true
-
-            // (선택 사항) 바텀 시트용 임시 변수도 동기화
-            // selectedIndustries.clear()
-            // industries.forEach { name ->
-            //     Tag.values().find { it.korean == name }?.let { selectedIndustries.add(it) }
-            // }
         }
     }
 

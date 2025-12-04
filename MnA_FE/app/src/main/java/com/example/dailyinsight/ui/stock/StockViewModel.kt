@@ -4,12 +4,14 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.asLiveData
 import com.example.dailyinsight.data.Repository
+import com.example.dailyinsight.data.RemoteRepository
 import com.example.dailyinsight.di.ServiceLocator
 import com.example.dailyinsight.data.dto.RecommendationDto
 import com.example.dailyinsight.ui.common.LoadResult
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.flow.map
@@ -44,26 +46,48 @@ class StockViewModel(
     // 2. 상태 관리 Flow
     private val _filterState = MutableStateFlow(FilterState())
 
-    // DB 데이터 + 관심 필터 결합
-    val briefingList = combine(
-        repo.getBriefingFlow(),_filterState
-    ) { list, state ->
-        // 🚨 화면에 보여줄 때의 최종 필터링 (AND 조건)
-        var result = list
-        // [관심 모드] 켜져있으면 '별표 친 것'만 남김
-        if (state.isFavMode) {
-            result = result.filter { it.isFavorite }
+    // 리스트 끝 도달 여부 (무한 오토 페이징 방지)
+    private var isEndOfList = false
+
+    val briefingList = _filterState.flatMapLatest { state ->
+        val isFav = state.isFavMode
+        // 필터가 하나라도 걸려있는지 확인 (규모가 전체가 아니거나, 산업이 선택되었거나)
+        val hasFilter = state.size != SizeFilter.ALL || state.industries.isNotEmpty()
+
+        if (isFav && !hasFilter) {
+            // A. [관심 모드 + 필터 없음 (전체)]:
+            // DB에 있는 '모든' 찜 목록을 가져옴 (시총순 정렬됨)
+            (repo as RemoteRepository).getFavoriteFlow().map { list ->
+                list.map { it.toDto() }
+            }
+        } else {
+            // B. [관심 모드 + 필터 있음] OR [일반 모드]:
+            // API가 필터링해서 준 '현재 화면 목록'을 사용
+            repo.getBriefingFlow().map { list ->
+                val dtos = list.map { it.toDto() }
+                val filteredList = if (isFav) {
+                    // API 결과(10개) 중에서 '내 찜'만 남김 (교집합)
+                    dtos.filter { it.isFavorite }
+                } else {
+                    dtos
+                }
+                val minCount = 10
+                // 🚨 [핵심: Auto-Paging]
+                // 관심 모드이고, 필터도 걸려있는데, 결과가 비었다? -> 다음 페이지 검색!
+                // (list.isNotEmpty() 체크: DB가 비어있으면 로딩 전이므로 스킵)
+                if (isFav && hasFilter && filteredList.size < minCount && list.isNotEmpty()) {
+                    if (!isLoading.get() && !isEndOfList) {
+                        loadNextPage() // "여기 없네? 더 가져와!"
+                    }
+                }
+
+                filteredList
+            }
         }
-        // (참고: 산업/규모 필터링은 이미 API 호출 시점에 적용되어 DB에 들어옴.
-        //  하지만 '살아남은 다른 찜 목록'을 가리고 싶다면 여기서 추가 필터링 가능.
-        //  현재는 DB에 industry 정보가 없으므로 로컬 필터링 불가능 -> API 결과 신뢰)
-        result
-    }.map { entities -> entities.map { it.toDto() } }
-        .asLiveData()
+    }.asLiveData()
 
     init {
         refresh()
-        //loadData(reset = true) // 초기 데이터 로드 -
         //  로그인 상태라면 서버 관심 목록 동기화 (비로그인이면 401 에러 나거나 무시됨 -> 안전)
         viewModelScope.launch(Dispatchers.IO) {
             repo.clearUserData()
@@ -98,7 +122,7 @@ class StockViewModel(
         _filterState.value = _filterState.value.copy(sort = sort)
         loadData(reset = true)
     }
-
+    /*
     fun refresh(filter: SizeFilter = sizeFilterMode, sort: String? = currentSort) {
         // 관심 모드 켜져있으면 -> 서버 호출 안 함 (로컬 DB에 있는 것만 보여줌)
         if (isLoading.getAndSet(true)) return
@@ -124,20 +148,29 @@ class StockViewModel(
             if (asOf != null) { _asOfTime.value = asOf }
             isLoading.set(false)
         }
-    }
+    }*/
 
     private fun loadData(reset: Boolean) {
+        val state = _filterState.value
+        val hasFilter = state.size != SizeFilter.ALL || state.industries.isNotEmpty()
+
+        // A. [관심 모드 + 필터 없음] -> API 호출 안 함 (이미 syncFavorites로 다 가져왔으니까)
+        if (state.isFavMode && !hasFilter) {
+            isLoading.set(false)
+            return
+        }
+
+        // B. [그 외] -> API 호출 (필터링된 데이터나 일반 목록 가져오기 위해)
         if (isLoading.getAndSet(true)) return
 
         viewModelScope.launch {
-            val state = _filterState.value
-            if (reset) { currentOffset = 0 }
+            if (reset) currentOffset = 0
 
-            // 산업 파라미터 변환
+            // 산업 파라미터
             val industryParam = if (state.industries.isEmpty()) null
             else state.industries.joinToString("|")
 
-            // API 호출 (DB 갱신)
+            // API 호출 (DB 갱신 - deleteNonFavorites 작동)
             val asOf = repo.fetchAndSaveBriefing(
                 offset = currentOffset,
                 clear = reset,
@@ -146,39 +179,37 @@ class StockViewModel(
                 max = state.size.maxRank
             )
 
-            if (asOf != null) _asOfTime.value = asOf
+            if (asOf != null) {
+                _asOfTime.value = asOf
+            } else {
+                if (!reset) isEndOfList = true // 더 이상 데이터 없음
+            }
             isLoading.set(false)
         }
     }
 
     // 무한 스크롤
     fun loadNextPage() {
-        if (isLoading.get()) return
-
+        if (isLoading.get() || isEndOfList) return
         val state = _filterState.value
+
+        // A. [관심 + 전체] -> 스크롤 안 함 (이미 다 있음)
+        val hasFilter = state.size != SizeFilter.ALL || state.industries.isNotEmpty()
+        if (state.isFavMode && !hasFilter) return
+
         val limit = state.size.maxRank
-
-        // 제한선 체크
-        if (limit != null && currentOffset + 10 >= limit) return
-
+        if (limit != null && currentOffset + 10 >= limit) {
+            isEndOfList = true
+            return
+        }
         currentOffset += 10
         loadData(reset = false) // 추가 로드
     }
 
     fun getCurrentFilterState() = _filterState.value
-
-    // 기존 호환용 (Fragment에서 호출)
-    fun refreshSortOnly(sort: String) = setSort(sort)
     fun refresh() = loadData(reset = true)
     fun getCurrentFilterMode() = _filterState.value.size
-    fun updateIndustryFilter(industries: Set<String>) {
-        // _filterState.value = _filterState.value.copy(industries = industries)
-        // loadData(reset = true)
-        // 위 코드가 주석 처리되어 있고 아래 setIndustryFilter를 호출하는지 확인 필요
-        setIndustryFilter(industries)
-    }
     fun getCurrentIndustries(): Set<String> = _filterState.value.industries
-
     enum class SizeFilter(val minRank: Int?, val maxRank: Int?) {
         ALL(null, null), LARGE(0, 100), MID(100, 300), SMALL(300, null)
     }

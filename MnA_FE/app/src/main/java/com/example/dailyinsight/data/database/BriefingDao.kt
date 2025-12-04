@@ -23,27 +23,31 @@ interface BriefingDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertFavorite(item: FavoriteTicker)
 
-    @Query("DELETE FROM favorite_tickers WHERE ticker = :ticker")
-    suspend fun deleteFavorite(ticker: String)
+    // 삭제 시 내 것만 삭제
+    @Query("DELETE FROM favorite_tickers WHERE ticker = :ticker AND username = :username")
+    suspend fun deleteFavorite(ticker: String, username: String)
+
+    // 내 목록만 전체 삭제 (서버 동기화용)
+    @Query("DELETE FROM favorite_tickers WHERE username = :username")
+    suspend fun clearFavoritesForUser(username: String)
 
     @Query("SELECT ticker FROM favorite_tickers")
     suspend fun getAllFavoriteTickers(): List<String>
 
-    // 브리핑 카드 + 즐겨찾기 조인 업데이트
-    // (화면에 보이는 리스트의 별표 상태를 '즐겨찾기 테이블' 보고 동기화)
+    // 내 찜 목록만 동기화 (내 거면 1, 남의 거거나 없으면 0)
     @Query("""
         UPDATE briefing_cards 
-        SET isFavorite = (ticker IN (SELECT ticker FROM favorite_tickers))
+        SET isFavorite = (ticker IN (SELECT ticker FROM favorite_tickers WHERE username = :username))
     """)
-    suspend fun syncFavorites()
+    suspend fun syncFavorites(username: String)
 
     //  즐겨찾기 상태만 업데이트 (전체 덮어쓰기 X)
     @Query("UPDATE briefing_cards SET isFavorite = :isFavorite WHERE ticker = :ticker")
     suspend fun updateFavorite(ticker: String, isFavorite: Boolean)
 
-    //  현재 즐겨찾기된 Ticker 목록 (서버 전송용)
-    @Query("SELECT ticker FROM briefing_cards WHERE isFavorite = 1")
-    suspend fun getFavoriteTickers(): List<String>
+    //  내 아이디에 해당하는 찜 목록만 가져오기
+    @Query("SELECT ticker FROM favorite_tickers WHERE username = :username")
+    suspend fun getFavoriteTickers(username: String): List<String>
 
     // 즐겨찾기 테이블 싹 비우기 (로그아웃 하거나 서버랑 맞출 때 사용)
     @Query("DELETE FROM favorite_tickers")
@@ -68,4 +72,23 @@ interface BriefingDao {
     // 모든 종목의 별표 해제 (로그아웃용)
     @Query("UPDATE briefing_cards SET isFavorite = 0")
     suspend fun uncheckAllFavorites()
+
+    @Query("DELETE FROM briefing_cards WHERE ticker NOT IN (SELECT ticker FROM favorite_tickers)")
+    suspend fun deleteNonFavorites()
+
+    // [일반 목록용] rank가 있는 것만 가져옴 (필터링된 결과)
+    @Query("SELECT * FROM briefing_cards WHERE rank IS NOT NULL ORDER BY rank ASC")
+    fun getNormalListFlow(): Flow<List<BriefingCardCache>>
+
+    // 관심 목록 정렬: 시가총액(marketCap) 내림차순 (NULL은 맨 뒤로)
+    @Query("SELECT * FROM briefing_cards WHERE isFavorite = 1 ORDER BY marketCap DESC")
+    fun getFavoriteListFlow(): Flow<List<BriefingCardCache>>
+
+    // [초기화] 데이터를 지우지 않고 '순서(rank)'만 떼버림 (화면에서 숨김)
+    @Query("UPDATE briefing_cards SET rank = NULL")
+    suspend fun resetRanks()
+
+    // [청소] 화면에도 안 나오고 찜도 안 한 데이터 삭제
+    @Query("DELETE FROM briefing_cards WHERE rank IS NULL AND isFavorite = 0")
+    suspend fun deleteGarbage()
 }

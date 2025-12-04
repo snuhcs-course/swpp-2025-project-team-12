@@ -22,7 +22,6 @@ import com.example.dailyinsight.data.dto.LogInResponse
 import com.example.dailyinsight.data.dto.SignUpResponse
 import com.example.dailyinsight.data.dto.UserProfileResponse
 import com.example.dailyinsight.data.network.RetrofitInstance
-import com.example.dailyinsight.ui.sign.SetPortfolioActivity
 import com.google.android.material.appbar.MaterialToolbar
 import com.google.android.material.button.MaterialButton
 import com.google.android.material.textfield.TextInputEditText

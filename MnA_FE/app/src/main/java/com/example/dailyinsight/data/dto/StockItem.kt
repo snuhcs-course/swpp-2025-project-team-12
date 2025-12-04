@@ -17,11 +17,11 @@ data class CompanyListResponse(
     val source: String,
     val asOf: String
 )
-
+/*
 data class PortfolioRequest(
     val portfolio: Set<String>
 )
 
-//data class PortfolioResponse(
-    //val message: String
-//)
+data class PortfolioResponse(
+    val message: String
+)*/
