@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8" />
+<title>Daily Insight Poster (A1)</title>
+<style>
+    body {
+        margin: 0;
+        padding: 0;
+        font-family: "Helvetica", "Arial", sans-serif;
+        background: #ffffff;
+        color: #000000;
+    }
+
+    /* A1 scale wrapper */
+    .poster-wrapper {
+        width: 2400px;
+        margin: 0 auto;
+        padding: 40px;
+    }
+
+    /* Top Title Box */
+    .top-box {
+        background: #1f1f1f;
+        color: white;
+        padding: 40px 20px;
+        text-align: center;
+        border-radius: 10px;
+        margin-bottom: 40px;
+    }
+    .top-box h1 {
+        font-size: 80px;
+        margin: 0;
+        font-weight: 900;
+    }
+    .top-box h3 {
+        margin-top: 10px;
+        font-size: 32px;
+        font-weight: 300;
+    }
+
+    /* Section Header */
+    .section-title {
+        background: #2c2c2c;
+        color: #ffffff;
+        font-size: 40px;
+        padding: 10px 20px;
+        border-radius: 10px;
+        margin-top: 50px;
+        margin-bottom: 20px;
+        font-weight: 700;
+    }
+
+    /* Grid for triple boxes */
+    .triple-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr 1fr;
+        gap: 25px;
+    }
+
+    /* Content box */
+    .content-box {
+        border: 3px solid black;
+        padding: 20px;
+        border-radius: 10px;
+        background: #fafafa;
+    }
+
+    .content-box h3 {
+        margin-top: 0;
+        font-size: 30px;
+        border-bottom: 2px solid #000;
+        padding-bottom: 6px;
+        margin-bottom: 15px;
+    }
+
+    .content-box p,
+    .content-box li {
+        font-size: 22px;
+        line-height: 1.45;
+    }
+
+    img {
+        max-width: 100%;
+        border-radius: 8px;
+        margin: 20px 0;
+    }
+
+    /* Two-column layout */
+    .two-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 25px;
+    }
+</style>
+</head>
+
+<body>
+<div class="poster-wrapper">
+
+    <!-- TOP BOX -->
+    <div class="top-box">
+        <h1>Daily Insight</h1>
+        <h3>AI-driven Daily Market Summary & Stock Analysis</h3>
+        <h3>Team 12 — SWPP Project 2025</h3>
+    </div>
+
+    <!-- Motivation / Key Features / Competitive Landscape -->
+    <div class="section-title">Introduction & Features</div>
+
+    <div class="triple-grid">
+
+        <!-- 1. MOTIVATION -->
+        <div class="content-box">
+            <h3>Motivation</h3>
+            <p>
+                개인 투자자는 매일 넘쳐나는 뉴스, 재무 데이터, 시장 지표를 직접 분석하기 어렵다.
+                Daily Insight는 자동 크롤링 + LLM 분석을 결합하여 누구나
+                매일 아침 시장의 핵심만 빠르게 이해하도록 돕는다.
+            </p>
+        </div>
+
+        <!-- 2. KEY FEATURES -->
+        <div class="content-box">
+            <h3>Key Features</h3>
+            <ul>
+                <li>전 종목 요약 제공 (기본적/기술적/뉴스 기반)</li>
+                <li>산업/규모 필터링 기능</li>
+                <li>시장 전체 분석(General, KOSPI, KOSDAQ)</li>
+                <li>Watchlist 기반 개인화 기능</li>
+                <li>Guest 모드 지원</li>
+            </ul>
+        </div>
+
+        <!-- 3. COMPETITIVE LANDSCAPE -->
+        <div class="content-box">
+            <h3>Competitive Landscape</h3>
+            <img src="https://github.com/user-attachments/assets/c1a436e6-dc8f-4844-a1c0-75ddbfbfb919" />
+            <p>여러 서비스가 데이터 일부만 제공하는 반면, Daily Insight는 시장·뉴스·재무·분석을 통합적으로 제공한다.</p>
+        </div>
+    </div>
+
+    <!-- USER INTERFACE -->
+    <div class="section-title">User Interface</div>
+    <div class="content-box">
+        <p>앱은 Home(요약 목록), Index(KOSPI/KOSDAQ), Detail View, My Profile로 구성된다.</p>
+        <img src="https://github.com/user-attachments/assets/473f55d7-03c3-4e83-af81-f08d3d87c111" />
+    </div>
+
+    <!-- SYSTEM ARCHITECTURE -->
+    <div class="section-title">System Architecture</div>
+    <div class="two-grid">
+        <div class="content-box">
+            <h3>Overview</h3>
+            <img src="https://github.com/user-attachments/assets/73362e35-cf40-43fa-ac63-cb8d06687fa3" />
+            <p>
+                Crawler → S3 저장 → LLM 분석 → Backend API → Android Client
+            </p>
+        </div>
+        <div class="content-box">
+            <h3>LLM Structure</h3>
+            <img src="https://github.com/user-attachments/assets/15b6220a-368e-4ddb-aa6b-552b00bb8e49" />
+            <p>
+                GPT-5 기반 HyDE RAG를 적용하여 고정밀 종목 분석을 생성한다.
+            </p>
+        </div>
+    </div>
+
+    <!-- CHALLENGES & SOLUTIONS -->
+    <div class="section-title">Challenges & Solutions</div>
+    <div class="triple-grid">
+        <div class="content-box">
+            <h3>데이터 품질 문제</h3>
+            <p>뉴스, 재무 데이터의 불규칙성 해결 → 전처리 + 중복 제거 + 안정화 파이프라인 구축</p>
+        </div>
+        <div class="content-box">
+            <h3>LLM 분석 안정성</h3>
+            <p>HyDE RAG와 구조화된 Input Schema로 편차 없이 일관된 분석 생성</p>
+        </div>
+        <div class="content-box">
+            <h3>성능 및 응답 속도</h3>
+            <p>SharedMemory + S3 캐시로 요청당 1초 이내 응답을 보장</p>
+        </div>
+    </div>
+
+    <!-- TESTING -->
+    <div class="section-title">Testing</div>
+    <div class="two-grid">
+        <div class="content-box">
+            <h3>Backend Coverage</h3>
+            <img src="https://github.com/user-attachments/assets/a3195f50-04f2-446e-91b6-11047e779d8c" />
+            <img src="https://github.com/user-attachments/assets/1a8c8a0e-92c7-4863-855f-66febcc92509" />
+            <p>백엔드 전체 커버리지 99% 달성</p>
+        </div>
+
+        <div class="content-box">
+            <h3>Android Testing</h3>
+            <img src="https://github.com/user-attachments/assets/d54fe94c-c91b-47a4-9faa-d6e76a8e48f1" />
+            <p>DTO/Repository는 높은 커버리지 확보, UI/Room은 Instrumented Test 필요</p>
+        </div>
+    </div>
+
+    <!-- PROJECT MANAGEMENT -->
+    <div class="section-title">Project Management</div>
+    <div class="content-box">
+        <h3>Processes</h3>
+        <ul>
+            <li>Iteration 관리 (Kickoff → Mid → Wrap-up, 총 5 Iteration)</li>
+            <li>Daily Scrum, Weekly Milestone 점검</li>
+            <li>CI 없이 수동 배포 (AWS EC2)</li>
+        </ul>
+    </div>
+
+</div>
+</body>
+</html>
