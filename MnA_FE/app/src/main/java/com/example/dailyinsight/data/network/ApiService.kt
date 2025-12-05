@@ -34,12 +34,6 @@ interface ApiService {
         @Query("max") max: Int? = null               // 시총 순위 끝
     ): BriefingListResponse
 
-    @GET("api/company-list")
-    suspend fun getStockList(): ApiResponse<List<RecommendationDto>>
-
-    @GET("marketindex/api/overview/{ticker}")
-    suspend fun getStockBriefing(): LLMSummaryResponse
-
     // 텍스트 개요(요약/기본적/기술적/뉴스/날짜)
     @GET("api/overview/{ticker}")
     suspend fun getStockOverview(
@@ -55,14 +49,6 @@ interface ApiService {
     //  내 관심 종목 가져오기
     @GET("user/info/portfolio")
     suspend fun getPortfolio(): Response<PortfolioResponse>
-
-    // ======================================
-
-    @GET("api/company-list")
-    suspend fun getCompanyList(
-        @Query("limit") limit: Int,
-        @Query("offset") offset: Int
-    ) : Response<CompanyListResponse>
 
     // ============ Market Index ============
     @GET("marketindex/stockindex/latest")

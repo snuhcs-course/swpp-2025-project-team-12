@@ -286,4 +286,165 @@ class StockDetailDtoTest {
         assertEquals("2024-01-02", sorted[1].date)
         assertEquals("2024-01-03", sorted[2].date)
     }
+
+    // ===== Additional Tests =====
+
+    @Test
+    fun stockDetailDto_equality() {
+        val dto1 = StockDetailDto(ticker = "005930", name = "삼성전자")
+        val dto2 = StockDetailDto(ticker = "005930", name = "삼성전자")
+        assertEquals(dto1, dto2)
+    }
+
+    @Test
+    fun stockDetailDto_hashCode() {
+        val dto1 = StockDetailDto(ticker = "005930", name = "삼성전자")
+        val dto2 = StockDetailDto(ticker = "005930", name = "삼성전자")
+        assertEquals(dto1.hashCode(), dto2.hashCode())
+    }
+
+    @Test
+    fun stockDetailDto_copy() {
+        val original = StockDetailDto(ticker = "005930", name = "삼성전자")
+        val copied = original.copy(name = "Samsung Electronics")
+        assertEquals("Samsung Electronics", copied.name)
+        assertEquals("005930", copied.ticker)
+    }
+
+    @Test
+    fun stockDetailDto_toString() {
+        val dto = StockDetailDto(ticker = "005930", name = "삼성전자")
+        val str = dto.toString()
+        assertTrue(str.contains("005930"))
+        assertTrue(str.contains("삼성전자"))
+    }
+
+    @Test
+    fun valuationData_equality() {
+        val val1 = ValuationData(peTtm = 15.5, priceToBook = 1.2, bps = 60000)
+        val val2 = ValuationData(peTtm = 15.5, priceToBook = 1.2, bps = 60000)
+        assertEquals(val1, val2)
+    }
+
+    @Test
+    fun valuationData_copy() {
+        val original = ValuationData(peTtm = 15.5, priceToBook = 1.2, bps = 60000)
+        val copied = original.copy(peTtm = 16.0)
+        assertEquals(16.0, copied.peTtm ?: 0.0, 0.001)
+        assertEquals(1.2, copied.priceToBook ?: 0.0, 0.001)
+    }
+
+    @Test
+    fun dividendData_equality() {
+        val div1 = DividendData(`yield` = 2.5)
+        val div2 = DividendData(`yield` = 2.5)
+        assertEquals(div1, div2)
+    }
+
+    @Test
+    fun dividendData_copy() {
+        val original = DividendData(`yield` = 2.5)
+        val copied = original.copy(`yield` = 3.0)
+        assertEquals(3.0, copied.`yield` ?: 0.0, 0.001)
+    }
+
+    @Test
+    fun financialsData_equality() {
+        val fin1 = FinancialsData(eps = 4800, dps = 1800, roe = 8.0)
+        val fin2 = FinancialsData(eps = 4800, dps = 1800, roe = 8.0)
+        assertEquals(fin1, fin2)
+    }
+
+    @Test
+    fun financialsData_copy() {
+        val original = FinancialsData(eps = 4800, dps = 1800, roe = 8.0)
+        val copied = original.copy(roe = 9.0)
+        assertEquals(9.0, copied.roe ?: 0.0, 0.001)
+        assertEquals(4800L, copied.eps)
+    }
+
+    @Test
+    fun historyItem_equality() {
+        val h1 = HistoryItem(date = "2024-01-01", close = 70000.0)
+        val h2 = HistoryItem(date = "2024-01-01", close = 70000.0)
+        assertEquals(h1, h2)
+    }
+
+    @Test
+    fun historyItem_hashCode() {
+        val h1 = HistoryItem(date = "2024-01-01", close = 70000.0)
+        val h2 = HistoryItem(date = "2024-01-01", close = 70000.0)
+        assertEquals(h1.hashCode(), h2.hashCode())
+    }
+
+    @Test
+    fun historyItem_copy() {
+        val original = HistoryItem(date = "2024-01-01", close = 70000.0)
+        val copied = original.copy(close = 71000.0)
+        assertEquals("2024-01-01", copied.date)
+        assertEquals(71000.0, copied.close, 0.001)
+    }
+
+    @Test
+    fun profileData_equality() {
+        val p1 = ProfileData(explanation = "반도체 제조업체")
+        val p2 = ProfileData(explanation = "반도체 제조업체")
+        assertEquals(p1, p2)
+    }
+
+    @Test
+    fun profileData_copy() {
+        val original = ProfileData(explanation = "반도체 제조업체")
+        val copied = original.copy(explanation = "Updated")
+        assertEquals("Updated", copied.explanation)
+    }
+
+    @Test
+    fun profileData_nullExplanation() {
+        val profile = ProfileData(explanation = null)
+        assertNull(profile.explanation)
+    }
+
+    @Test
+    fun currentData_destructuring() {
+        val current = CurrentData(
+            price = 72000,
+            change = -100,
+            changeRate = -0.14,
+            marketCap = 1000000,
+            date = "2024-01-01"
+        )
+        val (price, change, changeRate, marketCap, date) = current
+        assertEquals(72000L, price)
+        assertEquals(-100L, change)
+        assertEquals(-0.14, changeRate ?: 0.0, 0.001)
+        assertEquals(1000000L, marketCap)
+        assertEquals("2024-01-01", date)
+    }
+
+    @Test
+    fun valuationData_nullFields() {
+        val valuation = ValuationData()
+        assertNull(valuation.peTtm)
+        assertNull(valuation.priceToBook)
+        assertNull(valuation.bps)
+    }
+
+    @Test
+    fun financialsData_nullFields() {
+        val financials = FinancialsData()
+        assertNull(financials.eps)
+        assertNull(financials.dps)
+        assertNull(financials.roe)
+    }
+
+    @Test
+    fun stockDetailDto_industryField() {
+        val dto = StockDetailDto(
+            ticker = "005930",
+            name = "삼성전자",
+            industry = "반도체"
+        )
+        assertEquals("반도체", dto.industry)
+    }
 }

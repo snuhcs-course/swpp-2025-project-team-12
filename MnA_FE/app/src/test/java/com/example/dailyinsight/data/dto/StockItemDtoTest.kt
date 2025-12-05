@@ -117,63 +117,65 @@ class StockItemDtoTest {
     // ===== PortfolioRequest =====
     @Test
     fun portfolioRequest_createsCorrectly() {
-        val tickers = setOf("005930", "000660", "035420")
+        val tickers = listOf("005930", "000660", "035420")
         val request = PortfolioRequest(tickers)
-        
+
         assertEquals(3, request.portfolio.size)
         assertTrue(request.portfolio.contains("005930"))
     }
 
     @Test
-    fun portfolioRequest_emptySet() {
-        val request = PortfolioRequest(emptySet())
+    fun portfolioRequest_emptyList() {
+        val request = PortfolioRequest(emptyList())
         assertTrue(request.portfolio.isEmpty())
     }
 
     @Test
     fun portfolioRequest_singleItem() {
-        val request = PortfolioRequest(setOf("005930"))
+        val request = PortfolioRequest(listOf("005930"))
         assertEquals(1, request.portfolio.size)
         assertEquals("005930", request.portfolio.first())
     }
 
     @Test
-    fun portfolioRequest_largeSet() {
-        val tickers = (1..100).map { "STOCK$it" }.toSet()
+    fun portfolioRequest_largeList() {
+        val tickers = (1..100).map { "STOCK$it" }
         val request = PortfolioRequest(tickers)
         assertEquals(100, request.portfolio.size)
     }
 
     @Test
-    fun portfolioRequest_duplicatesRemoved() {
-        // Set should automatically remove duplicates
-        val request = PortfolioRequest(setOf("005930", "005930"))
-        assertEquals(1, request.portfolio.size)
+    fun portfolioRequest_allowsDuplicates() {
+        // List allows duplicates (unlike Set)
+        val request = PortfolioRequest(listOf("005930", "005930"))
+        assertEquals(2, request.portfolio.size)
     }
 
     // ===== PortfolioResponse =====
     @Test
-    fun portfolioResponse_success() {
-        val response = PortfolioResponse("Portfolio updated")
-        assertEquals("Portfolio updated", response.message)
+    fun portfolioResponse_withPortfolio() {
+        val response = PortfolioResponse(listOf("005930", "000660"))
+        assertNotNull(response.portfolio)
+        assertEquals(2, response.portfolio?.size)
     }
 
     @Test
-    fun portfolioResponse_failure() {
-        val response = PortfolioResponse("Failed to update")
-        assertEquals("Failed to update", response.message)
+    fun portfolioResponse_nullPortfolio() {
+        val response = PortfolioResponse(null)
+        assertNull(response.portfolio)
     }
 
     @Test
-    fun portfolioResponse_emptyMessage() {
-        val response = PortfolioResponse("")
-        assertEquals("", response.message)
+    fun portfolioResponse_emptyPortfolio() {
+        val response = PortfolioResponse(emptyList())
+        assertNotNull(response.portfolio)
+        assertTrue(response.portfolio?.isEmpty() == true)
     }
 
     @Test
-    fun portfolioResponse_koreanMessage() {
-        val response = PortfolioResponse("포트폴리오 업데이트 완료")
-        assertEquals("포트폴리오 업데이트 완료", response.message)
+    fun portfolioResponse_defaultValue() {
+        val response = PortfolioResponse()
+        assertNull(response.portfolio)
     }
 
     // ===== Integration Tests =====
@@ -191,12 +193,12 @@ class StockItemDtoTest {
             source = "API",
             asOf = "2024-01-15"
         )
-        
-        val request = PortfolioRequest(setOf("005930", "000660"))
-        val response = PortfolioResponse("Success")
-        
+
+        val request = PortfolioRequest(listOf("005930", "000660"))
+        val response = PortfolioResponse(listOf("005930", "000660"))
+
         assertEquals(listResponse.items.size, request.portfolio.size)
-        assertNotNull(response.message)
+        assertNotNull(response.portfolio)
     }
 
     @Test

@@ -1,0 +1,32 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(cat:*)",
+      "Bash(./gradlew testDebugUnitTest:*)",
+      "Bash(java -version:*)",
+      "Bash(where:*)",
+      "Bash(set:*)",
+      "Bash(dir \"C:\\Program Files\\Java\")",
+      "Bash(dir \"C:\\Program Files\\Android\\Android Studio\\jbr\")",
+      "Bash(dir:*)",
+      "Bash(find:*)",
+      "Bash(del \"D:\\swpp\\swpp-2025-project-team-12\\MnA_FE\\app\\src\\test\\java\\com\\example\\dailyinsight\\ExampleUnitTest.kt\")",
+      "Bash(del \"D:\\swpp\\swpp-2025-project-team-12\\MnA_FE\\app\\src\\androidTest\\java\\com\\example\\dailyinsight\\ExampleInstrumentedTest.kt\")",
+      "Bash(del \"D:\\swpp\\swpp-2025-project-team-12\\MnA_FE\\app\\src\\test\\java\\com\\example\\dailyinsight\\utils\\DimensionExtensionsTest.kt\")",
+      "Bash(\"%JAVA_HOME%\\bin\\java\" -version)",
+      "Bash(export JAVA_HOME=\"/c/Program Files/Android/Android Studio/jbr\")",
+      "Bash(\"$JAVA_HOME/bin/java\" -version)",
+      "Bash(export JAVA_HOME=\"/d/Java/jdk17.0.10\":*)",
+      "Bash(JAVA_HOME=\"D:/Java/jdk17.0.10\" PATH=\"D:/Java/jdk17.0.10/bin:$PATH\" ./gradlew testDebugUnitTest:*)",
+      "Bash(export JAVA_HOME=\"D:/Java/jdk17.0.10\":*)",
+      "Bash(export PATH=\"$JAVA_HOME/bin:$PATH\")",
+      "Bash(/d/Java/jdk17.0.10/bin/java.exe:*)",
+      "Bash(JAVA_HOME=/d/Java/jdk17.0.10 PATH=\"/d/Java/jdk17.0.10/bin:$PATH\" ./gradlew testDebugUnitTest:*)",
+      "Bash(export JAVA_HOME=/d/Java/jdk17.0.10:*)",
+      "Bash(export PATH=\"/d/Java/jdk17.0.10/bin:$PATH\")",
+      "Bash(./gradlew:*)"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}

@@ -155,4 +155,82 @@ class RecommendationDtoTest {
         val dto = RecommendationDto("005930", "삼성전자", 70000L, 0L, 0.0, "🚀 주가 상승!")
         assertEquals("🚀 주가 상승!", dto.headline)
     }
+
+    // ===== isFavorite Tests =====
+
+    @Test
+    fun recommendationDto_isFavorite_defaultsFalse() {
+        val dto = RecommendationDto("005930", "삼성전자", 70000L, 0L, 0.0)
+        assertFalse(dto.isFavorite)
+    }
+
+    @Test
+    fun recommendationDto_isFavorite_canBeSetTrue() {
+        val dto = RecommendationDto("005930", "삼성전자", 70000L, 0L, 0.0, isFavorite = true)
+        assertTrue(dto.isFavorite)
+    }
+
+    @Test
+    fun recommendationDto_isFavorite_canBeMutated() {
+        val dto = RecommendationDto("005930", "삼성전자", 70000L, 0L, 0.0)
+        assertFalse(dto.isFavorite)
+
+        dto.isFavorite = true
+        assertTrue(dto.isFavorite)
+
+        dto.isFavorite = false
+        assertFalse(dto.isFavorite)
+    }
+
+    @Test
+    fun recommendationDto_withAllFieldsIncludingFavorite() {
+        val dto = RecommendationDto(
+            ticker = "005930",
+            name = "삼성전자",
+            price = 70000L,
+            change = 100L,
+            changeRate = 0.14,
+            headline = "테스트 헤드라인",
+            isFavorite = true
+        )
+
+        assertEquals("005930", dto.ticker)
+        assertEquals("삼성전자", dto.name)
+        assertEquals(70000L, dto.price)
+        assertEquals(100L, dto.change)
+        assertEquals(0.14, dto.changeRate, 0.001)
+        assertEquals("테스트 헤드라인", dto.headline)
+        assertTrue(dto.isFavorite)
+    }
+
+    @Test
+    fun recommendationDto_copy_preservesIsFavorite() {
+        val original = RecommendationDto("005930", "삼성전자", 70000L, 0L, 0.0, isFavorite = true)
+        val copied = original.copy(price = 80000L)
+
+        assertTrue(copied.isFavorite)
+    }
+
+    @Test
+    fun recommendationDto_copy_changesIsFavorite() {
+        val original = RecommendationDto("005930", "삼성전자", 70000L, 0L, 0.0, isFavorite = false)
+        val copied = original.copy(isFavorite = true)
+
+        assertTrue(copied.isFavorite)
+        assertFalse(original.isFavorite)
+    }
+
+    @Test
+    fun recommendationDto_listFiltering_byFavorite() {
+        val dtos = listOf(
+            RecommendationDto("005930", "삼성전자", 70000L, 0L, 0.0, isFavorite = true),
+            RecommendationDto("000660", "SK하이닉스", 150000L, 0L, 0.0, isFavorite = false),
+            RecommendationDto("035720", "카카오", 50000L, 0L, 0.0, isFavorite = true)
+        )
+
+        val favorites = dtos.filter { it.isFavorite }
+        assertEquals(2, favorites.size)
+        assertEquals("005930", favorites[0].ticker)
+        assertEquals("035720", favorites[1].ticker)
+    }
 }
