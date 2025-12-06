@@ -198,20 +198,6 @@ koverReport {
                 "*Database",
                 "*Database\$*",
 
-                // === TIGHTLY COUPLED CLASSES (create dependencies internally, not injectable) ===
-                // RemoteRepository - uses Context.cookieDataStore extension property
-                "*RemoteRepository",
-                "*RemoteRepository\$*",
-                // ProfileViewModel - creates repository internally, uses Context/Toast/Intent
-                "*ProfileViewModel",
-                "*ProfileViewModel\$*",
-                "*ProfileViewModelFactory",
-                "*ProfileViewModelFactory\$*",
-                // StockIndexDetailViewModel - creates MarketIndexRepository internally (not injectable)
-                "*StockIndexDetailViewModel",
-                "*StockIndexDetailViewModel\$*",
-                "*StockIndexDetailViewModelFactory",
-                "*StockIndexDetailViewModelFactory\$*"
             )
         }
     }
