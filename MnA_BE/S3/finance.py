@@ -21,7 +21,7 @@ class FinanceBucket(BaseBucket):
     def __init__(self, client=None, bucket_name: str | None = None):
         try:
             if client is None:
-                client = S3ClientFactory.for_finance()
+                client = S3ClientFactory().create("finance")
             if bucket_name is None:
                 bucket_name = _get_env("FINANCE_BUCKET_NAME")
 

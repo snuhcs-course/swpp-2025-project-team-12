@@ -1,4 +1,5 @@
 import traceback
+import abc
 from typing import Iterable, Optional
 
 import boto3
@@ -12,8 +13,12 @@ def _get_first_env(*keys: str) -> Optional[str]:
     """
     return _get_env(*keys)
 
+class Factory(abc.ABC):
+    @abc.abstractmethod
+    def create(self, key_type: str):
+        pass
 
-class S3ClientFactory:
+class S3ClientFactory(Factory):
     """
     S3 Client 생성을 담당하는 Factory.
 
@@ -21,45 +26,19 @@ class S3ClientFactory:
     - for_finance: Finance 전용 S3 클라이언트
     """
 
-    @classmethod
-    def from_env(
-        cls,
-        access_key_envs: Iterable[str] = ("IAM_ACCESS_KEY_ID", "AWS_ACCESS_KEY_ID"),
-        secret_key_envs: Iterable[str] = ("IAM_SECRET_KEY", "AWS_SECRET_ACCESS_KEY"),
-        region_envs: Iterable[str] = ("AWS_REGION",),
-    ):
-        """
-        주어진 ENV 키 후보들에서 자격증명/리전을 읽어 S3 Client 생성.
-        """
-        access_key = _get_first_env(*access_key_envs)
-        secret_key = _get_first_env(*secret_key_envs)
-        region = _get_first_env(*region_envs)
+    def create(self, key_type: str = "default"):
+        if key_type == "finance":
+            boto3.client(
+                "s3",
+                aws_access_key_id=_get_env("FINANCE_IAM_ACCESS_KEY_ID", "FINANCE_AWS_ACCESS_KEY_ID"),
+                aws_secret_access_key=_get_env("FINANCE_IAM_SECRET_KEY", "FINANCE_AWS_SECRET_ACCESS_KEY"),
+                region_name=_get_env("FINANCE_AWS_REGION", "AWS_REGION"),
+            )
 
-        kwargs = {}
-        if region:
-            kwargs["region_name"] = region
-        if access_key and secret_key:
-            kwargs["aws_access_key_id"] = access_key
-            kwargs["aws_secret_access_key"] = secret_key
-
-        try:
-            return boto3.client("s3", **kwargs)
-        except Exception:
-            # 공통 디버그 출력
-            debug_print(traceback.format_exc())
-            raise
-
-    @classmethod
-    def for_finance(cls):
-        """
-        Finance 전용 ENV 세트를 사용해 S3 Client 생성.
-        """
-        return cls.from_env(
-            access_key_envs=("FINANCE_IAM_ACCESS_KEY_ID", "FINANCE_AWS_ACCESS_KEY_ID"),
-            secret_key_envs=(
-                "FINANCE_IAM_SECRET_KEY",
-                "FINANCE_AWS_SECRET_ACCESS_KEY",
-            ),
-            # 필요시 "FINANCE_AWS_REGION" 같은 걸 먼저 검색하고 싶다면 추가 가능
-            region_envs=("FINANCE_AWS_REGION", "AWS_REGION"),
+        # default client
+        return boto3.client(
+            "s3",
+            aws_access_key_id=_get_env("IAM_ACCESS_KEY_ID", "AWS_ACCESS_KEY_ID"),
+            aws_secret_access_key=_get_env("IAM_SECRET_KEY", "AWS_SECRET_ACCESS_KEY"),
+            region_name=_get_env("AWS_REGION")
         )

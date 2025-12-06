@@ -42,7 +42,7 @@ class BaseBucket:
         try:
             # client 미지정 시: 기본 ENV 기반 클라이언트 (공통)
             if client is None:
-                client = S3ClientFactory.from_env()
+                client = S3ClientFactory().create()
 
             # bucket_name 미지정 시: 공통 BUCKET_NAME 사용
             if bucket_name is None:
