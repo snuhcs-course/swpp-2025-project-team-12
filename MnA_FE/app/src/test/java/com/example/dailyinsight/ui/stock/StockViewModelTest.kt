@@ -221,4 +221,191 @@ class StockViewModelTest {
         // setSort triggers loadData and should update state
         assertNotNull(viewModel)
     }
+
+    // ===== Industry Filter Tests =====
+
+    @Test
+    fun setIndustryFilter_updatesFilterState() = runTest {
+        whenever(repository.fetchAndSaveBriefing(any(), any(), anyOrNull(), anyOrNull(), anyOrNull())).thenReturn("2024-01-01")
+
+        val viewModel = StockViewModel(repository)
+        advanceUntilIdle()
+
+        val industries = setOf("IT", "건설")
+        viewModel.setIndustryFilter(industries)
+        advanceUntilIdle()
+
+        assertEquals(industries, viewModel.getCurrentIndustries())
+    }
+
+    @Test
+    fun setIndustryFilter_emptySet() = runTest {
+        whenever(repository.fetchAndSaveBriefing(any(), any(), anyOrNull(), anyOrNull(), anyOrNull())).thenReturn("2024-01-01")
+
+        val viewModel = StockViewModel(repository)
+        advanceUntilIdle()
+
+        viewModel.setIndustryFilter(emptySet())
+        advanceUntilIdle()
+
+        assertTrue(viewModel.getCurrentIndustries().isEmpty())
+    }
+
+    @Test
+    fun getCurrentIndustries_returnsEmptyByDefault() = runTest {
+        whenever(repository.fetchAndSaveBriefing(any(), any(), anyOrNull(), anyOrNull(), anyOrNull())).thenReturn("2024-01-01")
+
+        val viewModel = StockViewModel(repository)
+        advanceUntilIdle()
+
+        assertTrue(viewModel.getCurrentIndustries().isEmpty())
+    }
+
+    // ===== getCurrentFilterState Tests =====
+
+    @Test
+    fun getCurrentFilterState_returnsDefaultState() = runTest {
+        whenever(repository.fetchAndSaveBriefing(any(), any(), anyOrNull(), anyOrNull(), anyOrNull())).thenReturn("2024-01-01")
+
+        val viewModel = StockViewModel(repository)
+        advanceUntilIdle()
+
+        val state = viewModel.getCurrentFilterState()
+        assertEquals(StockViewModel.SizeFilter.ALL, state.size)
+        assertTrue(state.industries.isEmpty())
+        assertEquals("market_cap", state.sort)
+        assertFalse(state.isFavMode)
+    }
+
+    @Test
+    fun getCurrentFilterState_reflectsChanges() = runTest {
+        whenever(repository.fetchAndSaveBriefing(any(), any(), anyOrNull(), anyOrNull(), anyOrNull())).thenReturn("2024-01-01")
+
+        val viewModel = StockViewModel(repository)
+        advanceUntilIdle()
+
+        viewModel.setSizeFilter(StockViewModel.SizeFilter.MID)
+        viewModel.setIndustryFilter(setOf("금융"))
+        viewModel.setSort("change_rate")
+        advanceUntilIdle()
+
+        val state = viewModel.getCurrentFilterState()
+        assertEquals(StockViewModel.SizeFilter.MID, state.size)
+        assertTrue(state.industries.contains("금융"))
+        assertEquals("change_rate", state.sort)
+    }
+
+    // ===== SizeFilter Enum Tests =====
+
+    @Test
+    fun sizeFilter_ALL_hasNullMinMax() {
+        val filter = StockViewModel.SizeFilter.ALL
+        assertNull(filter.minRank)
+        assertNull(filter.maxRank)
+    }
+
+    @Test
+    fun sizeFilter_LARGE_hasCorrectRange() {
+        val filter = StockViewModel.SizeFilter.LARGE
+        assertEquals(0, filter.minRank)
+        assertEquals(100, filter.maxRank)
+    }
+
+    @Test
+    fun sizeFilter_MID_hasCorrectRange() {
+        val filter = StockViewModel.SizeFilter.MID
+        assertEquals(100, filter.minRank)
+        assertEquals(300, filter.maxRank)
+    }
+
+    @Test
+    fun sizeFilter_SMALL_hasCorrectRange() {
+        val filter = StockViewModel.SizeFilter.SMALL
+        assertEquals(300, filter.minRank)
+        assertNull(filter.maxRank)
+    }
+
+    @Test
+    fun sizeFilter_values_contains4Items() {
+        assertEquals(4, StockViewModel.SizeFilter.values().size)
+    }
+
+    @Test
+    fun sizeFilter_valueOf_works() {
+        assertEquals(StockViewModel.SizeFilter.ALL, StockViewModel.SizeFilter.valueOf("ALL"))
+        assertEquals(StockViewModel.SizeFilter.LARGE, StockViewModel.SizeFilter.valueOf("LARGE"))
+        assertEquals(StockViewModel.SizeFilter.MID, StockViewModel.SizeFilter.valueOf("MID"))
+        assertEquals(StockViewModel.SizeFilter.SMALL, StockViewModel.SizeFilter.valueOf("SMALL"))
+    }
+
+    // ===== FilterState Data Class Tests =====
+
+    @Test
+    fun filterState_defaultValues() {
+        val state = StockViewModel.FilterState()
+        assertEquals(StockViewModel.SizeFilter.ALL, state.size)
+        assertTrue(state.industries.isEmpty())
+        assertEquals("market_cap", state.sort)
+        assertFalse(state.isFavMode)
+    }
+
+    @Test
+    fun filterState_customValues() {
+        val state = StockViewModel.FilterState(
+            size = StockViewModel.SizeFilter.LARGE,
+            industries = setOf("IT", "금융"),
+            sort = "price",
+            isFavMode = true
+        )
+        assertEquals(StockViewModel.SizeFilter.LARGE, state.size)
+        assertEquals(setOf("IT", "금융"), state.industries)
+        assertEquals("price", state.sort)
+        assertTrue(state.isFavMode)
+    }
+
+    @Test
+    fun filterState_copy() {
+        val original = StockViewModel.FilterState()
+        val copied = original.copy(size = StockViewModel.SizeFilter.MID)
+        assertEquals(StockViewModel.SizeFilter.MID, copied.size)
+        assertEquals(original.industries, copied.industries)
+        assertEquals(original.sort, copied.sort)
+        assertEquals(original.isFavMode, copied.isFavMode)
+    }
+
+    @Test
+    fun filterState_equality() {
+        val state1 = StockViewModel.FilterState(size = StockViewModel.SizeFilter.LARGE)
+        val state2 = StockViewModel.FilterState(size = StockViewModel.SizeFilter.LARGE)
+        assertEquals(state1, state2)
+    }
+
+    @Test
+    fun filterState_hashCode() {
+        val state1 = StockViewModel.FilterState()
+        val state2 = StockViewModel.FilterState()
+        assertEquals(state1.hashCode(), state2.hashCode())
+    }
+
+    @Test
+    fun filterState_toString() {
+        val state = StockViewModel.FilterState()
+        assertTrue(state.toString().contains("FilterState"))
+    }
+
+    @Test
+    fun filterState_destructuring() {
+        val state = StockViewModel.FilterState(
+            size = StockViewModel.SizeFilter.SMALL,
+            industries = setOf("제약"),
+            sort = "volume",
+            isFavMode = true
+        )
+        val (size, industries, sort, isFavMode) = state
+        assertEquals(StockViewModel.SizeFilter.SMALL, size)
+        assertEquals(setOf("제약"), industries)
+        assertEquals("volume", sort)
+        assertTrue(isFavMode)
+    }
+
 }

@@ -6,18 +6,9 @@
     <string name="title_stock">종목</string>
     <string name="title_market_index">시장</string>
     <string name="title_stock_detail">종목 상세</string>
-    <string name="title_stock_index_detail">코스피</string>
-    <string name="today">오늘</string>
-    <string name="yesterday">어제</string>
-    <string name="index_placeholder">--</string>
     <!-- 상승/하락 텍스트: +1,234 (3.50%) 같은 형태 -->
     <string name="change_text">%1$s%2$s (%3$s%%)</string>
     <string name="price_won">%1$s</string>
-    <string name="no_headline">헤드 라인 없음</string>
-    <string name="net_income">Net Income</string>
-    <string name="market_cap">Market Cap</string>
-    <string name="current_share_outstanding">Current Share Outstanding</string>
-    <string name="summary">summary</string>
     <string name="size">규모</string>
     <string name="value">가치</string>
     <string name="profitability">수익성</string>
@@ -32,12 +23,10 @@
     <string name="_1Y">1년</string>
     <string name="_3Y">3년</string>
     <string name="_5Y">5년</string>
-    <string name="no_chart_data">no chart data</string>
     <string name="placeholder_loading">불러오는 중…</string>
     <string name="label_overview">전반</string>
 
     <!--toast messages-->
-    <string name="not_implemented">서비스 준비중입니다</string>
     <string name="on_api_failure">네트워크 연결을 다시 확인해주세요</string>
     <string name="id_required">아이디를 입력해주세요</string>
     <string name="password_required">비밀번호를 입력해주세요</string>

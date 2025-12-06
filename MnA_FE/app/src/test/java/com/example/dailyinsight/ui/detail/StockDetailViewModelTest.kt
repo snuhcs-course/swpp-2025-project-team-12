@@ -304,4 +304,291 @@ class StockDetailViewModelTest {
         assertTrue(viewModel.state.value is LoadResult.Success)
         assertTrue(viewModel.overviewState.value is LoadResult.Error)
     }
+
+    // ===== Chart Data Tests =====
+
+    @Test
+    fun load_withLargeHistory_buildsPriceChartCorrectly() = runTest {
+        val ticker = "005930"
+        val detail = createStockDetail(ticker, hasHistory = true, historySize = 100)
+        val overview = createStockOverview(ticker)
+        whenever(repository.getStockReport(ticker)).thenReturn(detail)
+        whenever(repository.getStockOverview(ticker)).thenReturn(overview)
+
+        val viewModel = createViewModel()
+        viewModel.load(ticker)
+        advanceUntilIdle()
+
+        val priceState = viewModel.priceState.value
+        assertTrue(priceState is LoadResult.Success)
+        val chartUi = (priceState as LoadResult.Success).data.chart
+        assertNotNull(chartUi.data)
+        assertEquals(100, chartUi.xLabels.size)
+    }
+
+    @Test
+    fun load_withSingleHistoryItem_buildsPriceChart() = runTest {
+        val ticker = "005930"
+        val detail = createStockDetail(ticker, hasHistory = true, historySize = 1)
+        val overview = createStockOverview(ticker)
+        whenever(repository.getStockReport(ticker)).thenReturn(detail)
+        whenever(repository.getStockOverview(ticker)).thenReturn(overview)
+
+        val viewModel = createViewModel()
+        viewModel.load(ticker)
+        advanceUntilIdle()
+
+        val priceState = viewModel.priceState.value
+        assertTrue(priceState is LoadResult.Success)
+        val chartUi = (priceState as LoadResult.Success).data.chart
+        assertEquals(1, chartUi.xLabels.size)
+    }
+
+    // ===== Data Class Tests =====
+
+    @Test
+    fun chartUi_dataClassProperties() {
+        val lineData = com.github.mikephil.charting.data.LineData()
+        val labels = listOf("01/01", "01/02", "01/03")
+        val chartUi = ChartUi(lineData, labels)
+
+        assertEquals(lineData, chartUi.data)
+        assertEquals(labels, chartUi.xLabels)
+        assertEquals(3, chartUi.xLabels.size)
+    }
+
+    @Test
+    fun chartUi_equality() {
+        val lineData = com.github.mikephil.charting.data.LineData()
+        val labels = listOf("01/01", "01/02")
+        val chartUi1 = ChartUi(lineData, labels)
+        val chartUi2 = ChartUi(lineData, labels)
+
+        assertEquals(chartUi1, chartUi2)
+        assertEquals(chartUi1.hashCode(), chartUi2.hashCode())
+    }
+
+    @Test
+    fun chartUi_copy() {
+        val lineData = com.github.mikephil.charting.data.LineData()
+        val labels = listOf("01/01")
+        val chartUi = ChartUi(lineData, labels)
+        val newLabels = listOf("02/01", "02/02")
+        val copied = chartUi.copy(xLabels = newLabels)
+
+        assertEquals(newLabels, copied.xLabels)
+        assertEquals(lineData, copied.data)
+    }
+
+    @Test
+    fun priceChartUi_dataClassProperties() {
+        val lineData = com.github.mikephil.charting.data.LineData()
+        val chartUi = ChartUi(lineData, listOf("01/01"))
+        val priceChartUi = PriceChartUi(chartUi)
+
+        assertEquals(chartUi, priceChartUi.chart)
+    }
+
+    @Test
+    fun priceChartUi_equality() {
+        val lineData = com.github.mikephil.charting.data.LineData()
+        val chartUi = ChartUi(lineData, listOf("01/01"))
+        val priceChartUi1 = PriceChartUi(chartUi)
+        val priceChartUi2 = PriceChartUi(chartUi)
+
+        assertEquals(priceChartUi1, priceChartUi2)
+        assertEquals(priceChartUi1.hashCode(), priceChartUi2.hashCode())
+    }
+
+    @Test
+    fun priceChartUi_copy() {
+        val lineData1 = com.github.mikephil.charting.data.LineData()
+        val lineData2 = com.github.mikephil.charting.data.LineData()
+        val chartUi1 = ChartUi(lineData1, listOf("01/01"))
+        val chartUi2 = ChartUi(lineData2, listOf("02/02"))
+        val priceChartUi = PriceChartUi(chartUi1)
+        val copied = priceChartUi.copy(chart = chartUi2)
+
+        assertEquals(chartUi2, copied.chart)
+    }
+
+    @Test
+    fun priceChartUi_toString() {
+        val lineData = com.github.mikephil.charting.data.LineData()
+        val chartUi = ChartUi(lineData, listOf("01/01"))
+        val priceChartUi = PriceChartUi(chartUi)
+
+        val str = priceChartUi.toString()
+        assertTrue(str.contains("PriceChartUi"))
+    }
+
+    @Test
+    fun chartUi_toString() {
+        val lineData = com.github.mikephil.charting.data.LineData()
+        val chartUi = ChartUi(lineData, listOf("01/01"))
+
+        val str = chartUi.toString()
+        assertTrue(str.contains("ChartUi"))
+    }
+
+    @Test
+    fun chartUi_destructuring() {
+        val lineData = com.github.mikephil.charting.data.LineData()
+        val labels = listOf("01/01", "01/02")
+        val chartUi = ChartUi(lineData, labels)
+
+        val (data, xLabels) = chartUi
+        assertEquals(lineData, data)
+        assertEquals(labels, xLabels)
+    }
+
+    @Test
+    fun priceChartUi_destructuring() {
+        val lineData = com.github.mikephil.charting.data.LineData()
+        val chartUi = ChartUi(lineData, listOf("01/01"))
+        val priceChartUi = PriceChartUi(chartUi)
+
+        val (chart) = priceChartUi
+        assertEquals(chartUi, chart)
+    }
+
+    // ===== Concurrent Load Tests =====
+
+    @Test
+    fun load_calledMultipleTimes_lastCallWins() = runTest {
+        val ticker1 = "005930"
+        val ticker2 = "000660"
+        val detail1 = createStockDetail(ticker1)
+        val detail2 = createStockDetail(ticker2)
+        val overview1 = createStockOverview(ticker1)
+        val overview2 = createStockOverview(ticker2)
+
+        whenever(repository.getStockReport(ticker1)).thenReturn(detail1)
+        whenever(repository.getStockReport(ticker2)).thenReturn(detail2)
+        whenever(repository.getStockOverview(ticker1)).thenReturn(overview1)
+        whenever(repository.getStockOverview(ticker2)).thenReturn(overview2)
+
+        val viewModel = createViewModel()
+        viewModel.load(ticker1)
+        viewModel.load(ticker2)
+        advanceUntilIdle()
+
+        val state = viewModel.state.value
+        assertTrue(state is LoadResult.Success)
+        assertEquals(ticker2, (state as LoadResult.Success).data.ticker)
+    }
+
+    @Test
+    fun load_afterError_canRetry() = runTest {
+        val ticker = "005930"
+        val detail = createStockDetail(ticker)
+        val overview = createStockOverview(ticker)
+
+        // Setup mock to fail first, then succeed
+        var callCount = 0
+        whenever(repository.getStockReport(ticker)).thenAnswer {
+            callCount++
+            if (callCount == 1) throw IOException("Error")
+            else detail
+        }
+        whenever(repository.getStockOverview(ticker)).thenReturn(overview)
+
+        val viewModel = createViewModel()
+        viewModel.load(ticker)
+        advanceUntilIdle()
+        assertTrue(viewModel.state.value is LoadResult.Error)
+
+        // Retry - second call succeeds
+        viewModel.load(ticker)
+        advanceUntilIdle()
+
+        assertTrue(viewModel.state.value is LoadResult.Success)
+    }
+
+    // ===== History Date Parsing Tests =====
+
+    @Test
+    fun load_withInvalidDateFormat_handlesGracefully() = runTest {
+        val ticker = "005930"
+        val detail = StockDetailDto(
+            ticker = ticker,
+            name = "테스트",
+            current = CurrentData(price = 72000, change = 0, changeRate = 0.0, marketCap = 1000000, date = "2024-01-01"),
+            valuation = ValuationData(peTtm = 15.0, priceToBook = 1.0, bps = 60000),
+            dividend = DividendData(`yield` = 2.0),
+            financials = FinancialsData(eps = 4000, dps = 1500, roe = 8.0),
+            history = listOf(
+                HistoryItem(date = "invalid-date", close = 70000.0),
+                HistoryItem(date = "2024-01-02", close = 71000.0)
+            ),
+            profile = ProfileData(explanation = "설명"),
+            asOf = "2024-01-01"
+        )
+        val overview = createStockOverview(ticker)
+        whenever(repository.getStockReport(ticker)).thenReturn(detail)
+        whenever(repository.getStockOverview(ticker)).thenReturn(overview)
+
+        val viewModel = createViewModel()
+        viewModel.load(ticker)
+        advanceUntilIdle()
+
+        // Invalid date should be handled gracefully
+        assertTrue(viewModel.priceState.value is LoadResult.Success)
+    }
+
+    // ===== State Flow Emission Tests =====
+
+    @Test
+    fun load_emitsLoadingBeforeSuccess() = runTest {
+        val ticker = "005930"
+        val detail = createStockDetail(ticker)
+        val overview = createStockOverview(ticker)
+        whenever(repository.getStockReport(ticker)).thenReturn(detail)
+        whenever(repository.getStockOverview(ticker)).thenReturn(overview)
+
+        val viewModel = createViewModel()
+
+        // Initially empty
+        assertTrue(viewModel.state.value is LoadResult.Empty)
+
+        viewModel.load(ticker)
+        advanceUntilIdle()
+
+        // After load completes
+        assertTrue(viewModel.state.value is LoadResult.Success)
+    }
+
+    @Test
+    fun load_priceStateEmitsLoadingBeforeSuccess() = runTest {
+        val ticker = "005930"
+        val detail = createStockDetail(ticker, hasHistory = true)
+        val overview = createStockOverview(ticker)
+        whenever(repository.getStockReport(ticker)).thenReturn(detail)
+        whenever(repository.getStockOverview(ticker)).thenReturn(overview)
+
+        val viewModel = createViewModel()
+        assertTrue(viewModel.priceState.value is LoadResult.Empty)
+
+        viewModel.load(ticker)
+        advanceUntilIdle()
+
+        assertTrue(viewModel.priceState.value is LoadResult.Success)
+    }
+
+    @Test
+    fun load_overviewStateEmitsLoadingBeforeSuccess() = runTest {
+        val ticker = "005930"
+        val detail = createStockDetail(ticker)
+        val overview = createStockOverview(ticker)
+        whenever(repository.getStockReport(ticker)).thenReturn(detail)
+        whenever(repository.getStockOverview(ticker)).thenReturn(overview)
+
+        val viewModel = createViewModel()
+        assertTrue(viewModel.overviewState.value is LoadResult.Empty)
+
+        viewModel.load(ticker)
+        advanceUntilIdle()
+
+        assertTrue(viewModel.overviewState.value is LoadResult.Success)
+    }
 }

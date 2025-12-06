@@ -1,8 +1,0 @@
-<?xml version="1.0" encoding="utf-8"?>
-    <shape xmlns:android="http://schemas.android.com/apk/res/android">
-        <solid android:color="@android:color/transparent"/>
-        <stroke android:width="1dp" android:color="@color/table_border"/>
-        <padding android:left="0dp" android:top="0dp" android:right="0dp" android:bottom="0dp"/>
-        <!-- 왼쪽 셀은 전체 테두리 + 우측선(내부 구분선) 포함 -->
-    </shape>
-

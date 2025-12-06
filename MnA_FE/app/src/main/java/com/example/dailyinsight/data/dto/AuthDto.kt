@@ -1,6 +1,5 @@
 package com.example.dailyinsight.data.dto
 
-import com.example.dailyinsight.model.Style
 import com.example.dailyinsight.model.Tag
 
 // ============ Auth DTOs ============

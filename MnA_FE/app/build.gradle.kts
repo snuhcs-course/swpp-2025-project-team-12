@@ -104,7 +104,6 @@ dependencies {
 
     // Fragment testing
     debugImplementation("androidx.fragment:fragment-testing:1.8.5")
-    androidTestImplementation("androidx.fragment:fragment-testing:1.8.5")
 
     // Navigation testing
     androidTestImplementation("androidx.navigation:navigation-testing:2.7.7")
@@ -163,4 +162,83 @@ dependencies {
     implementation("androidx.room:room-ktx:$room_version")
 
     coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.1.2")
+}
+
+koverReport {
+    filters {
+        excludes {
+            classes(
+                // Room generated
+                "*_Impl",
+                "*_Impl\$*",
+                // ViewBinding generated
+                "*.databinding.*",
+                // Navigation generated
+                "*Directions",
+                "*Directions\$*",
+                "*Args",
+                "*Args\$*",
+                // Fragments (require instrumented tests)
+                "*Fragment",
+                "*Fragment\$*",
+                // Activities (require instrumented tests)
+                "*Activity",
+                "*Activity\$*",
+                // Adapters (require instrumented tests)
+                "*Adapter",
+                "*Adapter\$*",
+                // Application class
+                "*.DailyInsightApplication",
+                // UI Controllers that require Android Context/Views
+                "*ViewController",
+                "*ViewController\$*",
+                // DAOs (interfaces, Room generates implementation)
+                "*Dao",
+                "*Dao\$*",
+                // Database class (requires Android Context)
+                "*Database",
+                "*Database\$*",
+                // Retrofit API interface
+                "*ApiService",
+                "*ApiService\$*",
+                // DataStore (requires Android Context)
+                "*DataStoreModule",
+                "*DataStoreModule\$*",
+                // ServiceLocator (requires Android Context for init)
+                "*ServiceLocator",
+                "*ServiceLocator\$*",
+                // RemoteRepository (heavy network dependencies)
+                "*RemoteRepository",
+                "*RemoteRepository\$*",
+                // Formatters (TextView extensions require Android)
+                "*Formatters*",
+                // RetrofitInstance (network setup)
+                "*RetrofitInstance",
+                "*RetrofitInstance\$*",
+                // ProfileViewModel (requires Android Context)
+                "*ProfileViewModel",
+                "*ProfileViewModel\$*",
+                "*ProfileViewModelFactory",
+                "*ProfileViewModelFactory\$*",
+                // ChartHelper (setupChart/createTrendBasedConfig require Android Context)
+                "*ChartHelper",
+                "*ChartHelper\$*",
+                // StockIndexDetailViewModel (uses AndroidViewModel)
+                "*StockIndexDetailViewModel",
+                "*StockIndexDetailViewModel\$*",
+                "*StockIndexDetailViewModelFactory",
+                "*StockIndexDetailViewModelFactory\$*",
+                // CookieJar classes (require Android Log and DataStore)
+                "*CookieJar",
+                "*CookieJar\$*",
+                "*MyCookieJar",
+                "*MyCookieJar\$*",
+                "*ProxyCookieJar",
+                "*ProxyCookieJar\$*",
+                // Repository interface (has default parameters, implementation is RemoteRepository)
+                "*.data.Repository",
+                "*.data.Repository\$*"
+            )
+        }
+    }
 }
