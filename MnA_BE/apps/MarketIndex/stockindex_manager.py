@@ -15,7 +15,7 @@ from typing import Dict, List, Optional
 import yfinance as yf
 import pandas as pd
 from pathlib import Path
-import boto3
+from S3.client_factory import S3ClientFactory
 from botocore.exceptions import ClientError
 
 # UAT 날짜 유틸리티 import
@@ -26,13 +26,10 @@ except ImportError:
     def get_uat_date():
         return None
 
-
-# S3 설정
-S3_BUCKET_NAME = "swpp-12-bucket"
-S3_REGION = "ap-northeast-2"
-
 # Get the directory where this script is located
 BASE_DIR = Path(__file__).resolve().parent
+
+S3_BUCKET_NAME = os.getenv("FINANCE_BUCKET_NAME")
 
 
 class StockindexManager:
@@ -60,7 +57,7 @@ class StockindexManager:
         self.use_s3 = use_s3
         if self.use_s3:
             try:
-                self.s3_client = boto3.client("s3", region_name=S3_REGION)
+                self.s3_client = S3ClientFactory().create("finance")
             except Exception as e:
                 print(f"⚠️  S3 초기화 실패: {e}")
                 self.use_s3 = False
