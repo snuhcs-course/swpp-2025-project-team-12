@@ -28,7 +28,7 @@ class S3ClientFactory(Factory):
 
     def create(self, key_type: str = "default"):
         if key_type == "finance":
-            boto3.client(
+            return boto3.client(
                 "s3",
                 aws_access_key_id=_get_env("FINANCE_IAM_ACCESS_KEY_ID", "FINANCE_AWS_ACCESS_KEY_ID"),
                 aws_secret_access_key=_get_env("FINANCE_IAM_SECRET_KEY", "FINANCE_AWS_SECRET_ACCESS_KEY"),
