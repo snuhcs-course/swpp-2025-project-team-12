@@ -1,16 +1,10 @@
 package com.example.dailyinsight.data.network
 
 import com.example.dailyinsight.data.dto.*
+import okhttp3.ResponseBody
 import retrofit2.Call
 import retrofit2.Response
 import retrofit2.http.*
-import okhttp3.ResponseBody
-
-import com.example.dailyinsight.data.dto.StockDetailDto
-import com.example.dailyinsight.data.dto.StockOverviewDto
-import retrofit2.http.GET
-import retrofit2.http.Path
-
 
 /**
  * Unified API Service for all endpoints
