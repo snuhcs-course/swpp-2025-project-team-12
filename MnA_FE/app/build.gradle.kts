@@ -168,76 +168,50 @@ koverReport {
     filters {
         excludes {
             classes(
-                // Room generated
+                // === AUTO-GENERATED CODE (not written by us) ===
+                // Room generated classes
                 "*_Impl",
                 "*_Impl\$*",
-                // ViewBinding generated
+                // ViewBinding generated classes
                 "*.databinding.*",
-                // Navigation generated
+                // Navigation SafeArgs generated classes
                 "*Directions",
                 "*Directions\$*",
                 "*Args",
                 "*Args\$*",
-                // Fragments (require instrumented tests)
+
+                // === UI COMPONENTS (require Espresso/instrumented tests) ===
                 "*Fragment",
                 "*Fragment\$*",
-                // Activities (require instrumented tests)
                 "*Activity",
                 "*Activity\$*",
-                // Adapters (require instrumented tests)
                 "*Adapter",
                 "*Adapter\$*",
-                // Application class
+
+                // === ANDROID FRAMEWORK DEPENDENCIES ===
+                // Application class (Android entry point)
                 "*.DailyInsightApplication",
-                // UI Controllers that require Android Context/Views
-                "*ViewController",
-                "*ViewController\$*",
-                // DAOs (interfaces, Room generates implementation)
+                // Room DAOs (interfaces - Room generates implementation)
                 "*Dao",
                 "*Dao\$*",
-                // Database class (requires Android Context)
+                // Room Database (requires Android Context)
                 "*Database",
                 "*Database\$*",
-                // Retrofit API interface
-                "*ApiService",
-                "*ApiService\$*",
-                // DataStore (requires Android Context)
-                "*DataStoreModule",
-                "*DataStoreModule\$*",
-                // ServiceLocator (requires Android Context for init)
-                "*ServiceLocator",
-                "*ServiceLocator\$*",
-                // RemoteRepository (heavy network dependencies)
+
+                // === TIGHTLY COUPLED CLASSES (create dependencies internally, not injectable) ===
+                // RemoteRepository - uses Context.cookieDataStore extension property
                 "*RemoteRepository",
                 "*RemoteRepository\$*",
-                // Formatters (TextView extensions require Android)
-                "*Formatters*",
-                // RetrofitInstance (network setup)
-                "*RetrofitInstance",
-                "*RetrofitInstance\$*",
-                // ProfileViewModel (requires Android Context)
+                // ProfileViewModel - creates repository internally, uses Context/Toast/Intent
                 "*ProfileViewModel",
                 "*ProfileViewModel\$*",
                 "*ProfileViewModelFactory",
                 "*ProfileViewModelFactory\$*",
-                // ChartHelper (setupChart/createTrendBasedConfig require Android Context)
-                "*ChartHelper",
-                "*ChartHelper\$*",
-                // StockIndexDetailViewModel (uses AndroidViewModel)
+                // StockIndexDetailViewModel - creates MarketIndexRepository internally (not injectable)
                 "*StockIndexDetailViewModel",
                 "*StockIndexDetailViewModel\$*",
                 "*StockIndexDetailViewModelFactory",
-                "*StockIndexDetailViewModelFactory\$*",
-                // CookieJar classes (require Android Log and DataStore)
-                "*CookieJar",
-                "*CookieJar\$*",
-                "*MyCookieJar",
-                "*MyCookieJar\$*",
-                "*ProxyCookieJar",
-                "*ProxyCookieJar\$*",
-                // Repository interface (has default parameters, implementation is RemoteRepository)
-                "*.data.Repository",
-                "*.data.Repository\$*"
+                "*StockIndexDetailViewModelFactory\$*"
             )
         }
     }

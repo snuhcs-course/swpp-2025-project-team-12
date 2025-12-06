@@ -32,7 +32,12 @@
       "Bash(for file in app/src/main/java/com/example/dailyinsight/data/dto/*.kt)",
       "Bash(done)",
       "Bash(JAVA_HOME=/d/Java/jdk17.0.10 PATH=\"/d/Java/jdk17.0.10/bin:$PATH\" ./gradlew:*)",
-      "Bash(.gradlew.bat:*)"
+      "Bash(.gradlew.bat:*)",
+      "Bash(JAVA_HOME=\"D:/Java/jdk17.0.10\" ./gradlew.bat:*)",
+      "WebSearch",
+      "WebFetch(domain:gist.github.com)",
+      "WebFetch(domain:matthew-b-groves.medium.com)",
+      "Bash(JAVA_HOME=\"D:/Java/jdk17.0.10\" ./gradlew.bat testDebugUnitTest:*)"
     ],
     "deny": [],
     "ask": []
