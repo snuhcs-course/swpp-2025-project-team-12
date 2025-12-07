@@ -65,24 +65,22 @@ class StockFragment : Fragment(R.layout.fragment_stock) {
                     val isLoggedIn = !accessToken.isNullOrEmpty()
 
                     if (isLoggedIn) {
-                        // ✅ 로그인 유저: 정상적으로 즐겨찾기 토글
+                        // 로그인 유저: 정상적으로 즐겨찾기 토글
                         viewModel.toggleFavorite(item, isActive)
                         // (옵션) 토스트 메시지
                         val msg = if (isActive) "관심 종목에 추가되었습니다." else "관심 종목에서 해제되었습니다."
                         Toast.makeText(context, msg, Toast.LENGTH_SHORT).show()
                     } else {
-                        // 🚫 비로그인 유저: 로그인 화면으로 납치
+                        // 비로그인 유저: 로그인 화면으로 납치
                         Toast.makeText(requireContext(), "로그인이 필요한 서비스입니다.", Toast.LENGTH_SHORT).show()
 
                         // 로그인 화면(StartActivity)으로 이동
                         val intent = Intent(requireContext(), StartActivity::class.java)
                         startActivity(intent)
-                        // UI 원상복구 (이미 눌려서 노란색 된 별을 다시 회색으로)
-                        // (데이터 변경 없이 UI만 리프레시해서 체크박스를 원래대로 돌림)
+                        // 데이터 변경 없이 UI만 리프레시해서 체크박스를 원래대로 돌림
                         adapter.notifyDataSetChanged()
                     }
                 }
-
             }
         )
 
@@ -103,20 +101,17 @@ class StockFragment : Fragment(R.layout.fragment_stock) {
                 R.id.chipSize -> {
                     //viewModel.refresh() // 현재 설정된 필터(대/중/소) 유지하며 새로고침
                 }
-                //R.id.chipInterest -> viewModel.refreshSortOnly("favorites")
                 else -> {}
             }
         }
         // 3. 스크롤 리스너 (무한 스크롤 핵심)
         binding.recycler.addOnScrollListener(object : RecyclerView.OnScrollListener() {
             override fun onScrolled(recyclerView: RecyclerView, dx: Int, dy: Int) {
-                super.onScrolled(recyclerView, dx, dy)
-                // 스크롤이 아래로 내려갔을 때만 체크 (dy > 0)
+                super.onScrolled(recyclerView, dx, dy) // 스크롤이 아래로 내려갔을 때만 체크 (dy > 0)
                 if (dy > 0) {
                     val visibleItemCount = layoutManager.childCount
                     val totalItemCount = layoutManager.itemCount
-                    val firstVisibleItemPosition = layoutManager.findFirstVisibleItemPosition()
-                    // 바닥에 거의 다다랐을 때 (여유분 2개 정도 남기고)
+                    val firstVisibleItemPosition = layoutManager.findFirstVisibleItemPosition() // 바닥에 거의 다다랐을 때 (여유분 2개 정도 남기고)
                     if ((visibleItemCount + firstVisibleItemPosition) >= totalItemCount - 2
                         && firstVisibleItemPosition >= 0
                     ) {
@@ -150,8 +145,7 @@ class StockFragment : Fragment(R.layout.fragment_stock) {
             viewModel.asOfTime.collect { timeStr ->
                 if (!timeStr.isNullOrBlank()) {
                     binding.tvTime.text = "${formatDate(timeStr)}"
-                } else {
-                    // 시간이 아직 안 왔으면 현재 시간 표시 (임시)
+                } else { // 시간이 아직 안 왔으면 현재 시간 표시 (임시)
                     val now = SimpleDateFormat("yyyy년 M월 d일", Locale.KOREA).format(Date())
                     binding.tvTime.text = "$now 기준"
                 }
@@ -159,23 +153,18 @@ class StockFragment : Fragment(R.layout.fragment_stock) {
         }
     }
 
-    private fun setupChipListeners() {
-        // 1. [관심 종목] 버튼 리스너 (독립적으로 동작)
+    private fun setupChipListeners() { // 1. [관심 종목] 버튼 리스너 (독립적으로 동작)
         binding.chipInterest.setOnClickListener {
             val isChecked = binding.chipInterest.isChecked
             // 뷰모델에 "관심 모드 켜기/끄기" 요청
             viewModel.setFavoriteMode(isChecked)
         }
-
         binding.chipGroup.setOnCheckedStateChangeListener { _, checkedIds ->
             val checkedId = checkedIds.firstOrNull()
-            // UI 텍스트 복구
             if (checkedId != R.id.chipSize) binding.chipSize.text = "규모 ▼"
             if (checkedId != R.id.chipIndustry) binding.chipIndustry.text = "산업 ▼"
             when (checkedId) {
                 R.id.chipSize -> {
-                    // 팝업은 clickListener에서 처리하므로 여기선 무시하거나,
-                    // 현재 선택된 규모로 다시 갱신하고 싶다면:
                     val currentSize = viewModel.getCurrentFilterState().size
                     viewModel.setSizeFilter(currentSize)
                 }
@@ -192,11 +181,9 @@ class StockFragment : Fragment(R.layout.fragment_stock) {
     private fun showSizePopupMenu(anchor: View) {
         val popup = android.widget.PopupMenu(requireContext(), anchor)
         popup.menuInflater.inflate(R.menu.menu_stock_size, popup.menu) // 메뉴 리소스 필요
-
         popup.setOnMenuItemClickListener { item ->
             binding.chipSize.text = "${item.title} ▼"
             if (!binding.chipSize.isChecked) binding.chipSize.isChecked = true
-
             when (item.itemId) {
                 R.id.option_all -> viewModel.setSizeFilter(StockViewModel.SizeFilter.ALL)
                 R.id.option_large -> viewModel.setSizeFilter(StockViewModel.SizeFilter.LARGE)
@@ -213,20 +200,14 @@ class StockFragment : Fragment(R.layout.fragment_stock) {
         val dialog = BottomSheetDialog(requireContext())
         val view = layoutInflater.inflate(R.layout.layout_industry_filter, null)
         dialog.setContentView(view)
-
         val container = view.findViewById<LinearLayout>(R.id.containerCheckBoxes)
         val btnApply = view.findViewById<Button>(R.id.btnApply)
-
-        // 임시 선택 저장소 (취소하면 반영 안 되게)
-        val tempSelected = HashSet(selectedIndustries)
-
-        // Enum 돌면서 체크박스 동적 생성
-        Tag.values().forEach { tag ->
+        val tempSelected = HashSet(selectedIndustries) // 임시 선택 저장소 (취소하면 반영 안 되게)
+        Tag.values().forEach { tag -> // Enum 돌면서 체크박스 동적 생성
             val checkBox = CheckBox(requireContext())
             checkBox.text = tag.korean
             checkBox.textSize = 16f
             checkBox.isChecked = tempSelected.contains(tag)
-
             // 체크 상태 변경 시 임시 저장소 업데이트
             checkBox.setOnCheckedChangeListener { _, isChecked ->
                 if (isChecked) tempSelected.add(tag)

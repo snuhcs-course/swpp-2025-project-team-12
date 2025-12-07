@@ -126,8 +126,6 @@ class RemoteRepository(
         }
         // 2. 없으면 API 호출 (그리고 DB 저장)
         val detail = api.getStockReport(ticker)
-        // 상세 정보 가져올 때 시가총액도 같이 업데이트 (다음에 목록 볼 때 정렬이 잘되기 위해)
-        val existing = briefingDao.getCard(ticker)
         val json = gson.toJson(detail)
         stockDetailDao.insertDetail(StockDetailCache(ticker, json, System.currentTimeMillis()))
         return detail

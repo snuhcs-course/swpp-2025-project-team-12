@@ -69,7 +69,6 @@ class StockViewModel(
                     dtos
                 }
                 val minCount = 10
-                // 🚨 [핵심: Auto-Paging]
                 // 관심 모드이고, 필터도 걸려있는데, 결과가 비었다? -> 다음 페이지 검색!
                 // (list.isNotEmpty() 체크: DB가 비어있으면 로딩 전이므로 스킵)
                 if (isFav && hasFilter && filteredList.size < minCount && list.isNotEmpty()) {
@@ -119,33 +118,6 @@ class StockViewModel(
         _filterState.value = _filterState.value.copy(sort = sort)
         loadData(reset = true)
     }
-    /*
-    fun refresh(filter: SizeFilter = sizeFilterMode, sort: String? = currentSort) {
-        // 관심 모드 켜져있으면 -> 서버 호출 안 함 (로컬 DB에 있는 것만 보여줌)
-        if (isLoading.getAndSet(true)) return
-        viewModelScope.launch {
-            // 상태 업데이트
-            sizeFilterMode = filter
-            currentSort = sort
-            currentOffset = 0 // 필터링 시 offset은 항상 0부터 시작 (페이징은 서버가 함)
-            // 1. 산업 파라미터 변환 ("IT|건설|화학")
-            val industryParam = if (selectedIndustries.isEmpty()) null
-            else selectedIndustries.joinToString("|")
-            // 2. 규모 파라미터 변환 (Enum -> Int)
-            val minParam = filter.minRank
-            val maxParam = filter.maxRank
-            // 3. API 호출 / 첫 페이지 로드 (DB 클리어
-            val asOf = repo.fetchAndSaveBriefing(
-                offset = currentOffset,
-                clear = true,
-                industry = industryParam,
-                min = minParam,
-                max = maxParam
-            )
-            if (asOf != null) { _asOfTime.value = asOf }
-            isLoading.set(false)
-        }
-    }*/
 
     private fun loadData(reset: Boolean) {
         val state = _filterState.value

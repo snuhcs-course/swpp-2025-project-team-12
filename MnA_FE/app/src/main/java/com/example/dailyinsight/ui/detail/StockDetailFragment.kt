@@ -52,7 +52,7 @@ import android.text.TextUtils
 import android.view.LayoutInflater
 import kotlinx.coroutines.delay
 import android.util.Log
-
+import android.app.Notification.ProgressStyle.Point
 
 class StockDetailFragment : Fragment(R.layout.fragment_stock_detail) {
 
@@ -402,25 +402,68 @@ class StockDetailFragment : Fragment(R.layout.fragment_stock_detail) {
             }
         }
     }
-
     /** 실제 데이터로 차트 렌더 */
-    private fun renderChart(range: Range) = with(binding.lineChart) {
-        // 프래그먼트에 저장된 chartData 사용
-        val (pts, labels) = filterByRange(chartData, chartLabels, range)
+    private fun renderChart(range: Range) = with(binding.lineChart) { // 프래그먼트에 저장된 chartData 사용
+        var (pts, labels) = filterByRange(chartData, chartLabels, range)
         if (pts.isEmpty()) { data = null; invalidate(); return@with }
+        val isOneWeek = range == Range.W1
+        if (isOneWeek && pts.isNotEmpty()) { // 1주일(W1)인 경우: 휴장일 포함 7일치 데이터로 강제 변환
+            val filledPts = mutableListOf<Entry>()
+            val filledLabels = mutableListOf<String>()
+            // 포맷터 (날짜 비교용)
+            val sdf = SimpleDateFormat("yyyyMMdd", Locale.KOREA)
+            val labelSdf = SimpleDateFormat(currentXAxisFormat, Locale.KOREA)
+            // 기준일: 데이터의 가장 마지막 날짜 (오늘 또는 최근 개장일)
+            val lastTimestamp = pts.last().data as Long
+            val calendar = Calendar.getInstance().apply { timeInMillis = lastTimestamp }
+            // 7일 전부터 오늘까지 루프 (6일 전, 5일 전, ..., 오늘 -> 총 7개)
+            val tempEntries = mutableListOf<Entry>()
+            for (i in 0 until 7) {  // 역순으로 계산하기 위해 리스트 생성 (오늘 -> 6일전)
+                val targetDayStr = sdf.format(calendar.time) // 비교할 날짜 (ex: 20251207)
+                // 해당 날짜에 데이터가 있는지 찾기
+                val existingEntry = pts.find {
+                    sdf.format(Date(it.data as Long)) == targetDayStr
+                }
+                if (existingEntry != null) {
+                    tempEntries.add(existingEntry)
+                } else {
+                    // 데이터 없으면(휴장일) 임시 Entry 생성 (가격 0, 타임스탬프만 설정)
+                    // Entry(x, y, data) -> x는 나중에 설정되므로 0f
+                    tempEntries.add(Entry(0f, 0f, calendar.timeInMillis))
+                }
+                calendar.add(Calendar.DAY_OF_YEAR, -1) // 하루 전으로 이동
+            }
 
+            tempEntries.sortBy { it.data as Long } // 시간순 정렬 (과거 -> 현재)
+
+            // 🚨 가격 구멍 메우기 (Forward Fill: 전날 가격 따라가기)
+            var lastValidPrice = pts.first().y // 초기값은 첫 데이터
+
+            tempEntries.forEach{ entry->
+                // 원본 데이터에 있던 놈인지 확인 (가격이 0이 아니거나, 원본 리스트에 있는지)
+                val original = pts.find { sdf.format(Date(it.data as Long)) == sdf.format(Date(entry.data as Long)) }
+
+                if (original != null) {
+                    lastValidPrice = original.y
+                    filledPts.add(original)
+                } else {
+                    // 휴장일 -> 직전 가격으로 Entry 생성
+                    filledPts.add(Entry(0f, lastValidPrice, entry.data))
+                }
+                filledLabels.add(labelSdf.format(Date(entry.data as Long)))
+            } // 교체
+            pts = filledPts
+            labels = filledLabels
+        }
         val entries = pts.mapIndexed { i, p -> Entry(i.toFloat(), p.y, p.data) }
         val minY = entries.minOf { it.y }
         val maxY = entries.maxOf { it.y }
         val span = maxY - minY
         val fewPoints = entries.size < 8
         val almostFlat = span < 1e-3f
-
-        // 축 범위(데이터 때마다 갱신)
-        val pad = if (span == 0f) 1f else span * 0.05f
+        val pad = if (span == 0f) 1f else span * 0.05f // 축 범위(데이터 때마다 갱신), Y축 설정
         axisLeft.axisMinimum = minY - pad
         axisLeft.axisMaximum = maxY + pad
-
         // X 라벨(시작/중간/끝만)
         xAxis.valueFormatter = object : IndexAxisValueFormatter(labels) {
             override fun getAxisLabel(value: Float, axis: AxisBase?): String {
@@ -429,7 +472,6 @@ class StockDetailFragment : Fragment(R.layout.fragment_stock_detail) {
                 //  yyyy/MM 포맷 적용
                 val sdf = SimpleDateFormat(currentXAxisFormat, Locale.KOREA)
                 val labelDate = sdf.format(Date(pts[i].data as Long))
-
                 return if (i in labels.indices && (i == 0 || i == n || i == n/2)) labelDate else ""
             }
         }
@@ -438,30 +480,26 @@ class StockDetailFragment : Fragment(R.layout.fragment_stock_detail) {
             else LineDataSet.Mode.CUBIC_BEZIER
             color = ContextCompat.getColor(requireContext(), R.color.price_up)
             lineWidth = 3f
-            if (fewPoints) {
+            if (isOneWeek) {
                 setDrawCircles(true)
-                circleRadius = 3f
+                circleRadius = 4f
+                setCircleColor(color)
+                setDrawCircleHole(false)
             } else {
                 setDrawCircles(false)
             }
-            setDrawValues(false)
 
-            val drawFill = !fewPoints && !almostFlat
-            setDrawFilled(drawFill)
-            if (drawFill) {
-                fillDrawable = ContextCompat.getDrawable(requireContext(), R.drawable.gradient_chart_fill)
-                fillFormatter = IFillFormatter { _, _ -> minY } // 0 기준 삼각형 방지
-            } else {
-                fillFormatter = IFillFormatter { _, _ -> minY }
-            }
+            setDrawValues(false)
+            setDrawFilled(true)
+            fillDrawable = ContextCompat.getDrawable(requireContext(), R.drawable.gradient_chart_fill)
+            fillFormatter = IFillFormatter { _, _ -> axisLeft.axisMinimum }
             highLightColor = android.graphics.Color.TRANSPARENT
         }
 
         data = LineData(set)
+        fitScreen() // 뷰포트 리셋 (확대/축소 상태 초기화하여 전체 보기)
         invalidate()
     }
-
-
     /** 범위 필터 —범위 필터 — 실제 날짜(타임스탬프) 기준 */
     private fun filterByRange(
         rawEntries: List<Entry>,
@@ -501,14 +539,11 @@ class StockDetailFragment : Fragment(R.layout.fragment_stock_detail) {
                 filteredLabels.add(rawLabels[index])
             }
         }
-
         return Pair(filteredEntries, filteredLabels)
     }
 
     // ───── 표 ─────
-
-    /** "규모" 테이블 렌더링 */
-    private fun renderSizeTable(
+    private fun renderSizeTable( /** "규모" 테이블 렌더링 */
         table: TableLayout,
         header: List<String>,
         today: HistoryItem?,
@@ -532,8 +567,7 @@ class StockDetailFragment : Fragment(R.layout.fragment_stock_detail) {
         table.addView(rowShares)
     }
 
-    /** "가치" 테이블 렌더링 */
-    private fun renderValueTable(
+    private fun renderValueTable( /** "가치" 테이블 렌더링 */
         table: TableLayout,
         header: List<String>,
         today: HistoryItem?,
@@ -542,19 +576,16 @@ class StockDetailFragment : Fragment(R.layout.fragment_stock_detail) {
     ) {
         table.removeAllViews()
         table.addView(rowHeader(header))
-
         val rowBps = rowBody(listOf("주당순자산가치", "–", "–", "–"), false)
         (rowBps.getChildAt(1) as? TextView)?.setNumberOrDash(today?.bps, " 원")
         (rowBps.getChildAt(2) as? TextView)?.setNumberOrDash(yLast?.bps, " 원")
         (rowBps.getChildAt(3) as? TextView)?.setNumberOrDash(yBefore?.bps, " 원")
         table.addView(rowBps)
-
         val rowPer = rowBody(listOf("주가수익률", "–", "–", "–"), false)
         (rowPer.getChildAt(1) as? TextView)?.setNumberOrDash(today?.per, " 배")
         (rowPer.getChildAt(2) as? TextView)?.setNumberOrDash(yLast?.per, " 배")
         (rowPer.getChildAt(3) as? TextView)?.setNumberOrDash(yBefore?.per, " 배")
         table.addView(rowPer)
-
         val rowPbr = rowBody(listOf("주가순자산비율", "–", "–", "–"), false)
         (rowPbr.getChildAt(1) as? TextView)?.setNumberOrDash(today?.pbr, " 배")
         (rowPbr.getChildAt(2) as? TextView)?.setNumberOrDash(yLast?.pbr, " 배")
@@ -572,13 +603,11 @@ class StockDetailFragment : Fragment(R.layout.fragment_stock_detail) {
     ) {
         table.removeAllViews()
         table.addView(rowHeader(header))
-
         val rowEps = rowBody(listOf("주당순이익", "–", "–", "–"), false)
         (rowEps.getChildAt(1) as? TextView)?.setNumberOrDash(today?.eps, " 원")
         (rowEps.getChildAt(2) as? TextView)?.setNumberOrDash(yLast?.eps, " 원")
         (rowEps.getChildAt(3) as? TextView)?.setNumberOrDash(yBefore?.eps, " 원")
         table.addView(rowEps)
-
         val rowRoe = rowBody(listOf("자기자본이익률", "–", "–", "–"), false)
         (rowRoe.getChildAt(1) as? TextView)?.setNumberOrDash(today?.roe, "%", true)
         (rowRoe.getChildAt(2) as? TextView)?.setNumberOrDash(yLast?.roe, "%", true)
@@ -596,13 +625,11 @@ class StockDetailFragment : Fragment(R.layout.fragment_stock_detail) {
     ) {
         table.removeAllViews()
         table.addView(rowHeader(header))
-
         val rowDps = rowBody(listOf("주당배당금", "–", "–", "–"), false)
         (rowDps.getChildAt(1) as? TextView)?.setNumberOrDash(today?.dps, " 원")
         (rowDps.getChildAt(2) as? TextView)?.setNumberOrDash(yLast?.dps, " 원")
         (rowDps.getChildAt(3) as? TextView)?.setNumberOrDash(yBefore?.dps, " 원")
         table.addView(rowDps)
-
         val rowDiv = rowBody(listOf("배당 수익률", "–", "–", "–"), false)
         (rowDiv.getChildAt(1) as? TextView)?.setNumberOrDash(today?.divYield, "%")
         (rowDiv.getChildAt(2) as? TextView)?.setNumberOrDash(yLast?.divYield, "%")
@@ -713,20 +740,16 @@ class StockDetailFragment : Fragment(R.layout.fragment_stock_detail) {
         } else {
             null // 계산 불가 시 null
         }
-
         // === 4. 테이블 렌더링 ===
         renderSizeTable(tblSize, dynamicHeader, yToday, yLast, yBefore, calculatedShares)
         renderValueTable(tblValue, dynamicHeader, yToday, yLast, yBefore)
         renderProfitabilityTable(tblProfitability, dynamicHeader, yToday, yLast, yBefore)
         renderDividendTable(tblDividend, dynamicHeader, yToday, yLast, yBefore)
-
         // === 5. "기업 overview" 바인딩 ===
         d.profile?.explanation?.takeIf { it.isNotBlank() }?.let {
             cardExplanation.isVisible = true
             tvExplanation.text = it
         }
-
-
     }
 
     override fun onDestroyView() {
