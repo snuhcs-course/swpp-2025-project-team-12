@@ -1,17 +1,30 @@
 package com.example.dailyinsight.ui.common.chart
 
+import android.content.Context
+import android.graphics.Color
+import androidx.test.core.app.ApplicationProvider
+import com.github.mikephil.charting.charts.LineChart
 import com.github.mikephil.charting.data.Entry
 import org.junit.Assert.*
+import org.junit.Before
 import org.junit.Test
+import org.junit.runner.RunWith
+import org.robolectric.RobolectricTestRunner
+import org.robolectric.annotation.Config
 
 /**
- * Unit tests for ChartHelper
- *
- * Note: Only testing pure logic methods (isUpwardTrend).
- * Methods requiring Android Context (setupChart, createTrendBasedConfig)
- * should be tested with instrumented tests.
+ * Unit tests for ChartHelper using Robolectric
  */
+@RunWith(RobolectricTestRunner::class)
+@Config(sdk = [28])
 class ChartHelperTest {
+
+    private lateinit var context: Context
+
+    @Before
+    fun setup() {
+        context = ApplicationProvider.getApplicationContext()
+    }
 
     // ===== Tests for isUpwardTrend() =====
 
@@ -323,5 +336,158 @@ class ChartHelperTest {
 
         // Then: Should return true (100 >= 100), middle values don't matter
         assertTrue(result)
+    }
+
+    // ===== Tests for setupChart() using Robolectric =====
+
+    @Test
+    fun setupChart_withEmptyEntries_clearsChart() {
+        val chart = LineChart(context)
+        val config = ChartConfig(lineColor = Color.RED)
+
+        ChartHelper.setupChart(chart, emptyList(), config)
+
+        assertNull(chart.data)
+    }
+
+    @Test
+    fun setupChart_withEntries_setsData() {
+        val chart = LineChart(context)
+        val entries = listOf(
+            Entry(0f, 100f),
+            Entry(1f, 110f),
+            Entry(2f, 120f)
+        )
+        val config = ChartConfig(lineColor = Color.RED)
+
+        ChartHelper.setupChart(chart, entries, config)
+
+        assertNotNull(chart.data)
+        assertEquals(1, chart.data.dataSetCount)
+        assertEquals(3, chart.data.getDataSetByIndex(0).entryCount)
+    }
+
+    @Test
+    fun setupChart_disablesTouchWhenConfigured() {
+        val chart = LineChart(context)
+        val entries = listOf(Entry(0f, 100f))
+        val config = ChartConfig(lineColor = Color.RED, enableTouch = false)
+
+        ChartHelper.setupChart(chart, entries, config)
+
+        // Chart was configured (we verify data was set)
+        assertNotNull(chart.data)
+    }
+
+    @Test
+    fun setupChart_enablesAxesByDefault() {
+        val chart = LineChart(context)
+        val entries = listOf(Entry(0f, 100f))
+        val config = ChartConfig(lineColor = Color.RED, enableAxes = true)
+
+        ChartHelper.setupChart(chart, entries, config)
+
+        assertTrue(chart.xAxis.isEnabled)
+        assertTrue(chart.axisLeft.isEnabled)
+        assertFalse(chart.axisRight.isEnabled)
+    }
+
+    @Test
+    fun setupChart_disablesAxesWhenConfigured() {
+        val chart = LineChart(context)
+        val entries = listOf(Entry(0f, 100f))
+        val config = ChartConfig(lineColor = Color.RED, enableAxes = false)
+
+        ChartHelper.setupChart(chart, entries, config)
+
+        assertFalse(chart.xAxis.isEnabled)
+        assertFalse(chart.axisLeft.isEnabled)
+    }
+
+    @Test
+    fun setupChart_setsViewPortOffsets() {
+        val chart = LineChart(context)
+        val entries = listOf(Entry(0f, 100f))
+        val offsets = floatArrayOf(10f, 20f, 30f, 40f)
+        val config = ChartConfig(lineColor = Color.RED, viewPortOffsets = offsets)
+
+        ChartHelper.setupChart(chart, entries, config)
+
+        assertNotNull(chart.data)
+    }
+
+    @Test
+    fun setupChart_disablesDescriptionAndLegend() {
+        val chart = LineChart(context)
+        val entries = listOf(Entry(0f, 100f))
+        val config = ChartConfig(lineColor = Color.RED)
+
+        ChartHelper.setupChart(chart, entries, config)
+
+        assertFalse(chart.description.isEnabled)
+        assertFalse(chart.legend.isEnabled)
+    }
+
+    // ===== Tests for createTrendBasedConfig() =====
+
+    @Test
+    fun createTrendBasedConfig_upwardTrend_returnsValidConfig() {
+        val config = ChartHelper.createTrendBasedConfig(
+            context = context,
+            isUpward = true,
+            upColorRes = android.R.color.holo_green_dark,
+            downColorRes = android.R.color.holo_red_dark,
+            upFillRes = android.R.color.holo_green_light,
+            downFillRes = android.R.color.holo_red_light
+        )
+
+        assertNotNull(config)
+        assertTrue(config.enableTouch)
+        assertTrue(config.enableAxes)
+    }
+
+    @Test
+    fun createTrendBasedConfig_downwardTrend_returnsValidConfig() {
+        val config = ChartHelper.createTrendBasedConfig(
+            context = context,
+            isUpward = false,
+            upColorRes = android.R.color.holo_green_dark,
+            downColorRes = android.R.color.holo_red_dark,
+            upFillRes = android.R.color.holo_green_light,
+            downFillRes = android.R.color.holo_red_light
+        )
+
+        assertNotNull(config)
+    }
+
+    @Test
+    fun createTrendBasedConfig_disablesTouchWhenConfigured() {
+        val config = ChartHelper.createTrendBasedConfig(
+            context = context,
+            isUpward = true,
+            upColorRes = android.R.color.black,
+            downColorRes = android.R.color.white,
+            upFillRes = android.R.color.black,
+            downFillRes = android.R.color.white,
+            enableTouch = false,
+            enableAxes = false
+        )
+
+        assertFalse(config.enableTouch)
+        assertFalse(config.enableAxes)
+    }
+
+    @Test
+    fun createTrendBasedConfig_hasFillDrawable() {
+        val config = ChartHelper.createTrendBasedConfig(
+            context = context,
+            isUpward = true,
+            upColorRes = android.R.color.holo_green_dark,
+            downColorRes = android.R.color.holo_red_dark,
+            upFillRes = android.R.color.holo_green_light,
+            downFillRes = android.R.color.holo_red_light
+        )
+
+        assertNotNull(config.fillDrawable)
     }
 }

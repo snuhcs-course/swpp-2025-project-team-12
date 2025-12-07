@@ -104,7 +104,6 @@ dependencies {
 
     // Fragment testing
     debugImplementation("androidx.fragment:fragment-testing:1.8.5")
-    androidTestImplementation("androidx.fragment:fragment-testing:1.8.5")
 
     // Navigation testing
     androidTestImplementation("androidx.navigation:navigation-testing:2.7.7")
@@ -163,4 +162,43 @@ dependencies {
     implementation("androidx.room:room-ktx:$room_version")
 
     coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.1.2")
+}
+
+koverReport {
+    filters {
+        excludes {
+            classes(
+                // === AUTO-GENERATED CODE (not written by us) ===
+                // Room generated classes
+                "*_Impl",
+                "*_Impl\$*",
+                // ViewBinding generated classes
+                "*.databinding.*",
+                // Navigation SafeArgs generated classes
+                "*Directions",
+                "*Directions\$*",
+                "*Args",
+                "*Args\$*",
+
+                // === UI COMPONENTS (require Espresso/instrumented tests) ===
+                "*Fragment",
+                "*Fragment\$*",
+                "*Activity",
+                "*Activity\$*",
+                "*Adapter",
+                "*Adapter\$*",
+
+                // === ANDROID FRAMEWORK DEPENDENCIES ===
+                // Application class (Android entry point)
+                "*.DailyInsightApplication",
+                // Room DAOs (interfaces - Room generates implementation)
+                "*Dao",
+                "*Dao\$*",
+                // Room Database (requires Android Context)
+                "*Database",
+                "*Database\$*",
+
+            )
+        }
+    }
 }

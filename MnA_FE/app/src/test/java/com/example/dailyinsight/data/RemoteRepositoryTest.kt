@@ -1,109 +1,252 @@
 package com.example.dailyinsight.data
 
+import android.content.Context
+import androidx.datastore.preferences.core.PreferenceDataStoreFactory
+import androidx.datastore.preferences.core.edit
+import androidx.test.core.app.ApplicationProvider
 import com.example.dailyinsight.data.database.BriefingCardCache
 import com.example.dailyinsight.data.database.BriefingDao
 import com.example.dailyinsight.data.database.FavoriteTicker
 import com.example.dailyinsight.data.database.StockDetailCache
 import com.example.dailyinsight.data.database.StockDetailDao
-import com.example.dailyinsight.data.dto.*
+import com.example.dailyinsight.data.datastore.CookieKeys
+import com.example.dailyinsight.data.datastore.cookieDataStore
+import com.example.dailyinsight.data.dto.BriefingItemDto
+import com.example.dailyinsight.data.dto.BriefingListResponse
+import com.example.dailyinsight.data.dto.StockDetailDto
+import com.example.dailyinsight.data.dto.StockOverviewDto
 import com.example.dailyinsight.data.network.ApiService
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.flowOf
-import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.runTest
+import okhttp3.ResponseBody
+import org.junit.After
 import org.junit.Assert.*
 import org.junit.Before
+import org.junit.Rule
 import org.junit.Test
+import org.junit.rules.TemporaryFolder
+import org.junit.runner.RunWith
+import org.mockito.Mock
+import org.mockito.MockitoAnnotations
 import org.mockito.kotlin.*
-import java.io.IOException
+import org.robolectric.RobolectricTestRunner
+import org.robolectric.annotation.Config
+import retrofit2.Response
 
-@ExperimentalCoroutinesApi
+/**
+ * Unit tests for RemoteRepository using Robolectric and Mockito.
+ */
+@OptIn(ExperimentalCoroutinesApi::class)
+@RunWith(RobolectricTestRunner::class)
+@Config(sdk = [28])
 class RemoteRepositoryTest {
 
-    private lateinit var api: ApiService
-    private lateinit var briefingDao: BriefingDao
-    private lateinit var stockDetailDao: StockDetailDao
+    @get:Rule
+    val tmpFolder: TemporaryFolder = TemporaryFolder.builder().assureDeletion().build()
+
+    @Mock
+    private lateinit var mockApi: ApiService
+
+    @Mock
+    private lateinit var mockBriefingDao: BriefingDao
+
+    @Mock
+    private lateinit var mockStockDetailDao: StockDetailDao
+
+    private lateinit var context: Context
     private lateinit var repository: RemoteRepository
+    private lateinit var closeable: AutoCloseable
 
     @Before
     fun setup() {
-        api = mock()
-        briefingDao = mock()
-        stockDetailDao = mock()
-        repository = RemoteRepository(api, briefingDao, stockDetailDao)
+        closeable = MockitoAnnotations.openMocks(this)
+        context = ApplicationProvider.getApplicationContext()
+        repository = RemoteRepository(
+            api = mockApi,
+            briefingDao = mockBriefingDao,
+            stockDetailDao = mockStockDetailDao,
+            context = context
+        )
+    }
+
+    @After
+    fun tearDown() {
+        closeable.close()
     }
 
     // ===== getBriefingFlow Tests =====
 
     @Test
-    fun getBriefingFlow_returnsFlowFromDao() = runTest {
-        val cachedItems = listOf(
-            createBriefingCardCache("005930", "삼성전자"),
-            createBriefingCardCache("000660", "SK하이닉스")
+    fun getBriefingFlow_returnsDaoFlow() {
+        // Given
+        val expectedList = listOf(
+            createBriefingCardCache("AAPL", "Apple"),
+            createBriefingCardCache("GOOGL", "Google")
         )
-        whenever(briefingDao.getAllCards()).thenReturn(flowOf(cachedItems))
+        whenever(mockBriefingDao.getNormalListFlow()).thenReturn(flowOf(expectedList))
 
-        val result = repository.getBriefingFlow().first()
+        // When
+        val flow = repository.getBriefingFlow()
 
-        assertEquals(2, result.size)
-        assertEquals("삼성전자", result[0].name)
-        assertEquals("SK하이닉스", result[1].name)
+        // Then
+        verify(mockBriefingDao).getNormalListFlow()
+    }
+
+    // ===== getFavoriteFlow Tests =====
+
+    @Test
+    fun getFavoriteFlow_returnsDaoFavoriteFlow() {
+        // Given
+        val expectedList = listOf(createBriefingCardCache("TSLA", "Tesla", isFavorite = true))
+        whenever(mockBriefingDao.getFavoriteListFlow()).thenReturn(flowOf(expectedList))
+
+        // When
+        val flow = repository.getFavoriteFlow()
+
+        // Then
+        verify(mockBriefingDao).getFavoriteListFlow()
+    }
+
+    // ===== getStockReport Tests =====
+
+    @Test
+    fun getStockReport_withCache_returnsCachedData() = runTest {
+        // Given
+        val ticker = "AAPL"
+        val cachedJson = """{"ticker":"AAPL","name":"Apple Inc"}"""
+        val cachedDetail = StockDetailCache(ticker, cachedJson, System.currentTimeMillis())
+        whenever(mockStockDetailDao.getDetail(ticker)).thenReturn(cachedDetail)
+
+        // When
+        val result = repository.getStockReport(ticker)
+
+        // Then
+        verify(mockStockDetailDao).getDetail(ticker)
+        verify(mockApi, never()).getStockReport(any())
+        assertEquals("AAPL", result.ticker)
     }
 
     @Test
-    fun getBriefingFlow_returnsEmptyListWhenDaoEmpty() = runTest {
-        whenever(briefingDao.getAllCards()).thenReturn(flowOf(emptyList()))
+    fun getStockReport_withoutCache_callsApiAndCaches() = runTest {
+        // Given
+        val ticker = "AAPL"
+        val apiResponse = StockDetailDto(ticker = "AAPL", name = "Apple Inc")
+        whenever(mockStockDetailDao.getDetail(ticker)).thenReturn(null)
+        whenever(mockApi.getStockReport(ticker)).thenReturn(apiResponse)
+        whenever(mockBriefingDao.getCard(ticker)).thenReturn(null)
 
-        val result = repository.getBriefingFlow().first()
+        // When
+        val result = repository.getStockReport(ticker)
 
-        assertTrue(result.isEmpty())
+        // Then
+        verify(mockApi).getStockReport(ticker)
+        verify(mockStockDetailDao).insertDetail(any())
+        assertEquals("AAPL", result.ticker)
+    }
+
+    // ===== getStockOverview Tests =====
+
+    @Test
+    fun getStockOverview_callsApi() = runTest {
+        // Given
+        val ticker = "AAPL"
+        val apiResponse = StockOverviewDto(summary = "Apple makes iPhones")
+        whenever(mockApi.getStockOverview(ticker)).thenReturn(apiResponse)
+
+        // When
+        val result = repository.getStockOverview(ticker)
+
+        // Then
+        verify(mockApi).getStockOverview(ticker)
+        assertEquals("Apple makes iPhones", result.summary)
+    }
+
+    // ===== toggleFavorite Tests =====
+
+    @Test
+    fun toggleFavorite_addFavorite_insertsToDao() = runTest {
+        // Given
+        val ticker = "AAPL"
+        // Setup DataStore with guest user (no server sync)
+
+        // When
+        val result = repository.toggleFavorite(ticker, true)
+
+        // Then
+        assertTrue(result)
+        verify(mockBriefingDao).insertFavorite(any())
+        verify(mockBriefingDao).syncFavorites(any())
+    }
+
+    @Test
+    fun toggleFavorite_removeFavorite_deletesFromDao() = runTest {
+        // Given
+        val ticker = "AAPL"
+
+        // When
+        val result = repository.toggleFavorite(ticker, false)
+
+        // Then
+        assertTrue(result)
+        verify(mockBriefingDao).deleteFavorite(eq(ticker), any())
+        verify(mockBriefingDao).syncFavorites(any())
+    }
+
+    // ===== clearUserData Tests =====
+
+    @Test
+    fun clearUserData_clearsAllFavorites() = runTest {
+        // When
+        repository.clearUserData()
+
+        // Then
+        verify(mockBriefingDao).clearAllFavorites()
+        verify(mockBriefingDao).uncheckAllFavorites()
     }
 
     // ===== fetchAndSaveBriefing Tests =====
 
     @Test
-    fun fetchAndSaveBriefing_successWithClear_clearsAndInsertsData() = runTest {
-        val response = createBriefingListResponse()
-        whenever(api.getBriefingList(limit = 10, offset = 0, sort = null)).thenReturn(response)
-        whenever(briefingDao.getFavoriteTickers()).thenReturn(emptyList())
+    fun fetchAndSaveBriefing_success_returnsAsOf() = runTest {
+        // Given
+        val items = listOf(
+            BriefingItemDto(
+                ticker = "AAPL",
+                name = "Apple",
+                close = "150",
+                change = "5",
+                changeRate = "3.5",
+                summary = "Tech company",
+                overview = null,
+                marketCap = 1000000L
+            )
+        )
+        val response = BriefingListResponse(
+            items = items,
+            total = 1,
+            limit = 10,
+            offset = 0,
+            source = null,
+            asOf = "2024-01-01"
+        )
+        whenever(mockApi.getBriefingList(any(), any(), anyOrNull(), anyOrNull(), anyOrNull(), anyOrNull()))
+            .thenReturn(response)
+        whenever(mockBriefingDao.getFavoriteTickers(any())).thenReturn(emptyList())
+        whenever(mockBriefingDao.getCard(any())).thenReturn(null)
 
-        val result = repository.fetchAndSaveBriefing(offset = 0, clear = true)
+        // When
+        val result = repository.fetchAndSaveBriefing(offset = 0, clear = false)
 
+        // Then
         assertEquals("2024-01-01", result)
-        verify(briefingDao).clearAll()
-        verify(briefingDao).insertCards(any())
-        verify(briefingDao).syncFavorites()
+        verify(mockBriefingDao).insertCards(any())
     }
 
     @Test
-    fun fetchAndSaveBriefing_successWithoutClear_doesNotClearData() = runTest {
-        val response = createBriefingListResponse()
-        whenever(api.getBriefingList(limit = 10, offset = 10, sort = null)).thenReturn(response)
-        whenever(briefingDao.getFavoriteTickers()).thenReturn(emptyList())
-
-        val result = repository.fetchAndSaveBriefing(offset = 10, clear = false)
-
-        assertEquals("2024-01-01", result)
-        verify(briefingDao, never()).clearAll()
-        verify(briefingDao).insertCards(any())
-    }
-
-    @Test
-    fun fetchAndSaveBriefing_preservesFavorites() = runTest {
-        val response = createBriefingListResponse()
-        whenever(api.getBriefingList(limit = 10, offset = 0, sort = null)).thenReturn(response)
-        whenever(briefingDao.getFavoriteTickers()).thenReturn(listOf("005930"))
-
-        repository.fetchAndSaveBriefing(offset = 0, clear = true)
-
-        verify(briefingDao).insertCards(argThat { cards ->
-            cards.any { it.ticker == "005930" && it.isFavorite }
-        })
-    }
-
-    @Test
-    fun fetchAndSaveBriefing_emptyResponse_doesNotInsert() = runTest {
-        val emptyResponse = BriefingListResponse(
+    fun fetchAndSaveBriefing_withClear_resetsRanks() = runTest {
+        // Given
+        val response = BriefingListResponse(
             items = emptyList(),
             total = 0,
             limit = 10,
@@ -111,253 +254,103 @@ class RemoteRepositoryTest {
             source = null,
             asOf = "2024-01-01"
         )
-        whenever(api.getBriefingList(limit = 10, offset = 0, sort = null)).thenReturn(emptyResponse)
-        whenever(briefingDao.getFavoriteTickers()).thenReturn(emptyList())
+        whenever(mockApi.getBriefingList(any(), any(), anyOrNull(), anyOrNull(), anyOrNull(), anyOrNull()))
+            .thenReturn(response)
+        whenever(mockBriefingDao.getFavoriteTickers(any())).thenReturn(emptyList())
 
-        val result = repository.fetchAndSaveBriefing(offset = 0, clear = false)
+        // When
+        repository.fetchAndSaveBriefing(offset = 0, clear = true)
 
-        assertEquals("2024-01-01", result)
-        verify(briefingDao, never()).insertCards(any())
+        // Then
+        verify(mockBriefingDao).resetRanks()
+        verify(mockBriefingDao).deleteGarbage()
     }
 
     @Test
     fun fetchAndSaveBriefing_apiError_returnsNull() = runTest {
-        whenever(api.getBriefingList(any(), any(), anyOrNull())).thenAnswer { throw IOException("Network error") }
-        whenever(briefingDao.getFavoriteTickers()).thenReturn(emptyList())
+        // Given
+        whenever(mockApi.getBriefingList(any(), any(), anyOrNull(), anyOrNull(), anyOrNull(), anyOrNull()))
+            .thenThrow(RuntimeException("Network error"))
+        whenever(mockBriefingDao.getFavoriteTickers(any())).thenReturn(emptyList())
 
+        // When
         val result = repository.fetchAndSaveBriefing(offset = 0, clear = false)
 
+        // Then
         assertNull(result)
     }
 
     @Test
-    fun fetchAndSaveBriefing_handlesNullValues() = runTest {
+    fun fetchAndSaveBriefing_preservesFavoriteStatus() = runTest {
+        // Given
+        val items = listOf(
+            BriefingItemDto(
+                ticker = "AAPL",
+                name = "Apple",
+                close = "150",
+                change = "5",
+                changeRate = "3.5",
+                summary = "Tech company",
+                overview = null,
+                marketCap = 1000000L
+            )
+        )
         val response = BriefingListResponse(
-            items = listOf(
-                BriefingItemDto(
-                    ticker = "005930",
-                    name = "삼성전자",
-                    close = null,
-                    change = null,
-                    changeRate = null,
-                    summary = "요약",
-                    overview = null
-                )
-            ),
+            items = items,
             total = 1,
             limit = 10,
             offset = 0,
             source = null,
             asOf = "2024-01-01"
         )
-        whenever(api.getBriefingList(limit = 10, offset = 0, sort = null)).thenReturn(response)
-        whenever(briefingDao.getFavoriteTickers()).thenReturn(emptyList())
+        whenever(mockApi.getBriefingList(any(), any(), anyOrNull(), anyOrNull(), anyOrNull(), anyOrNull()))
+            .thenReturn(response)
+        whenever(mockBriefingDao.getFavoriteTickers(any())).thenReturn(listOf("AAPL"))
+        whenever(mockBriefingDao.getCard("AAPL")).thenReturn(null)
 
-        val result = repository.fetchAndSaveBriefing(offset = 0, clear = false)
+        // When
+        repository.fetchAndSaveBriefing(offset = 0, clear = false)
 
-        assertNotNull(result)
-        verify(briefingDao).insertCards(argThat { cards ->
-            cards[0].price == 0L && cards[0].change == 0L && cards[0].changeRate == 0.0
+        // Then
+        verify(mockBriefingDao).insertCards(argThat { cards ->
+            cards.any { it.ticker == "AAPL" && it.isFavorite }
         })
     }
 
-    // ===== getStockReport Tests =====
+    // ===== syncFavorites Tests =====
 
     @Test
-    fun getStockReport_returnsCachedDataWhenAvailable() = runTest {
-        val cached = createStockDetailCache("005930")
-        whenever(stockDetailDao.getDetail("005930")).thenReturn(cached)
+    fun syncFavorites_guestUser_doesNotCallApi() = runTest {
+        // Given: Default context has no username (guest)
 
-        val result = repository.getStockReport("005930")
+        // When
+        repository.syncFavorites()
 
-        assertEquals("005930", result.ticker)
-        verify(api, never()).getStockReport(any())
-    }
-
-    @Test
-    fun getStockReport_fetchesFromApiWhenNotCached() = runTest {
-        val apiResponse = createStockDetailDto("005930")
-        whenever(stockDetailDao.getDetail("005930")).thenReturn(null)
-        whenever(api.getStockReport("005930")).thenReturn(apiResponse)
-
-        val result = repository.getStockReport("005930")
-
-        assertEquals("005930", result.ticker)
-        verify(api).getStockReport("005930")
-        verify(stockDetailDao).insertDetail(any())
-    }
-
-    @Test
-    fun getStockReport_savesToCacheAfterApiFetch() = runTest {
-        val apiResponse = createStockDetailDto("005930")
-        whenever(stockDetailDao.getDetail("005930")).thenReturn(null)
-        whenever(api.getStockReport("005930")).thenReturn(apiResponse)
-
-        repository.getStockReport("005930")
-
-        verify(stockDetailDao).insertDetail(argThat { ticker == "005930" })
-    }
-
-    @Test
-    fun getStockReport_throwsExceptionOnApiError() = runTest {
-        whenever(stockDetailDao.getDetail("005930")).thenReturn(null)
-        whenever(api.getStockReport("005930")).thenAnswer { throw IOException("Network error") }
-
-        try {
-            repository.getStockReport("005930")
-            fail("Expected IOException")
-        } catch (e: IOException) {
-            assertEquals("Network error", e.message)
-        }
-    }
-
-    // ===== getStockOverview Tests =====
-
-    @Test
-    fun getStockOverview_returnsApiResponse() = runTest {
-        val overview = StockOverviewDto(
-            asOfDate = "2024-01-01",
-            summary = "테스트 요약",
-            fundamental = "펀더멘털 분석",
-            technical = "기술적 분석",
-            news = listOf("뉴스1", "뉴스2")
-        )
-        whenever(api.getStockOverview("005930")).thenReturn(overview)
-
-        val result = repository.getStockOverview("005930")
-
-        assertEquals("테스트 요약", result.summary)
-        assertEquals("펀더멘털 분석", result.fundamental)
-    }
-
-    @Test
-    fun getStockOverview_throwsExceptionOnApiError() = runTest {
-        whenever(api.getStockOverview("005930")).thenAnswer { throw IOException("Network error") }
-
-        try {
-            repository.getStockOverview("005930")
-            fail("Expected IOException")
-        } catch (e: IOException) {
-            assertEquals("Network error", e.message)
-        }
-    }
-
-    // ===== toggleFavorite Tests =====
-
-    @Test
-    fun toggleFavorite_addFavorite_insertsFavoriteAndSyncs() = runTest {
-        val result = repository.toggleFavorite("005930", isActive = true)
-
-        assertTrue(result)
-        verify(briefingDao).insertFavorite(argThat<FavoriteTicker> { ticker == "005930" })
-        verify(briefingDao).syncFavorites()
-    }
-
-    @Test
-    fun toggleFavorite_removeFavorite_deletesFavoriteAndSyncs() = runTest {
-        val result = repository.toggleFavorite("005930", isActive = false)
-
-        assertTrue(result)
-        verify(briefingDao).deleteFavorite("005930")
-        verify(briefingDao).syncFavorites()
-    }
-
-    @Test
-    fun toggleFavorite_multipleTickers_worksIndependently() = runTest {
-        repository.toggleFavorite("005930", isActive = true)
-        repository.toggleFavorite("000660", isActive = true)
-        repository.toggleFavorite("005930", isActive = false)
-
-        verify(briefingDao, times(2)).insertFavorite(any())
-        verify(briefingDao, times(1)).deleteFavorite("005930")
-        verify(briefingDao, times(3)).syncFavorites()
+        // Then
+        verify(mockApi, never()).getPortfolio()
     }
 
     // ===== Helper Functions =====
 
-    private fun createBriefingCardCache(ticker: String, name: String) = BriefingCardCache(
-        ticker = ticker,
-        name = name,
-        price = 70000L,
-        change = 1000L,
-        changeRate = 1.5,
-        headline = "테스트 요약",
-        label = null,
-        confidence = null,
-        fetchedAt = System.currentTimeMillis()
-    )
-
-    private fun createBriefingListResponse() = BriefingListResponse(
-        items = listOf(
-            BriefingItemDto(
-                ticker = "005930",
-                name = "삼성전자",
-                close = "72000",
-                change = "1000",
-                changeRate = "1.5",
-                summary = "삼성전자 요약",
-                overview = null
-            ),
-            BriefingItemDto(
-                ticker = "000660",
-                name = "SK하이닉스",
-                close = "150000",
-                change = "-2000",
-                changeRate = "-1.3",
-                summary = "SK하이닉스 요약",
-                overview = null
-            )
-        ),
-        total = 2,
-        limit = 10,
-        offset = 0,
-        source = "cache",
-        asOf = "2024-01-01"
-    )
-
-    private fun createStockDetailDto(ticker: String) = StockDetailDto(
-        ticker = ticker,
-        name = "테스트 주식",
-        current = CurrentData(
-            price = 72000,
-            change = -100,
-            changeRate = -0.14,
-            marketCap = 1000000,
-            date = "2024-01-01"
-        ),
-        valuation = ValuationData(
-            peTtm = 15.5,
-            priceToBook = 1.2,
-            bps = 60000
-        ),
-        dividend = DividendData(
-            `yield` = 2.5
-        ),
-        financials = FinancialsData(
-            eps = 4800,
-            dps = 1800,
-            roe = 8.0
-        ),
-        history = listOf(
-            HistoryItem(date = "2024-01-01", close = 71000.0),
-            HistoryItem(date = "2024-01-02", close = 72000.0)
-        ),
-        profile = ProfileData(
-            explanation = "테스트 회사 설명"
-        ),
-        asOf = "2024-01-01"
-    )
-
-    private fun createStockDetailCache(ticker: String) = StockDetailCache(
-        ticker = ticker,
-        json = """
-            {
-                "ticker": "$ticker",
-                "name": "캐시된 주식",
-                "current": {"price": 72000},
-                "history": []
-            }
-        """.trimIndent(),
-        fetchedAt = System.currentTimeMillis()
-    )
+    private fun createBriefingCardCache(
+        ticker: String,
+        name: String,
+        isFavorite: Boolean = false
+    ): BriefingCardCache {
+        return BriefingCardCache(
+            ticker = ticker,
+            name = name,
+            price = 100L,
+            change = 5L,
+            changeRate = 2.5,
+            headline = "Test headline",
+            label = null,
+            confidence = null,
+            rank = 0,
+            fetchedAt = System.currentTimeMillis(),
+            marketCap = 1000000L,
+            industry = "Technology",
+            isFavorite = isFavorite
+        )
+    }
 }

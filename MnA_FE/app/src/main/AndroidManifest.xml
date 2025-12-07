@@ -15,9 +15,6 @@
         android:theme="@style/Theme.DailyInsight"
         android:usesCleartextTraffic="true">
         <activity
-            android:name=".ui.userinfo.FavoriteListActivity"
-            android:exported="false" />
-        <activity
             android:name=".ui.userinfo.WithdrawActivity"
             android:exported="false" />
         <activity

@@ -1,12 +1,157 @@
 package com.example.dailyinsight.ui.marketindex
 
+import android.app.Application
+import androidx.arch.core.executor.testing.InstantTaskExecutorRule
+import androidx.lifecycle.ViewModel
+import androidx.test.core.app.ApplicationProvider
+import com.example.dailyinsight.data.dto.StockIndexHistoryItem
+import com.example.dailyinsight.data.network.RetrofitInstance
+import com.example.dailyinsight.di.ServiceLocator
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.test.UnconfinedTestDispatcher
+import kotlinx.coroutines.test.resetMain
+import kotlinx.coroutines.test.setMain
+import org.junit.After
 import org.junit.Assert.*
+import org.junit.Before
+import org.junit.Rule
 import org.junit.Test
+import org.junit.runner.RunWith
+import org.robolectric.RobolectricTestRunner
+import org.robolectric.annotation.Config
+import java.lang.reflect.Method
 
+/**
+ * Unit tests for StockIndexDetailViewModel using Robolectric.
+ */
+@OptIn(ExperimentalCoroutinesApi::class)
+@RunWith(RobolectricTestRunner::class)
+@Config(sdk = [28])
 class StockIndexDetailViewModelTest {
 
-    // ChartDataPoint 테스트 (20개)
-    
+    @get:Rule
+    val instantTaskExecutorRule = InstantTaskExecutorRule()
+
+    private val testDispatcher = UnconfinedTestDispatcher()
+    private lateinit var application: Application
+
+    @Before
+    fun setup() {
+        Dispatchers.setMain(testDispatcher)
+        application = ApplicationProvider.getApplicationContext()
+        ServiceLocator.init(application)
+        RetrofitInstance.init(application)
+    }
+
+    @After
+    fun tearDown() {
+        Dispatchers.resetMain()
+    }
+
+    // ===== parseHistoryListToChartPoints Tests via Reflection =====
+
+    @Test
+    fun parseHistoryListToChartPoints_withEmptyList_returnsEmpty() {
+        val viewModel = StockIndexDetailViewModel(application, "KOSPI")
+        val method = getParseMethod(viewModel)
+
+        @Suppress("UNCHECKED_CAST")
+        val result = method.invoke(viewModel, emptyList<StockIndexHistoryItem>()) as List<ChartDataPoint>
+
+        assertTrue(result.isEmpty())
+    }
+
+    @Test
+    fun parseHistoryListToChartPoints_withValidData_returnsChartPoints() {
+        val viewModel = StockIndexDetailViewModel(application, "KOSPI")
+        val method = getParseMethod(viewModel)
+        val historyItems = listOf(
+            StockIndexHistoryItem(date = "2024-01-01", close = 2500.0),
+            StockIndexHistoryItem(date = "2024-01-02", close = 2550.0)
+        )
+
+        @Suppress("UNCHECKED_CAST")
+        val result = method.invoke(viewModel, historyItems) as List<ChartDataPoint>
+
+        assertEquals(2, result.size)
+        assertEquals(2500f, result[0].closePrice, 0.01f)
+        assertEquals(2550f, result[1].closePrice, 0.01f)
+    }
+
+    @Test
+    fun parseHistoryListToChartPoints_sortsChronologically() {
+        val viewModel = StockIndexDetailViewModel(application, "KOSPI")
+        val method = getParseMethod(viewModel)
+        val historyItems = listOf(
+            StockIndexHistoryItem(date = "2024-01-03", close = 2525.0),
+            StockIndexHistoryItem(date = "2024-01-01", close = 2500.0),
+            StockIndexHistoryItem(date = "2024-01-02", close = 2550.0)
+        )
+
+        @Suppress("UNCHECKED_CAST")
+        val result = method.invoke(viewModel, historyItems) as List<ChartDataPoint>
+
+        assertTrue(result[0].timestamp < result[1].timestamp)
+        assertTrue(result[1].timestamp < result[2].timestamp)
+    }
+
+    // ===== Factory Tests =====
+
+    @Test
+    fun factory_createsViewModelSuccessfully() {
+        val factory = StockIndexDetailViewModelFactory(application, "KOSPI")
+        val viewModel = factory.create(StockIndexDetailViewModel::class.java)
+
+        assertNotNull(viewModel)
+        assertTrue(viewModel is StockIndexDetailViewModel)
+    }
+
+    @Test(expected = IllegalArgumentException::class)
+    fun factory_throwsForUnknownClass() {
+        val factory = StockIndexDetailViewModelFactory(application, "KOSPI")
+        factory.create(UnknownViewModel::class.java)
+    }
+
+    @Test
+    fun factory_worksWithDifferentIndexTypes() {
+        val kospiVm = StockIndexDetailViewModelFactory(application, "KOSPI")
+            .create(StockIndexDetailViewModel::class.java)
+        val kosdaqVm = StockIndexDetailViewModelFactory(application, "KOSDAQ")
+            .create(StockIndexDetailViewModel::class.java)
+
+        assertNotNull(kospiVm)
+        assertNotNull(kosdaqVm)
+    }
+
+    // ===== ViewModel Properties Tests =====
+
+    @Test
+    fun viewModel_hasAllLiveDataProperties() {
+        val viewModel = StockIndexDetailViewModel(application, "KOSPI")
+
+        assertNotNull(viewModel.stockIndexData)
+        assertNotNull(viewModel.error)
+        assertNotNull(viewModel.historicalData)
+        assertNotNull(viewModel.yearHigh)
+        assertNotNull(viewModel.yearLow)
+    }
+
+    // ===== Helper =====
+
+    private fun getParseMethod(viewModel: StockIndexDetailViewModel): Method {
+        val method = viewModel::class.java.getDeclaredMethod(
+            "parseHistoryListToChartPoints",
+            List::class.java
+        )
+        method.isAccessible = true
+        return method
+    }
+
+    private class UnknownViewModel : ViewModel()
+
+    // ========== Original ChartDataPoint Tests ==========
+
     @Test
     fun chartDataPoint_creates() {
         val point = ChartDataPoint(1234567890L, 2500.0f)
