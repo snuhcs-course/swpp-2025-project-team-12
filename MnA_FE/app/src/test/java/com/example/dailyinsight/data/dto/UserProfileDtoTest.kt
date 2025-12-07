@@ -101,4 +101,118 @@ class UserProfileDtoTest {
         val response = UserProfileResponse("")
         assertEquals("", response.message)
     }
+
+    // ===== Additional Tests =====
+
+    @Test
+    fun changeNameRequest_hashCode() {
+        val r1 = ChangeNameRequest("John")
+        val r2 = ChangeNameRequest("John")
+        assertEquals(r1.hashCode(), r2.hashCode())
+    }
+
+    @Test
+    fun changeNameRequest_toString() {
+        val request = ChangeNameRequest("John")
+        val str = request.toString()
+        assertTrue(str.contains("John"))
+    }
+
+    @Test
+    fun changeNameRequest_destructuring() {
+        val request = ChangeNameRequest("John")
+        val (name) = request
+        assertEquals("John", name)
+    }
+
+    @Test
+    fun changeNameRequest_inequality() {
+        val r1 = ChangeNameRequest("John")
+        val r2 = ChangeNameRequest("Jane")
+        assertNotEquals(r1, r2)
+    }
+
+    @Test
+    fun changePasswordRequest_hashCode() {
+        val r1 = ChangePasswordRequest("pass")
+        val r2 = ChangePasswordRequest("pass")
+        assertEquals(r1.hashCode(), r2.hashCode())
+    }
+
+    @Test
+    fun changePasswordRequest_toString() {
+        val request = ChangePasswordRequest("secret")
+        val str = request.toString()
+        assertTrue(str.contains("secret"))
+    }
+
+    @Test
+    fun changePasswordRequest_destructuring() {
+        val request = ChangePasswordRequest("secret")
+        val (password) = request
+        assertEquals("secret", password)
+    }
+
+    @Test
+    fun changePasswordRequest_copy() {
+        val original = ChangePasswordRequest("old")
+        val copied = original.copy(password = "new")
+        assertEquals("new", copied.password)
+    }
+
+    @Test
+    fun changePasswordRequest_inequality() {
+        val r1 = ChangePasswordRequest("pass1")
+        val r2 = ChangePasswordRequest("pass2")
+        assertNotEquals(r1, r2)
+    }
+
+    @Test
+    fun changePasswordRequest_longPassword() {
+        val longPassword = "A".repeat(256)
+        val request = ChangePasswordRequest(longPassword)
+        assertEquals(256, request.password.length)
+    }
+
+    @Test
+    fun userProfileResponse_hashCode() {
+        val r1 = UserProfileResponse("Success")
+        val r2 = UserProfileResponse("Success")
+        assertEquals(r1.hashCode(), r2.hashCode())
+    }
+
+    @Test
+    fun userProfileResponse_toString() {
+        val response = UserProfileResponse("Success")
+        val str = response.toString()
+        assertTrue(str.contains("Success"))
+    }
+
+    @Test
+    fun userProfileResponse_destructuring() {
+        val response = UserProfileResponse("Success")
+        val (message) = response
+        assertEquals("Success", message)
+    }
+
+    @Test
+    fun userProfileResponse_equality() {
+        val r1 = UserProfileResponse("Success")
+        val r2 = UserProfileResponse("Success")
+        assertEquals(r1, r2)
+    }
+
+    @Test
+    fun userProfileResponse_copy() {
+        val original = UserProfileResponse("Old message")
+        val copied = original.copy(message = "New message")
+        assertEquals("New message", copied.message)
+    }
+
+    @Test
+    fun userProfileResponse_inequality() {
+        val r1 = UserProfileResponse("Success")
+        val r2 = UserProfileResponse("Failure")
+        assertNotEquals(r1, r2)
+    }
 }

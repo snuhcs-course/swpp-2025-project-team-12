@@ -167,4 +167,87 @@ class StockHistoryConverterTest {
 
         assertEquals(999999999.99, restored[0].close, 0.01)
     }
+
+    // ===== Additional Tests =====
+
+    @Test
+    fun fromStockHistoryItemList_decimalPrecision_preserved() {
+        val list = listOf(StockIndexHistoryItem("2024-01-01", 2500.123456789))
+
+        val json = converter.fromStockHistoryItemList(list)
+        val restored = converter.toStockHistoryItemList(json)
+
+        assertEquals(2500.123456789, restored[0].close, 0.0001)
+    }
+
+    @Test
+    fun toStockHistoryItemList_validJsonArray_convertsCorrectly() {
+        val json = """[{"date":"2024-01-01","close":100},{"date":"2024-01-02","close":200}]"""
+
+        val list = converter.toStockHistoryItemList(json)
+
+        assertEquals(2, list.size)
+        assertEquals(100.0, list[0].close, 0.01)
+        assertEquals(200.0, list[1].close, 0.01)
+    }
+
+    @Test
+    fun roundTrip_multipleItems_preservesOrder() {
+        val originalList = listOf(
+            StockIndexHistoryItem("2024-01-01", 100.0),
+            StockIndexHistoryItem("2024-01-02", 200.0),
+            StockIndexHistoryItem("2024-01-03", 300.0)
+        )
+
+        val json = converter.fromStockHistoryItemList(originalList)
+        val restoredList = converter.toStockHistoryItemList(json)
+
+        assertEquals("2024-01-01", restoredList[0].date)
+        assertEquals("2024-01-02", restoredList[1].date)
+        assertEquals("2024-01-03", restoredList[2].date)
+    }
+
+    @Test
+    fun fromStockHistoryItemList_koreanDateFormat_preserved() {
+        val list = listOf(StockIndexHistoryItem("2024년 01월 15일", 2500.0))
+
+        val json = converter.fromStockHistoryItemList(list)
+        val restored = converter.toStockHistoryItemList(json)
+
+        assertEquals("2024년 01월 15일", restored[0].date)
+    }
+
+    @Test
+    fun fromStockHistoryItemList_specialDateFormats_preserved() {
+        val list = listOf(
+            StockIndexHistoryItem("2024/01/15", 2500.0),
+            StockIndexHistoryItem("15-01-2024", 2600.0)
+        )
+
+        val json = converter.fromStockHistoryItemList(list)
+        val restored = converter.toStockHistoryItemList(json)
+
+        assertEquals("2024/01/15", restored[0].date)
+        assertEquals("15-01-2024", restored[1].date)
+    }
+
+    @Test
+    fun fromStockHistoryItemList_maxDoubleValue_preserved() {
+        val list = listOf(StockIndexHistoryItem("2024-01-01", Double.MAX_VALUE))
+
+        val json = converter.fromStockHistoryItemList(list)
+        val restored = converter.toStockHistoryItemList(json)
+
+        assertEquals(Double.MAX_VALUE, restored[0].close, 0.01)
+    }
+
+    @Test
+    fun fromStockHistoryItemList_minDoubleValue_preserved() {
+        val list = listOf(StockIndexHistoryItem("2024-01-01", Double.MIN_VALUE))
+
+        val json = converter.fromStockHistoryItemList(list)
+        val restored = converter.toStockHistoryItemList(json)
+
+        assertEquals(Double.MIN_VALUE, restored[0].close, Double.MIN_VALUE)
+    }
 }

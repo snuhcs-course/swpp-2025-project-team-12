@@ -7,16 +7,13 @@ import com.example.dailyinsight.data.Repository
 import com.example.dailyinsight.data.RemoteRepository
 import com.example.dailyinsight.di.ServiceLocator
 import com.example.dailyinsight.data.dto.RecommendationDto
-import com.example.dailyinsight.ui.common.LoadResult
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.flatMapLatest
-import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.flow.map
 import java.util.concurrent.atomic.AtomicBoolean
-import androidx.lifecycle.asLiveData
 
 class StockViewModel(
     private val repo: Repository = ServiceLocator.repository

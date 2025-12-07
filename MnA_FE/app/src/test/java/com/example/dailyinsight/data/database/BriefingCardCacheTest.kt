@@ -215,4 +215,226 @@ class BriefingCardCacheTest {
 
         assertNotEquals(cache1, cache2)
     }
+
+    // ===== New Fields Tests =====
+
+    @Test
+    fun marketCap_defaultsToNull() {
+        val cache = BriefingCardCache(
+            ticker = "005930",
+            name = "삼성전자",
+            price = 72000L,
+            change = 1000L,
+            changeRate = 1.5,
+            headline = null,
+            label = null,
+            confidence = null,
+            fetchedAt = System.currentTimeMillis()
+        )
+
+        assertNull(cache.marketCap)
+    }
+
+    @Test
+    fun marketCap_withValue_createsCorrectly() {
+        val cache = BriefingCardCache(
+            ticker = "005930",
+            name = "삼성전자",
+            price = 72000L,
+            change = 1000L,
+            changeRate = 1.5,
+            headline = null,
+            label = null,
+            confidence = null,
+            fetchedAt = System.currentTimeMillis(),
+            marketCap = 430000000000000L
+        )
+
+        assertEquals(430000000000000L, cache.marketCap)
+    }
+
+    @Test
+    fun rank_defaultsToNull() {
+        val cache = BriefingCardCache(
+            ticker = "005930",
+            name = "삼성전자",
+            price = 72000L,
+            change = 1000L,
+            changeRate = 1.5,
+            headline = null,
+            label = null,
+            confidence = null,
+            fetchedAt = System.currentTimeMillis()
+        )
+
+        assertNull(cache.rank)
+    }
+
+    @Test
+    fun rank_withValue_createsCorrectly() {
+        val cache = BriefingCardCache(
+            ticker = "005930",
+            name = "삼성전자",
+            price = 72000L,
+            change = 1000L,
+            changeRate = 1.5,
+            headline = null,
+            label = null,
+            confidence = null,
+            fetchedAt = System.currentTimeMillis(),
+            rank = 1
+        )
+
+        assertEquals(1, cache.rank)
+    }
+
+    @Test
+    fun industry_defaultsToNull() {
+        val cache = BriefingCardCache(
+            ticker = "005930",
+            name = "삼성전자",
+            price = 72000L,
+            change = 1000L,
+            changeRate = 1.5,
+            headline = null,
+            label = null,
+            confidence = null,
+            fetchedAt = System.currentTimeMillis()
+        )
+
+        assertNull(cache.industry)
+    }
+
+    @Test
+    fun industry_withValue_createsCorrectly() {
+        val cache = BriefingCardCache(
+            ticker = "005930",
+            name = "삼성전자",
+            price = 72000L,
+            change = 1000L,
+            changeRate = 1.5,
+            headline = null,
+            label = null,
+            confidence = null,
+            fetchedAt = System.currentTimeMillis(),
+            industry = "전기.전자"
+        )
+
+        assertEquals("전기.전자", cache.industry)
+    }
+
+    @Test
+    fun allOptionalFields_withValues_createsCorrectly() {
+        val cache = BriefingCardCache(
+            ticker = "005930",
+            name = "삼성전자",
+            price = 72000L,
+            change = 1000L,
+            changeRate = 1.5,
+            headline = "테스트 헤드라인",
+            label = "상승",
+            confidence = 0.95,
+            fetchedAt = System.currentTimeMillis(),
+            isFavorite = true,
+            marketCap = 430000000000000L,
+            rank = 1,
+            industry = "전기.전자"
+        )
+
+        assertEquals("테스트 헤드라인", cache.headline)
+        assertEquals("상승", cache.label)
+        assertEquals(0.95, cache.confidence!!, 0.01)
+        assertTrue(cache.isFavorite)
+        assertEquals(430000000000000L, cache.marketCap)
+        assertEquals(1, cache.rank)
+        assertEquals("전기.전자", cache.industry)
+    }
+
+    @Test
+    fun copy_modifiesRank() {
+        val original = BriefingCardCache(
+            ticker = "005930",
+            name = "삼성전자",
+            price = 72000L,
+            change = 1000L,
+            changeRate = 1.5,
+            headline = null,
+            label = null,
+            confidence = null,
+            fetchedAt = System.currentTimeMillis(),
+            rank = 1
+        )
+
+        val copied = original.copy(rank = 2)
+
+        assertEquals(2, copied.rank)
+        assertEquals("005930", copied.ticker)
+    }
+
+    @Test
+    fun copy_modifiesIsFavorite() {
+        val original = BriefingCardCache(
+            ticker = "005930",
+            name = "삼성전자",
+            price = 72000L,
+            change = 1000L,
+            changeRate = 1.5,
+            headline = null,
+            label = null,
+            confidence = null,
+            fetchedAt = System.currentTimeMillis(),
+            isFavorite = false
+        )
+
+        val copied = original.copy(isFavorite = true)
+
+        assertTrue(copied.isFavorite)
+    }
+
+    @Test
+    fun hashCode_consistency() {
+        val cache1 = BriefingCardCache(
+            ticker = "005930",
+            name = "삼성전자",
+            price = 72000L,
+            change = 1000L,
+            changeRate = 1.5,
+            headline = null,
+            label = null,
+            confidence = null,
+            fetchedAt = 1000L
+        )
+        val cache2 = BriefingCardCache(
+            ticker = "005930",
+            name = "삼성전자",
+            price = 72000L,
+            change = 1000L,
+            changeRate = 1.5,
+            headline = null,
+            label = null,
+            confidence = null,
+            fetchedAt = 1000L
+        )
+
+        assertEquals(cache1.hashCode(), cache2.hashCode())
+    }
+
+    @Test
+    fun toString_containsFields() {
+        val cache = BriefingCardCache(
+            ticker = "005930",
+            name = "삼성전자",
+            price = 72000L,
+            change = 1000L,
+            changeRate = 1.5,
+            headline = null,
+            label = null,
+            confidence = null,
+            fetchedAt = 1000L
+        )
+
+        val str = cache.toString()
+        assertTrue(str.contains("005930"))
+        assertTrue(str.contains("삼성전자"))
+    }
 }
