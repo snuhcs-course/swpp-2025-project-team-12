@@ -1,4 +1,6 @@
 # MnA_BE/S3/__init__.py  (통합본)
+import dotenv
+dotenv.load_dotenv()
 
 import os
 import io

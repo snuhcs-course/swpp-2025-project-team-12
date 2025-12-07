@@ -32,7 +32,6 @@ BASE_DIR = Path(__file__).resolve().parent
 
 S3_BUCKET_NAME = os.getenv("FINANCE_BUCKET_NAME")
 
-
 class StockindexManager:
     """
     Manages KOSPI and KOSDAQ data in both S3 and local storage.
