@@ -335,10 +335,10 @@ class StockDetailFragment : Fragment(R.layout.fragment_stock_detail) {
         setNoDataText("")
         legend.isEnabled = false
         description.isEnabled = false
-        setTouchEnabled(false)
-        isDragEnabled = false
-        setScaleEnabled(false)
-        setPinchZoom(false)
+        setTouchEnabled(true)
+        isDragEnabled = true
+        setScaleEnabled(true)
+        setPinchZoom(true)
         setDrawGridBackground(false)
         setMinOffset(12f)
         setExtraOffsets(8f, 6f, 12f, 16f)
