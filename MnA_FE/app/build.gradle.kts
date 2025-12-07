@@ -169,7 +169,7 @@ koverReport {
         excludes {
             classes(
                 // === AUTO-GENERATED CODE (not written by us) ===
-                // Room generated classes
+                // Room generated implementation classes (Java code generated from DAO interfaces)
                 "*_Impl",
                 "*_Impl\$*",
                 // ViewBinding generated classes
@@ -186,18 +186,7 @@ koverReport {
                 "*Activity",
                 "*Activity\$*",
                 "*Adapter",
-                "*Adapter\$*",
-
-                // === ANDROID FRAMEWORK DEPENDENCIES ===
-                // Application class (Android entry point)
-                "*.DailyInsightApplication",
-                // Room DAOs (interfaces - Room generates implementation)
-                "*Dao",
-                "*Dao\$*",
-                // Room Database (requires Android Context)
-                "*Database",
-                "*Database\$*",
-
+                "*Adapter\$*"
             )
         }
     }
