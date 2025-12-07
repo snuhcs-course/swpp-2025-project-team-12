@@ -34,7 +34,12 @@ class MarketIndexFragment : Fragment() {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-
+        binding.swipe.setOnRefreshListener {
+            marketIndexViewModel.refresh()
+        }
+        marketIndexViewModel.isLoading.observe(viewLifecycleOwner) { isLoading ->
+            binding.swipe.isRefreshing = isLoading
+        }
         marketIndexViewModel.marketData.observe(viewLifecycleOwner) { dataMap ->
             // Update KOSPI UI
             dataMap["KOSPI"]?.let { kospiData ->

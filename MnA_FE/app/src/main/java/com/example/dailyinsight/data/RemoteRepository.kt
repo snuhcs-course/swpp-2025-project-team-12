@@ -118,19 +118,18 @@ class RemoteRepository(
     }
 
     override suspend fun getStockReport(ticker: String): StockDetailDto {
-        // 1. DB 확인
-        val cached = stockDetailDao.getDetail(ticker)
-        if (cached != null) {
-            // 캐시가 있으면 JSON -> DTO 변환해서 즉시 반환
-            return gson.fromJson(cached.json, StockDetailDto::class.java)
+        try { // 1. [Network First] 무조건 서버에 최신 데이터를 달라고 요청
+            val detail = api.getStockReport(ticker)
+            val json = gson.toJson(detail) // 2. 성공했다면? -> 이 데이터가 가장 최신 - DB에 저장해서 캐시를 업데이트
+            stockDetailDao.insertDetail(StockDetailCache(ticker, json, System.currentTimeMillis()))
+            return detail
+        } catch (e: Exception) { // 3. 실패했다면? (인터넷 끊김, 서버 에러 등) 어쩔 수 없이 DB에 있는 '과거 데이터'라도 보여줍니다.
+            val cached = stockDetailDao.getDetail(ticker)
+            if (cached != null) {
+                return gson.fromJson(cached.json, StockDetailDto::class.java)
+            }
+            throw e // 4. DB에도 없다면? 진짜 에러.
         }
-        // 2. 없으면 API 호출 (그리고 DB 저장)
-        val detail = api.getStockReport(ticker)
-        // 상세 정보 가져올 때 시가총액도 같이 업데이트 (다음에 목록 볼 때 정렬이 잘되기 위해)
-        val existing = briefingDao.getCard(ticker)
-        val json = gson.toJson(detail)
-        stockDetailDao.insertDetail(StockDetailCache(ticker, json, System.currentTimeMillis()))
-        return detail
     }
 
     override suspend fun getStockOverview(ticker: String): StockOverviewDto {

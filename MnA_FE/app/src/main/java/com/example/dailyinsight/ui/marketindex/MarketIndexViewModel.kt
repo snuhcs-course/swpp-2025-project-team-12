@@ -13,6 +13,7 @@ import com.example.dailyinsight.data.repository.MarketIndexRepository
 import kotlinx.coroutines.launch
 import org.json.JSONObject
 import java.io.InputStream
+import kotlinx.coroutines.joinAll
 
 class MarketIndexViewModel(
     private val repository: MarketIndexRepository = MarketIndexRepository()
@@ -33,27 +34,38 @@ class MarketIndexViewModel(
     private val _error = MutableLiveData<String>()
     val error: LiveData<String> = _error
 
-    // Load the data when the ViewModel is created
-    init {
-        fetchMarketData()
-        fetchLLMSummary()
-        preCacheChartData()
-    }
-    private fun fetchMarketData() {
-        viewModelScope.launch {
-            try {
-                // The repository now returns the map directly
-                val dataMap = repository.getMarketData()
-                // Manually add the name (key) to each StockIndexData
-                dataMap.forEach { (key, value) ->
-                    value.name = key
-                }
+    // -새로고침 상태 관리를 위한 LiveData 추가
+    private val _isLoading = MutableLiveData<Boolean>()
+    val isLoading: LiveData<Boolean> = _isLoading
 
-                _marketData.postValue(dataMap)
-            } catch (e: Exception) {
-                _error.postValue("Failed to fetch data: ${e.message}")
-                Log.e("MarketIndexViewModel", "API Call Failed", e)
+    init {
+        refresh() // 앱 시작 시 데이터 로드
+    }
+
+    fun refresh() { // -당겨서 새로고침
+        viewModelScope.launch {
+            _isLoading.value = true // 로딩바 표시
+
+            // 3개의 작업을 병렬로 시작하고 모두 끝날 때까지 기다림 (joinAll)
+            val jobs = listOf(
+                launch { fetchMarketData() },
+                launch { fetchLLMSummary() },
+                launch { preCacheChartData() }
+            )
+            jobs.joinAll()
+            _isLoading.value = false // 로딩바 숨김
+        }
+    }
+    private suspend fun fetchMarketData() {
+        try {
+            val dataMap = repository.getMarketData()
+            dataMap.forEach { (key, value) ->
+                value.name = key
             }
+            _marketData.postValue(dataMap)
+        } catch (e: Exception) {
+            _error.postValue("Failed to fetch data: ${e.message}")
+            Log.e("MarketIndexViewModel", "API Call Failed", e)
         }
     }
 
